@@ -1,122 +1,185 @@
-# Guía de operación: SSO con Keycloak
+# Guía de operación: SSO por OpenID Connect
 
-Para quien instala o mantiene una instancia self-hosted de Dokploy. Cubre NFR-QA-005.
+Para quien instala o mantiene una instancia self-hosted de Dokploy. Cubre NFR-QA-005 y FR-022 a
+FR-025. Keycloak es el proveedor de referencia; Okta, Authentik, Zitadel y Authelia están soportados
+mediante configuración (presets en la pantalla de settings).
 
-## 1. Configurar el cliente en Keycloak
+## 1. Lo común a todos los proveedores
 
-En el realm de tu organización, **Clients → Create client**:
-
-| Campo | Valor |
+| En el proveedor | Valor |
 |---|---|
-| Client type | OpenID Connect |
-| Client ID | `dokploy` (o el que prefieras) |
-| Client authentication | **On** (cliente confidencial) |
-| Standard flow | On |
-| Direct access grants, Implicit flow | Off |
-| Valid redirect URIs | `https://<tu-dokploy>/api/auth/keycloak/callback` (exacta, sin comodines) |
-| Valid post logout redirect URIs | `https://<tu-dokploy>/` |
-| Advanced → Proof Key for Code Exchange | `S256` |
+| Tipo de cliente | OpenID Connect, **confidencial** (con secreto) |
+| Flujo | Authorization code; PKCE `S256` si el proveedor lo permite configurar |
+| Redirect URI | `https://<tu-dokploy>/api/auth/oidc/callback` (exacta) |
+| Post-logout redirect URI | `https://<tu-dokploy>/` |
+| Scopes | `openid email profile`, más el scope de grupos si el proveedor lo exige |
+| Claims necesarios | `sub`, `email`, `email_verified: true` y el claim de grupos o roles |
 
-Luego, en **Credentials**, copia el *Client secret*.
+**Grupos:**
+- **Grupo de acceso**: uno o varios, separados por comas (p. ej. `admins,leads`). Quien pertenece a
+  alguno entra y recibe cuenta en su primer login; el resto es rechazado, salvo el owner. Si está
+  vacío, no se crean cuentas nuevas y solo pueden entrar usuarios que ya existían.
+- **Grupo de administración**: sus miembros son admin y el resto member. El rol se recalcula en cada
+  login. Si está vacío, los roles se gestionan en Dokploy.
+- El **owner** de la instancia nunca cambia de rol por el proveedor.
 
-### Mapper de grupos
+Para quitar el acceso a alguien, sácalo del grupo de acceso o banéalo en Dokploy. Eliminarlo solo en
+Dokploy no basta: si sigue en el grupo, se le vuelve a crear la cuenta.
 
-**Client scopes → dokploy-dedicated → Add mapper → By configuration → Group Membership**:
+## 2. Configuración por proveedor
 
-| Campo | Valor |
-|---|---|
-| Name | `groups` |
-| Token Claim Name | `groups` |
-| Full group path | a tu elección. Dokploy acepta `dokploy-users` y `/equipos/dokploy-users` |
-| Add to ID token | On (si está en Off, Dokploy lee los grupos de *userinfo*) |
-| Add to userinfo | On |
+### Keycloak (referencia)
 
-### Grupos
+- Issuer: `https://<keycloak>/realms/<realm>`.
+- Cliente: *Client authentication* On, *Standard flow* On, *Direct access grants* e *Implicit* Off,
+  y en *Advanced*, PKCE `S256`.
+- Grupos: un mapper *Group Membership* con claim `groups` y *Add to ID token* activado, o un client
+  scope `groups` asignado como **Default** (no Optional). *Full group path* puede estar activado o
+  no: `admins` coincide tanto con `/admins` como con `/equipo/admins`.
+- Logout: sí.
 
-- **Grupo de acceso** (p. ej. `dokploy-users`): quien pertenece entra y recibe cuenta en su primer login. Quien no pertenece es rechazado, salvo el owner.
-- **Grupo de administración** (p. ej. `dokploy-admins`): sus miembros son admin; el resto, member. El rol se recalcula en cada login. Un cambio de rol hecho a mano en Dokploy se sobrescribe en el siguiente login del usuario.
-- El **owner** nunca cambia de rol por Keycloak, aunque no pertenezca a ningún grupo.
+### Okta
 
-Para quitar el acceso a alguien, sácalo del grupo de acceso o banéalo en Dokploy. Eliminarlo solo en Dokploy no basta: si sigue en el grupo, se le vuelve a crear la cuenta.
+- Issuer: `https://<org>.okta.com/oauth2/default` (o el de tu authorization server).
+- Aplicación: *OIDC – Web Application*, grant *Authorization Code*.
+- Grupos: en el authorization server, añade un claim `groups` al ID token (filtro, p. ej.,
+  *Matches regex* `.*`). Scopes adicionales: `groups`.
+- Logout: sí.
 
-## 2. Configurar Dokploy
+### Authentik
+
+- Issuer: `https://<authentik>/application/o/<slug>/`.
+- Proveedor *OAuth2/OpenID*, cliente confidencial. El scope `profile` por defecto ya incluye
+  `groups`.
+- Logout: sí.
+
+### Zitadel
+
+- Issuer: `https://<instancia>.zitadel.cloud` (o tu dominio).
+- Aplicación *Web*, *Code* con autenticación básica o POST.
+- Zitadel usa **roles de proyecto**, no grupos. Activa *Assert Roles on Authentication* y usa las
+  claves de rol como grupos de acceso y de administración.
+  - Claim de grupos: `urn:zitadel:iam:org:project:roles`.
+  - Scopes adicionales: `urn:zitadel:iam:org:projects:roles`.
+- Logout: sí.
+
+### Authelia
+
+- Issuer: `https://<authelia>`.
+- Cliente en `identity_providers.oidc.clients` con `redirect_uris` y los scopes
+  `openid email profile groups`. Scopes adicionales: `groups`.
+- **Logout: no** (sin `end_session_endpoint`). En modo SSO-only, cerrar sesión lleva a una pantalla
+  de «sesión cerrada» que no redirige sola. La sesión de Authelia sigue abierta hasta que caduque.
+
+### Otro proveedor OIDC
+
+Cualquier proveedor con discovery (`/.well-known/openid-configuration`) y ID tokens firmados.
+Configura el claim que lleva los grupos o roles y los scopes necesarios para recibirlo.
+
+## 3. Configurar Dokploy
 
 ### Desde la interfaz
 
-**Settings → Keycloak SSO** (solo lo ve el owner):
+**Settings → OIDC SSO** (solo lo ve el owner de la instancia):
 
-1. Rellena el issuer (`https://keycloak.example.com/realms/<realm>`), el client ID, el secreto y los grupos.
-2. Pulsa **Test connection**.
-3. Guarda con el modo **Button**.
-4. Cierra sesión y entra con **Sign in with Keycloak** usando tu cuenta de owner. Así se verifica el issuer.
-5. A partir de ahí puedes elegir **SSO-only**.
+1. Elige el preset del proveedor. Rellena el claim de grupos y los scopes adicionales.
+2. Completa el issuer, el client ID, el secreto y los grupos.
+3. Pulsa **Test connection**.
+4. Guarda con el modo **Button**.
+5. Cierra sesión y entra con el botón de SSO usando tu cuenta de owner. Así se verifica el issuer.
+6. A partir de ahí puedes elegir **SSO-only**.
 
-### Por variables de entorno (p. ej. desde Vault)
+### Por variables de entorno
 
-| Variable | Ejemplo |
+| Variable | Descripción |
 |---|---|
-| `KEYCLOAK_SSO_MODE` | `button` |
-| `KEYCLOAK_SSO_ISSUER_URL` | `https://auth.milpia.com/realms/milpia-realm` |
-| `KEYCLOAK_SSO_CLIENT_ID` | `dokploy` |
-| `KEYCLOAK_SSO_CLIENT_SECRET_FILE` | `/run/secrets/keycloak_client_secret` |
-| `KEYCLOAK_SSO_ACCESS_GROUP` | `dokploy-users` |
-| `KEYCLOAK_SSO_ADMIN_GROUP` | `dokploy-admins` |
-| `KEYCLOAK_SSO_BUTTON_LABEL` | `Entrar con Milpia` |
+| `SSO_OIDC_MODE` | `disabled` \| `button` \| `sso-only` |
+| `SSO_OIDC_ISSUER_URL` | issuer del proveedor |
+| `SSO_OIDC_CLIENT_ID` | client ID |
+| `SSO_OIDC_CLIENT_SECRET` / `SSO_OIDC_CLIENT_SECRET_FILE` | secreto (la variable directa prevalece) |
+| `SSO_OIDC_ACCESS_GROUP` | grupo o lista separada por comas |
+| `SSO_OIDC_ADMIN_GROUP` | grupo o lista separada por comas |
+| `SSO_OIDC_GROUPS_CLAIM` | claim de grupos o roles (por defecto `groups`) |
+| `SSO_OIDC_EXTRA_SCOPES` | scopes adicionales separados por espacios |
+| `SSO_OIDC_BUTTON_LABEL` | texto del botón |
+| `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
 
-- Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen bloqueados en ella.
+- Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen
+  bloqueados en ella.
 - Un cambio en las variables requiere reiniciar Dokploy.
-- `KEYCLOAK_SSO_MODE=sso-only` solo surte efecto cuando el issuer ya está verificado; hasta entonces la instancia funciona en modo botón. Así una variable mal puesta no puede dejar a todos fuera.
-- Usa `KEYCLOAK_SSO_ALLOW_INSECURE_HTTP=true` solo en desarrollo.
+- `SSO_OIDC_MODE=sso-only` solo surte efecto cuando el issuer ya está verificado; hasta entonces la
+  instancia funciona en modo botón.
+- Si la instancia tiene licencia enterprise activa, prevalece su SSO propio y esta integración queda
+  inactiva.
 
-Si una instancia tiene licencia enterprise activa, prevalece su SSO propio y esta integración queda inactiva.
+#### Ejemplo: Milpia (Keycloak `milpia-infra`)
 
-## 3. Procedimientos de emergencia
+Pendiente de la decisión del owner; ver la spec 013 de infraestructura.
 
-### Keycloak caído, el owner conoce su contraseña local
+```dotenv
+SSO_OIDC_MODE=button
+SSO_OIDC_ISSUER_URL=https://auth.milpia.com/realms/milpia-infra
+SSO_OIDC_CLIENT_ID=dokploy
+SSO_OIDC_CLIENT_SECRET=<desde PROD_ENV_FILE, con copia en Vault>
+SSO_OIDC_ACCESS_GROUP=admins,leads
+SSO_OIDC_ADMIN_GROUP=admins
+BETTER_AUTH_URL=https://deploy.milpia.com
+```
+
+En `milpia-infra`, el scope `groups` envía nombres sin ruta y debe estar como **Default** en el
+cliente (ver MIL-213). El cliente `dokploy` se crea a mano y se documenta como as-built.
+
+## 4. Procedimientos de emergencia
+
+### El proveedor está caído y el owner conoce su contraseña local
 
 1. Abre `https://<tu-dokploy>/?emergency=1`.
 2. Entra con el email y la contraseña local del owner (y su 2FA, si lo tiene).
-3. En **Settings → Keycloak SSO**, cambia a **Button** o **Disabled**.
+3. En **Settings → OIDC SSO**, cambia a **Button** o **Disabled**.
 
-Solo la cuenta del owner puede entrar por esta ruta. Cada intento queda registrado en la tabla de eventos.
+Solo la cuenta del owner puede entrar por esta ruta, y cada intento queda registrado.
 
 ### El owner no recuerda su contraseña local
 
-Desde el servidor, dentro del contenedor de Dokploy:
+Dentro del contenedor de Dokploy:
 
 ```bash
-pnpm run keycloak:disable-sso-only        # vuelve a modo botón
-pnpm run reset-password                    # contraseña nueva para el owner, si hace falta
+pnpm run sso:disable-sso-only        # vuelve a modo botón
+pnpm run reset-password              # contraseña nueva para el owner, si hace falta
 ```
 
-En desarrollo, sin `dist/` compilado:
+En desarrollo: `pnpm exec tsx -r dotenv/config scripts/oidc-sso-disable-sso-only.ts`.
 
-```bash
-pnpm exec tsx -r dotenv/config scripts/keycloak-sso-disable-sso-only.ts
-```
+Si el comando termina con código 2, `SSO_OIDC_MODE=sso-only` está definido en el entorno. Quítalo y
+reinicia.
 
-Si el comando termina con código 2, `KEYCLOAK_SSO_MODE=sso-only` está definido en el entorno. Quítalo y reinicia.
+## 5. Diagnóstico
 
-## 4. Diagnóstico
+Cuando un login falla, el usuario ve un mensaje con una **referencia** de 12 caracteres. Búscala en
+la tabla de eventos de la pantalla de settings o en los logs (`OIDC SSO [<referencia>] ...`).
 
-Cuando un login falla, el usuario ve un mensaje con una **referencia** (12 caracteres). Búscala:
-
-- en la tabla **Recent authentication events** de la pantalla de configuración (columna *Reference*);
-- en los logs del servidor: `Keycloak SSO [<referencia>] ... failed: ...`.
-
-| Código visible (`?error=`) | Causa habitual |
+| Código (`?error=`) | Causa habitual |
 |---|---|
-| `keycloak_access_denied` | Fuera del grupo de acceso, usuario baneado, o email ya vinculado a otra identidad de Keycloak |
-| `keycloak_email_unverified` | Keycloak no envía email o no lo marca como verificado |
-| `keycloak_invalid_response` | La cookie de login caducó (más de 10 minutos en Keycloak), `state` no coincide o el ID token no es válido |
-| `keycloak_unavailable` | Keycloak no responde en 5 s, error de red o TLS, o el secreto del cliente es incorrecto |
-| `keycloak_clock_skew` | Los relojes de Dokploy y Keycloak difieren en más de 30 s (usa NTP) |
-| `keycloak_cancelled` | El usuario canceló en Keycloak |
+| `sso_access_denied` | Fuera del grupo de acceso, usuario baneado, email vinculado a otra identidad, o el claim o scope de grupos está mal configurado |
+| `sso_email_unverified` | El proveedor no envía email o no lo marca como verificado |
+| `sso_invalid_response` | La cookie de login caducó (más de 10 minutos), `state` no coincide o el ID token no es válido |
+| `sso_unavailable` | El proveedor no responde en 5 s, error de red o TLS, o secreto incorrecto |
+| `sso_clock_skew` | Los relojes difieren en más de 30 s (usa NTP) |
+| `sso_cancelled` | El usuario canceló en el proveedor |
+
+Si un usuario del grupo recibe `sso_access_denied`, revisa que el token lleve el claim de grupos. Es
+el error más frecuente con Okta, Authelia y Zitadel.
 
 Los eventos se conservan 90 días.
 
-## 5. Consideraciones de seguridad
+## 6. Consideraciones de seguridad
 
-- Con el login por Keycloak, el MFA lo aplica Keycloak. El 2FA local de Dokploy solo se pide en la ruta de emergencia.
-- La cookie de sesión sigue la política de upstream. En self-hosted, Dokploy la emite sin `Secure`, así que sirve Dokploy siempre detrás de HTTPS.
-- La URI de retorno se calcula a partir de la URL con la que se accede a Dokploy. Si hay un proxy delante, define `BETTER_AUTH_URL` (o la URL pública equivalente) para que coincida exactamente con la registrada en Keycloak.
+- **MFA:** con SSO, el MFA lo aplica el proveedor. El 2FA local de Dokploy solo se pide en la ruta de
+  emergencia.
+- **Quién configura:** solo el **owner de la instancia**, no el owner de cualquier organización.
+- **Cookie de sesión:** sigue la política de upstream. En self-hosted se emite sin `Secure`, así que
+  sirve Dokploy siempre detrás de HTTPS.
+- **URL pública:** detrás de un proxy, define `BETTER_AUTH_URL` con la URL pública para que la
+  redirect URI coincida exactamente con la registrada en el proveedor.
+- **SSO-only no afecta a:** las API keys ni los endpoints SAML del SSO enterprise, que siguen
+  funcionando en modo SSO-only (decisión explícita).
