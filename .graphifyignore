@@ -1,0 +1,16 @@
+# Documents graphify does NOT put in the graph (same rule as Milpia/mlp-infrastructure,
+# see CLAUDE.md § Lookup order).
+#
+# Volatile spec documents change in almost every PR and dominate the cost of each
+# `/graphify --update`; progress is read from them directly or from Jira. Query them
+# with context-mode (ctx_execute_file, ctx_index + ctx_search) instead.
+specs/**/tasks.md
+specs/**/traceability.yaml
+specs/**/research.md
+specs/**/quickstart.md
+specs/**/checklists/
+
+# Generated or bulky files with no navigational value.
+apps/dokploy/drizzle/meta/
+pnpm-lock.yaml
+openapi.json

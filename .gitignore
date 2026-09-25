@@ -47,3 +47,5 @@ yarn-error.log*
 
 .playwright-*
 .credentials
+# graphify knowledge graph (local, rebuilt with `graphify update .`)
+graphify-out/

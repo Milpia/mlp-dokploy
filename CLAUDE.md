@@ -10,7 +10,7 @@ This repo also has an `AGENTS.md` at the root with the rules for any AI agent (l
 - Don't leave comments describing the change you just made.
 
 ## Lookup order: graphify and context-mode before raw output
-1. **graphify**: when `graphify-out/graph.json` exists, start code and architecture questions with `graphify query`, `graphify path` or `graphify explain`. After code-only changes, `graphify update .` is enough.
+1. **graphify**: when `graphify-out/graph.json` exists, start code and architecture questions with `graphify query`, `graphify path` or `graphify explain`. The graph is local (`graphify-out/` is gitignored): build or refresh it with `graphify update .` (AST only, no API cost). Use the full `/graphify --update` only when stable documents changed (spec, plan, data model, contracts, AGENTS.md, constitution), and once at the end of the session rather than after every PR. `.graphifyignore` keeps volatile spec documents (tasks, traceability, research, quickstart, checklists) out of the graph; read those with context-mode. The `graphify hook-guard` hooks in `.claude/settings.json` point raw searches and reads to the graph when it exists.
 2. **context-mode**: filter, count or summarise long outputs (test runs, logs, large files) with `ctx_execute` / `ctx_batch_execute` / `ctx_execute_file` instead of dumping them into the conversation.
 3. Read files or raw command output only when 1 and 2 do not cover the case. Commands that change state (git, pnpm install, migrations) use Bash directly.
 
