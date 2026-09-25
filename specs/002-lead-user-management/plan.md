@@ -122,6 +122,7 @@ apps/dokploy/
 │   ├── middlewares/user-management.ts     # nuevo: middleware tRPC
 │   └── routers/oidc-sso.ts                # + userManagementStatus, + campo en get/update
 ├── components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx  # + campo del grupo
+├── components/dashboard/settings/oidc-sso/user-management-visibility.ts  # nuevo: helper puro de visibilidad
 ├── components/dashboard/settings/users/show-users.tsx            # upstream
 ├── pages/dashboard/settings/users.tsx                            # upstream
 └── __test__/oidc-sso/                     # unitarias, integración, deriva, bench, e2e

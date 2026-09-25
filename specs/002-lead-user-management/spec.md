@@ -89,8 +89,8 @@ El owner configura qué grupo del proveedor de identidad puede gestionar usuario
 - **FR-008**: El sistema MUST recalcular la pertenencia al grupo de gestión de usuarios en cada login por SSO, igual que el rol (spec 001, FR-008a).
 - **FR-009**: Sin grupo de gestión de usuarios configurado, el sistema MUST mantener las reglas actuales de Dokploy sin ningún cambio.
 - **FR-010**: El owner MUST poder gestionar usuarios siempre, con independencia de sus grupos.
-- **FR-011**: Las reglas actuales de Dokploy entre roles MUST seguir aplicándose además de esta: solo el owner gestiona a otros admins y nadie cambia su propio rol.
-- **FR-012**: El sistema MUST registrar en los eventos del SSO (los que el owner ya consulta en la pantalla de SSO) cada intento rechazado de gestión de usuarios, con quién lo intentó, la acción y el usuario afectado.
+- **FR-011**: La restricción MUST NOT ampliar ningún permiso respecto a upstream: una acción que Dokploy rechaza hoy (por ejemplo, que un admin cambie el rol de otro admin por la interfaz) MUST seguir rechazándose también para quien pertenece al grupo de gestión.
+- **FR-012**: El sistema MUST registrar en los eventos del SSO (los que el owner ya consulta en la pantalla de SSO) cada intento rechazado de gestión de usuarios, con quién lo intentó, la acción y el usuario afectado cuando la petición lo identifica (un id de usuario, un id de miembro o el email de un usuario existente). En invitaciones nuevas y en definiciones de roles no hay usuario afectado.
 - **FR-013**: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
 - **FR-014**: Cuando el grupo de gestión de usuarios está configurado, un admin que nunca ha entrado por SSO MUST NOT poder gestionar usuarios hasta que un login por SSO confirme que pertenece al grupo. El owner queda exento (FR-010).
 - **FR-015**: El permiso de gestión de usuarios de un admin MUST caducar 8 horas después de su último login por SSO. Pasado ese plazo, el sistema MUST rechazar las acciones de gestión con un mensaje que pida volver a iniciar sesión por SSO, sin cerrar la sesión ni afectar al resto de capacidades. El owner queda exento (FR-010).
@@ -110,7 +110,7 @@ El owner configura qué grupo del proveedor de identidad puede gestionar usuario
 
 ### Measurable Outcomes
 
-- **SC-001**: El 100 % de las acciones de gestión de usuarios (borrar, invitar, cancelar invitación, cambiar rol, cambiar permisos) intentadas por un lead se rechazan, tanto desde la interfaz como por llamada directa.
+- **SC-001**: El 100 % de las acciones de gestión de usuarios de FR-004 intentadas por un lead se rechazan, tanto desde la interfaz como por llamada directa.
 - **SC-002**: Un lead completa las tareas habituales de admin (crear un proyecto, desplegar un servicio, revisar contenedores) sin ningún rechazo.
 - **SC-003**: Los admins del grupo de gestión y el owner completan el 100 % de las acciones de gestión que hoy pueden hacer.
 - **SC-004**: Una instancia que actualiza sin configurar el grupo no cambia de comportamiento: las pruebas actuales de gestión de usuarios pasan sin modificarse.
@@ -123,3 +123,4 @@ El owner configura qué grupo del proveedor de identidad puede gestionar usuario
 - Cambiar la configuración no cierra sesiones abiertas: la decisión usa los grupos del último login por SSO contra la configuración vigente, dentro de la caducidad de 8 horas.
 - Milpia configurará `admins` como grupo de gestión de usuarios, manteniendo `SSO_OIDC_ADMIN_GROUP=admins,leads` de la spec 014 de infra.
 - Depende de la spec 001 (SSO por OIDC) ya integrada en `canary`.
+- Queda fuera de alcance un hueco que ya existe en upstream (research R10): cualquier admin puede quitar o cambiar el rol de otros admins, o el suyo propio, llamando directamente a las rutas de organización de better-auth, que no aplican las reglas de la interfaz. Esta spec lo cierra para quien no está en el grupo de gestión, pero no para los admins del grupo. Se registra aparte.

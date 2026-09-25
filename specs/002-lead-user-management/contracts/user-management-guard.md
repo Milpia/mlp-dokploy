@@ -26,8 +26,13 @@ Los mensajes no revelan el nombre del grupo configurado.
   - `type = "user_management"`, `outcome = "denied"`, `reason`;
   - `action` es la `UserManagementAction` del path;
   - `user_id` es quien lo intentó;
-  - `target_user_id` sale del input: `userId` tal cual, o el usuario de `memberId` (esa
-    consulta solo se hace al denegar). En invitaciones y roles vale `null`;
+  - `target_user_id` es el usuario afectado, resuelto solo al denegar:
+    - `userId` del input, tal cual;
+    - `memberId` (tRPC) → el `userId` de ese miembro;
+    - `memberIdOrEmail` (`/organization/remove-member`) → el `userId` del miembro con ese id o,
+      si no existe, del usuario con ese email;
+    - en invitaciones nuevas, definiciones de roles o si no se resuelve, `null`.
+    Un fallo al resolverlo no cambia la denegación: el evento se guarda con `null`;
   - `ip`.
 - Si falla la escritura del evento, la acción se deniega igualmente. El fallo va a `console.error`.
 
