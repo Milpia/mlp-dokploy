@@ -152,13 +152,13 @@ ve la configuración efectiva.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T014 [P] [US3] Add tests (FR-003, US3 scenarios 1–2, SC-005):
+- [X] T014 [P] [US3] Add tests (FR-003, US3 scenarios 1–2, SC-005):
   - In `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts`: with an invalid value (`http://localhost:3900/`), the owner's sign-in from that origin → 403, and the error is logged once at startup.
   - In `apps/dokploy/__test__/oidc-sso/router.test.ts`: `oidcSso.get` returns `emergencyOrigin: null` without the variable and the configured value with it, and `update` does not accept it.
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Return `emergencyOrigin: string | null` from `oidcSso.get` in `apps/dokploy/server/api/routers/oidc-sso.ts`, read-only. Show it in the emergency section of `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` as "Emergency origin: <value> (set by environment)", or "Not set". Pass T014 (FR-001, FR-003).
+- [X] T015 [US3] Return `emergencyOrigin: string | null` from `oidcSso.get` in `apps/dokploy/server/api/routers/oidc-sso.ts`, read-only. Show it in the emergency section of `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` as "Emergency origin: <value> (set by environment)", or "Not set". Pass T014 (FR-001, FR-003).
 
 ---
 
