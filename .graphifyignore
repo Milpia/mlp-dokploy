@@ -14,3 +14,15 @@ specs/**/checklists/
 apps/dokploy/drizzle/meta/
 pnpm-lock.yaml
 openapi.json
+
+# Images (sponsor logos, public assets, template icons) and vendored prompts
+# (Spec Kit skills and templates): no architectural value, costly to extract.
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.svg
+*.ico
+.claude/skills/
+.specify/templates/
