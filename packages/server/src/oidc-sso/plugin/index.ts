@@ -5,6 +5,7 @@ import {
 	findSsoIdToken,
 } from "../identity/provisioning";
 import { getOidcSsoServices } from "../services";
+import { createEmergencyOriginHandler } from "./emergency-origin";
 import { createSsoEndpoints, type SsoEndpointDeps } from "./endpoints";
 import { createSsoOnlyGuard } from "./sso-only-guard";
 
@@ -26,6 +27,7 @@ export const oidcSso = (options: OidcSsoPluginOptions = {}) => {
 		id: "oidc-sso",
 		endpoints: createSsoEndpoints(resolveDeps),
 		hooks: createSsoOnlyGuard(resolveDeps),
+		onRequest: createEmergencyOriginHandler(resolveDeps),
 		rateLimit: [
 			{
 				pathMatcher: (path: string) => path.startsWith("/oidc/"),

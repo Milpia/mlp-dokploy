@@ -75,6 +75,11 @@ export const SsoAuthEvents = () => {
 										</TableCell>
 										<TableCell>
 											{TYPE_LABELS[event.type] ?? event.type}
+											{event.emergencyOrigin && (
+												<Badge variant="outline" className="ml-2">
+													via emergency origin
+												</Badge>
+											)}
 										</TableCell>
 										<TableCell>
 											<Badge variant={outcomeVariant(event.outcome)}>
