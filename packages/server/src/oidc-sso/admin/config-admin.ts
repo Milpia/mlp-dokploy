@@ -65,6 +65,8 @@ export interface ConfigView {
 	inactiveReason: InactiveReason | null;
 	sources: Record<ConfigField, ConfigSource>;
 	envErrors: string[];
+	/** Read-only: only the environment can set it (spec 003 FR-001). */
+	emergencyOrigin: string | null;
 }
 
 export interface Actor {
@@ -97,6 +99,7 @@ const toView = (
 	inactiveReason: effective.inactiveReason ?? null,
 	sources: effective.sources,
 	envErrors: services.config.envOverrides.errors,
+	emergencyOrigin: services.emergencyOrigin,
 });
 
 export const getConfigView = async (

@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { readEnvOverrides } from "@dokploy/server/oidc-sso/config/env";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
@@ -327,6 +328,21 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 	});
 
 	describe("US3: without the setting nothing changes", () => {
+		it("FR-002: an invalid value is reported and the tunnel origin stays rejected", async () => {
+			const env = readEnvOverrides({
+				SSO_OIDC_EMERGENCY_ORIGIN: `${TUNNEL}/`,
+			});
+			expect(env.errors).toHaveLength(1);
+			const ctx = setup(env.emergencyOrigin ?? null);
+			await signUp(ctx, OWNER);
+			await enableSsoOnly(ctx);
+			const response = await post(ctx, "/sign-in/email", {
+				email: OWNER,
+				password: PASSWORD,
+			});
+			expect(response.status).toBe(403);
+		});
+
 		it("FR-003: the owner's sign-in from the tunnel origin is rejected as today", async () => {
 			const ctx = setup(null);
 			await signUp(ctx, OWNER);

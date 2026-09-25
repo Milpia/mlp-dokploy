@@ -537,6 +537,18 @@ export const OidcSsoSettings = () => {
 										</FormItem>
 									)}
 								/>
+								<p className="text-sm text-muted-foreground md:col-span-2">
+									Emergency origin:{" "}
+									{view.emergencyOrigin ? (
+										<>
+											<span className="font-mono">{view.emergencyOrigin}</span>{" "}
+											(set by environment). While SSO-only is active, the owner
+											can use the emergency sign-in from this origin.
+										</>
+									) : (
+										"Not set"
+									)}
+								</p>
 								{allowInsecureHttp && issuerUrl.startsWith("http:") && (
 									<AlertBlock type="warning" className="md:col-span-2">
 										Plain HTTP is allowed: credentials and tokens travel
