@@ -10,7 +10,7 @@ const BASE = "http://localhost:3000";
 const setup = (options: Parameters<typeof makeDeps>[0] = {}) => {
 	const built = makeDeps(options);
 	const now = new Date();
-	const memory: Record<string, Record<string, unknown>[]> = {
+	const memory = {
 		user: [
 			{
 				id: "new-user-id",
@@ -21,9 +21,9 @@ const setup = (options: Parameters<typeof makeDeps>[0] = {}) => {
 				updatedAt: now,
 			},
 		],
-		session: [],
-		account: [],
-		verification: [],
+		session: [] as Record<string, unknown>[],
+		account: [] as Record<string, unknown>[],
+		verification: [] as Record<string, unknown>[],
 	};
 	const auth = betterAuth({
 		baseURL: BASE,
@@ -36,7 +36,7 @@ const setup = (options: Parameters<typeof makeDeps>[0] = {}) => {
 };
 
 const cookiesFrom = (response: Response) =>
-	response.headers.getSetCookie().map((cookie) => cookie.split(";")[0]);
+	response.headers.getSetCookie().map((cookie) => cookie.split(";")[0] ?? "");
 
 const findCookie = (response: Response, name: string) =>
 	response.headers
