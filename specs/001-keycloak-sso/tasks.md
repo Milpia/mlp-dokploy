@@ -232,11 +232,11 @@ registrados.
 - [X] T053 Rename the feature to generic OIDC naming (FR-022): module `packages/server/src/oidc-sso/`, tables `oidc_sso_config`/`oidc_sso_auth_event` (regenerated migration), endpoints `/api/auth/oidc/*`, env vars `SSO_OIDC_*`, error codes `sso_*`, tRPC router `oidcSso`, page `/dashboard/settings/oidc-sso`, command `sso:disable-sso-only`, tests in `apps/dokploy/__test__/oidc-sso/`
 - [X] T054 [P] Write failing tests for groups claim formats in `apps/dokploy/__test__/oidc-sso/claims.test.ts`: configurable claim name, list, single string, Zitadel role object (keys), missing claim [FR-023]
 - [X] T055 Implement the configurable groups claim end to end: `groupsClaim` column (default `groups`), `SSO_OIDC_GROUPS_CLAIM`, `extractIdentity(claims, groupsClaim)`, userinfo fallback on the configured claim in `packages/server/src/oidc-sso/oidc/client.ts` [FR-023]
-- [X] T055a Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`, RFC 6749 scope validation, appended to `openid email profile` in the authorization request [FR-023a]
 - [X] T056 Write failing tests and implement the signed-out screen: sign-out in sso-only without an end-session URL returns `/?signed_out=1`, and the login page does not auto-redirect on it, in `packages/server/src/oidc-sso/plugin/login-flow.ts` and `apps/dokploy/pages/index.tsx` [FR-025]
 - [X] T057 [P] Add provider presets (Keycloak, Okta, Authentik, Zitadel, Authelia, generic) to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` and make all user-facing copy provider-neutral [FR-024]
 - [X] T058 [P] Update `specs/001-oidc-sso/operations.md` with per-provider setup (client, redirect URI, groups/roles claim, logout support) [FR-022]
 - [X] T059 Update plan, research, data model, contracts and quickstart to the generic naming, re-run lint, typecheck, tests, coverage and traceability [FR-022]
+- [X] T060 Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`, RFC 6749 scope validation, appended to `openid email profile` in the authorization request [FR-023a, FR-023] (formerly T055a)
 
 ---
 

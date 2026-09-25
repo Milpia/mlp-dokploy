@@ -18,8 +18,8 @@ feature:
   issue_type: null
   task_issue_type: Subtask
   synced_at: null
-  synced_from_sha: 9d8009888df1c7ea8bcdbd33796394d08ab550a6
-  spec_digest: sha256:4040c1716bc7280196004e03eb75b71805fbaadf93428110bf299b4d2d0d4e83
+  synced_from_sha: f3577c533a2244ab3a6c002560f63f75b0fbe7cc
+  spec_digest: sha256:48b5dde4dd48c0ffd7ba2938b80d5fdb283894b072d877c62a6a41f6f4778feb
 requirements:
   FR-001:
     text: El sistema MUST permitir registrar una conexión con un servidor Keycloak mediante OIDC, indicando
@@ -191,6 +191,17 @@ requirements:
     commits:
     - 0935ed1d9
     - d7f99afab
+    bugs: []
+    status: implemented
+  FR-007c:
+    text: El grupo de acceso y el grupo de administración MUST admitir una lista separada por comas (p.
+      ej. `admins,leads`); basta con pertenecer a uno de ellos.
+    tasks: []
+    local_tasks:
+    - T056
+    - T060
+    commits:
+    - 55122b573
     bugs: []
     status: implemented
   FR-008:
@@ -550,6 +561,80 @@ requirements:
     - 8dbfb1608
     bugs: []
     status: implemented
+  FR-022:
+    text: El sistema MUST funcionar con cualquier proveedor OpenID Connect que publique un documento de
+      discovery y emita ID tokens firmados, y MUST verificarse al menos con Keycloak, Okta, Authentik,
+      Zitadel y Authelia.
+    tasks: []
+    local_tasks:
+    - T053
+    - T054
+    - T055
+    - T058
+    - T059
+    commits:
+    - 8c1729e16
+    - ceaa7db54
+    - f52aa03a6
+    - fe40a8d81
+    bugs: []
+    status: implemented
+  FR-023:
+    text: El nombre del claim que contiene los grupos o roles MUST ser configurable (por defecto `groups`).
+      El sistema MUST aceptar ese claim como lista de textos, como texto único o como objeto cuyas claves
+      son los nombres (formato de roles de Zitadel, `urn:zitadel:iam:org:project:roles`).
+    tasks: []
+    local_tasks:
+    - T054
+    - T055
+    - T057
+    - T060
+    commits:
+    - 2188ec4c6
+    - 8c1729e16
+    - f52aa03a6
+    bugs: []
+    status: implemented
+  FR-023a:
+    text: Los scopes adicionales que se piden al proveedor, además de `openid email profile`, MUST ser
+      configurables (por defecto ninguno), porque algunos proveedores solo envían los grupos si se pide
+      un scope concreto (`groups` en Authelia y Okta, `urn:zitadel:iam:org:projects:roles` en Zitadel).
+      Cada scope MUST validarse con la sintaxis de RFC 6749 §3.3.
+    tasks: []
+    local_tasks:
+    - T056
+    - T057
+    - T060
+    commits:
+    - 2188ec4c6
+    - 55122b573
+    bugs: []
+    status: implemented
+  FR-024:
+    text: 'La configuración MUST ofrecer presets para Keycloak, Okta, Authentik, Zitadel, Authelia y «Otro
+      (OIDC genérico)», que rellenan el claim de grupos y muestran el formato de la URL del issuer de
+      cada proveedor. Los presets solo ayudan a rellenar: no limitan la configuración.'
+    tasks: []
+    local_tasks:
+    - T057
+    commits:
+    - 2188ec4c6
+    - f52aa03a6
+    bugs: []
+    status: implemented
+  FR-025:
+    text: En modo SSO-only, si el proveedor no ofrece cierre de sesión (`end_session_endpoint`, p. ej.
+      Authelia), cerrar sesión MUST llevar a una pantalla de «sesión cerrada» que no redirige automáticamente
+      al proveedor, para que el usuario no vuelva a entrar sin querer.
+    tasks: []
+    local_tasks:
+    - T056
+    - T060
+    commits:
+    - 55122b573
+    - f52aa03a6
+    bugs: []
+    status: implemented
   NFR-SEC-001:
     text: 'El flujo de login MUST seguir las buenas prácticas vigentes de seguridad para OAuth 2.0 y OpenID
       Connect (OAuth 2.0 Security Best Current Practice, RFC 9700): flujo de código de autorización con
@@ -698,8 +783,11 @@ requirements:
     tasks: []
     local_tasks:
     - T047
+    - T054
+    - T055
     commits:
     - 17f8a6305
+    - 8c1729e16
     bugs: []
     status: implemented
   NFR-PERF-002:
@@ -825,8 +913,11 @@ requirements:
     tasks: []
     local_tasks:
     - T049
+    - T058
+    - T059
     commits:
     - a51cfb704
+    - ceaa7db54
     bugs: []
     status: implemented
 success_criteria:
@@ -906,77 +997,77 @@ user_stories:
   success_criteria: []
   tasks:
   - local_id: T020
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/provisioning.test.ts` [FR-006,
-      FR-007, FR-008]:'
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/provisioning.test.ts` [FR-006, FR-007,
+      FR-008]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/provisioning.test.ts
+    - apps/dokploy/__test__/oidc-sso/provisioning.test.ts
     requirements:
     - FR-006
     - FR-007
     - FR-008
   - local_id: T021
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/endpoints.test.ts` with fake `OidcClient`
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/endpoints.test.ts` with fake `OidcClient`
       and fake provisioning [FR-005, FR-016]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/endpoints.test.ts
+    - apps/dokploy/__test__/oidc-sso/endpoints.test.ts
     requirements:
     - FR-005
     - FR-016
   - local_id: T022
-    title: 'Implement `provisionIdentity()` in `packages/server/src/keycloak-sso/identity/provisioning.ts`
-      to pass T020: a Drizzle transaction over `use'
+    title: 'Implement `provisionIdentity()` in `packages/server/src/oidc-sso/identity/provisioning.ts`
+      to pass T020: a Drizzle transaction over `user`, '
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/identity/provisioning.ts
+    - packages/server/src/oidc-sso/identity/provisioning.ts
     requirements:
     - FR-006
     - FR-007
     - FR-008a
   - local_id: T023
-    title: Implement the `sign-in` and `callback` endpoints in `packages/server/src/keycloak-sso/plugin/endpoints.ts`
-      using `createAuthEndpoint`, signe
+    title: Implement the `sign-in` and `callback` endpoints in `packages/server/src/oidc-sso/plugin/endpoints.ts`
+      using `createAuthEndpoint`, signed co
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/plugin/endpoints.ts
+    - packages/server/src/oidc-sso/plugin/endpoints.ts
     requirements:
     - FR-005
     - NFR-QA-004
     - NFR-SEC-001
   - local_id: T024
-    title: Implement `keycloakSso()` in `packages/server/src/keycloak-sso/plugin/index.ts` (endpoints
-      plus `rateLimit` rule for `/keycloak/*` of 20 per
+    title: Implement `oidcSso()` in `packages/server/src/oidc-sso/plugin/index.ts` (endpoints plus `rateLimit`
+      rule for `/oidc/*` of 20 per 60 s) and r
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/plugin/index.ts
     - packages/server/src/lib/auth.ts
+    - packages/server/src/oidc-sso/plugin/index.ts
     requirements:
     - FR-005
     - FR-017
     - NFR-SEC-006
   - local_id: T025
-    title: Implement `keycloakSso.publicConfig` in `apps/dokploy/server/api/routers/keycloak-sso.ts` and
-      register the router in `apps/dokploy/server/ap
+    title: Implement `oidcSso.publicConfig` in `apps/dokploy/server/api/routers/oidc-sso.ts` and register
+      the router in `apps/dokploy/server/api/root.t
     jira: null
     parallel: false
     paths:
     - apps/dokploy/server/api/root.ts
-    - apps/dokploy/server/api/routers/keycloak-sso.ts
+    - apps/dokploy/server/api/routers/oidc-sso.ts
     requirements:
     - FR-003
   - local_id: T026
-    title: 'Create `apps/dokploy/components/auth/sign-in-with-keycloak.tsx`: an outline button with the
-      configured label linking to `/api/auth/keycloak/'
+    title: 'Create `apps/dokploy/components/auth/sign-in-with-sso.tsx`: an outline button with the configured
+      label linking to `/api/auth/oidc/sign-in` '
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/components/auth/sign-in-with-keycloak.tsx
+    - apps/dokploy/components/auth/sign-in-with-sso.tsx
     requirements:
     - FR-003
   - local_id: T027
@@ -1010,49 +1101,47 @@ user_stories:
   success_criteria: []
   tasks:
   - local_id: T035
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts` [FR-009,
-      FR-012]:'
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/sso-only-guard.test.ts` [FR-009, FR-012]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts
+    - apps/dokploy/__test__/oidc-sso/sso-only-guard.test.ts
     requirements:
     - FR-009
     - FR-012
   - local_id: T036
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/sign-out.test.ts` [FR-010]:'
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/sign-out.test.ts` [FR-010]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/sign-out.test.ts
+    - apps/dokploy/__test__/oidc-sso/sign-out.test.ts
     requirements:
     - FR-010
   - local_id: T037
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/proxy.test.ts`: `/dashboard/*`
-      without a session cookie redirects to `/?returnTo='
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/proxy.test.ts`: `/dashboard/*` without
+      a session cookie redirects to `/?returnTo=<pat'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/proxy.test.ts
+    - apps/dokploy/__test__/oidc-sso/proxy.test.ts
     requirements:
     - FR-004
   - local_id: T038
-    title: Implement the SSO-only guard (`hooks.before`) in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts`
-      and wire it in the plugin (FR-0
+    title: 'Implement the SSO-only guard (`hooks.before`) in `packages/server/src/oidc-sso/plugin/sso-only-guard.ts`
+      and wire it in the plugin (FR-009, '
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/plugin/sso-only-guard.ts
+    - packages/server/src/oidc-sso/plugin/sso-only-guard.ts
     requirements:
     - FR-009
     - FR-012
   - local_id: T039
-    title: Implement the `sign-out` endpoint in `packages/server/src/keycloak-sso/plugin/endpoints.ts`
-      (FR-010)
+    title: Implement the `sign-out` endpoint in `packages/server/src/oidc-sso/plugin/endpoints.ts` (FR-010)
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/plugin/endpoints.ts
+    - packages/server/src/oidc-sso/plugin/endpoints.ts
     requirements:
     - FR-010
   - local_id: T040
@@ -1076,7 +1165,7 @@ user_stories:
     - FR-016
   - local_id: T042
     title: 'Update logout in `apps/dokploy/components/layouts/user-nav.tsx`: when `publicConfig.mode ===
-      "sso-only"`, navigate to `/api/auth/keycloak/si'
+      "sso-only"`, navigate to `/api/auth/oidc/sign-o'
     jira: null
     parallel: false
     paths:
@@ -1098,23 +1187,22 @@ user_stories:
   success_criteria: []
   tasks:
   - local_id: T029
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/router.test.ts` [FR-011, FR-015,
-      FR-020]:'
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/router.test.ts` [FR-011, FR-015, FR-020]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/router.test.ts
+    - apps/dokploy/__test__/oidc-sso/router.test.ts
     requirements:
     - FR-011
     - FR-015
     - FR-020
   - local_id: T030
-    title: 'Implement the `get`, `update`, `testConnection` and `listEvents` owner-only procedures in
-      `apps/dokploy/server/api/routers/keycloak-sso.ts` '
+    title: Implement the `get`, `update`, `testConnection` and `listEvents` owner-only procedures in `apps/dokploy/server/api/routers/oidc-sso.ts`
+      usin
     jira: null
     parallel: false
     paths:
-    - apps/dokploy/server/api/routers/keycloak-sso.ts
+    - apps/dokploy/server/api/routers/oidc-sso.ts
     requirements:
     - FR-001
     - FR-014
@@ -1127,38 +1215,38 @@ user_stories:
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/plugin/endpoints.ts
+    - packages/server/src/oidc-sso/plugin/endpoints.ts
     requirements:
     - FR-011
   - local_id: T032
-    title: 'Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx`
-      [FR-008, FR-014, FR-015, FR-020]:'
+    title: 'Create `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` [FR-008,
+      FR-014, FR-015, FR-020]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx
+    - apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx
     requirements:
     - FR-008
     - FR-014
     - FR-015
     - FR-020
   - local_id: T033
-    title: Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx` listing
-      the last 50 events [FR-013]
+    title: Create `apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx` listing the
+      last 50 events [FR-013]
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx
+    - apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx
     requirements:
     - FR-013
   - local_id: T034
-    title: 'Create the page `apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx` (owner only, not
-      cloud, same `getServerSideProps` guard pattern as '
+    title: Create the page `apps/dokploy/pages/dashboard/settings/oidc-sso.tsx` (owner only, not cloud,
+      same `getServerSideProps` guard pattern as othe
     jira: null
     parallel: false
     paths:
     - apps/dokploy/components/layouts/side.tsx
-    - apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx
+    - apps/dokploy/pages/dashboard/settings/oidc-sso.tsx
     requirements:
     - FR-001
 - local_id: US4
@@ -1172,35 +1260,35 @@ user_stories:
   success_criteria: []
   tasks:
   - local_id: T043
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/emergency.test.ts` [FR-012, FR-013,
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency.test.ts` [FR-012, FR-013,
       FR-021]:'
     jira: null
     parallel: true
     paths:
-    - apps/dokploy/__test__/keycloak-sso/emergency.test.ts
+    - apps/dokploy/__test__/oidc-sso/emergency.test.ts
     requirements:
     - FR-012
     - FR-013
     - FR-021
   - local_id: T044
-    title: Add `hooks.after` on `/sign-in/email` in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts`
-      to record owner emergency logins (FR-01
+    title: Add `hooks.after` on `/sign-in/email` in `packages/server/src/oidc-sso/plugin/sso-only-guard.ts`
+      to record owner emergency logins (FR-013)
     jira: null
     parallel: false
     paths:
-    - packages/server/src/keycloak-sso/plugin/sso-only-guard.ts
+    - packages/server/src/oidc-sso/plugin/sso-only-guard.ts
     requirements:
     - FR-013
   - local_id: T045
-    title: Implement `disableSsoOnlyMode()` in `packages/server/src/keycloak-sso/config/provider.ts` and
-      the CLI in `apps/dokploy/scripts/keycloak-sso-
+    title: Implement `disableSsoOnlyMode()` in `packages/server/src/oidc-sso/config/provider.ts` and the
+      CLI in `apps/dokploy/scripts/oidc-sso-disable-
     jira: null
     parallel: false
     paths:
     - apps/dokploy/esbuild.config.ts
     - apps/dokploy/package.json
-    - apps/dokploy/scripts/keycloak-sso-disable-sso-only.ts
-    - packages/server/src/keycloak-sso/config/provider.ts
+    - apps/dokploy/scripts/oidc-sso-disable-sso-only.ts
+    - packages/server/src/oidc-sso/config/provider.ts
     requirements:
     - FR-012
     - FR-012a
@@ -1231,8 +1319,8 @@ phase_tasks:
     requirements:
     - NFR-QA-001
   - local_id: T003
-    title: 'Create the module skeleton `packages/server/src/keycloak-sso/index.ts` and domain types in
-      `packages/server/src/keycloak-sso/types.ts`: `Sso'
+    title: 'Create the module skeleton `packages/server/src/oidc-sso/index.ts` and domain types in `packages/server/src/oidc-sso/types.ts`:
+      `SsoMode = "'
     jira: null
     parallel: true
     requirements:
@@ -1240,7 +1328,7 @@ phase_tasks:
 - name: Foundational
   tasks:
   - local_id: T004
-    title: 'Create Drizzle tables in `packages/server/src/db/schema/keycloak-sso.ts`:'
+    title: 'Create Drizzle tables in `packages/server/src/db/schema/oidc-sso.ts`:'
     jira: null
     parallel: false
     requirements: []
@@ -1251,27 +1339,27 @@ phase_tasks:
     parallel: false
     requirements: []
   - local_id: T006
-    title: 'Write failing tests for env parsing in `apps/dokploy/__test__/keycloak-sso/config-env.test.ts`:
-      every `KEYCLOAK_SSO_*` variable, `_FILE` sec'
+    title: 'Write failing tests for env parsing in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`:
+      every `SSO_OIDC_*` variable, `_FILE` secret, emp'
     jira: null
     parallel: true
     requirements:
     - FR-019
   - local_id: T007
-    title: Implement `readEnvOverrides()` in `packages/server/src/keycloak-sso/config/env.ts` to pass
-      T006 [FR-019]
+    title: Implement `readEnvOverrides()` in `packages/server/src/oidc-sso/config/env.ts` to pass T006
+      [FR-019]
     jira: null
     parallel: true
     requirements:
     - FR-019
   - local_id: T008
-    title: Write failing tests for pure domain rules in `apps/dokploy/__test__/keycloak-sso/access-policy.test.ts`
-      (all R7 rules, incl. owner exemption
+    title: Write failing tests for pure domain rules in `apps/dokploy/__test__/oidc-sso/access-policy.test.ts`
+      (all R7 rules, incl. owner exemption, ba
     jira: null
     parallel: true
     requirements: []
   - local_id: T009
-    title: Implement `decideAccess` in `packages/server/src/keycloak-sso/domain/access-policy.ts` (FR-006,
+    title: Implement `decideAccess` in `packages/server/src/oidc-sso/domain/access-policy.ts` (FR-006,
       FR-007, FR-007a, FR-008, FR-008b)
     jira: null
     parallel: true
@@ -1282,35 +1370,35 @@ phase_tasks:
     - FR-008
     - FR-008b
   - local_id: T010
-    title: Implement `extractIdentity` and `isInGroup` in `packages/server/src/keycloak-sso/domain/claims.ts`
+    title: Implement `extractIdentity` and `isInGroup` in `packages/server/src/oidc-sso/domain/claims.ts`
       (research R6)
     jira: null
     parallel: true
     requirements: []
   - local_id: T011
-    title: Implement `sanitizeReturnTo` in `packages/server/src/keycloak-sso/domain/return-to.ts` (NFR-SEC-003)
+    title: Implement `sanitizeReturnTo` in `packages/server/src/oidc-sso/domain/return-to.ts` (NFR-SEC-003)
     jira: null
     parallel: true
     requirements:
     - NFR-SEC-003
   - local_id: T012
-    title: Implement `canTransitionMode` in `packages/server/src/keycloak-sso/domain/mode-transition.ts`
-      (FR-002, FR-011, data-model transitions)
+    title: Implement `canTransitionMode` in `packages/server/src/oidc-sso/domain/mode-transition.ts` (FR-002,
+      FR-011, data-model transitions)
     jira: null
     parallel: true
     requirements:
     - FR-002
     - FR-011
   - local_id: T013
-    title: 'Implement `ConfigRepository` in `packages/server/src/keycloak-sso/config/repository.ts`: single-row
-      get/upsert, secret encrypted with `encry'
+    title: 'Implement `ConfigRepository` in `packages/server/src/oidc-sso/config/repository.ts`: single-row
+      get/upsert, secret encrypted with `encryptVa'
     jira: null
     parallel: false
     requirements:
     - FR-015
   - local_id: T014
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/config-provider.test.ts` [FR-017,
-      FR-018, FR-019, FR-020]:'
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/config-provider.test.ts` [FR-017, FR-018,
+      FR-019, FR-020]:'
     jira: null
     parallel: false
     requirements:
@@ -1319,39 +1407,39 @@ phase_tasks:
     - FR-019
     - FR-020
   - local_id: T015
-    title: Implement `KeycloakConfigProvider` in `packages/server/src/keycloak-sso/config/provider.ts`
-      to pass T014
+    title: Implement `SsoConfigProvider` in `packages/server/src/oidc-sso/config/provider.ts` to pass
+      T014
     jira: null
     parallel: false
     requirements: []
   - local_id: T016
-    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/oidc-client.test.ts`:'
+    title: 'Write failing tests in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts`:'
     jira: null
     parallel: true
     requirements: []
   - local_id: T017
-    title: 'Implement `OidcClient` port and `openid-client` adapter in `packages/server/src/keycloak-sso/oidc/client.ts`.
+    title: 'Implement `OidcClient` port and `openid-client` adapter in `packages/server/src/oidc-sso/oidc/client.ts`.
       It covers:'
     jira: null
     parallel: false
     requirements: []
   - local_id: T018
-    title: 'Implement `AuthEventRecorder` in `packages/server/src/keycloak-sso/events/auth-events.ts`:
-      `record()` never throws (logs on failure), `listR'
+    title: 'Implement `AuthEventRecorder` in `packages/server/src/oidc-sso/events/auth-events.ts`: `record()`
+      never throws (logs on failure), `listRecen'
     jira: null
     parallel: true
     requirements:
     - FR-013
   - local_id: T019
-    title: Export the module's public API from `packages/server/src/keycloak-sso/index.ts` and `packages/server/src/index.ts`
+    title: Export the module's public API from `packages/server/src/oidc-sso/index.ts` and `packages/server/src/index.ts`
     jira: null
     parallel: false
     requirements: []
 - name: Polish
   tasks:
   - local_id: T047
-    title: Add a benchmark in `apps/dokploy/__test__/keycloak-sso/performance.bench.ts` for the guard
-      hook with the SSO disabled (target ≤ 5 ms p95, NF
+    title: Add a benchmark in `apps/dokploy/__test__/oidc-sso/performance.bench.ts` for the guard hook
+      with the SSO disabled (target ≤ 5 ms p95, NFR-PE
     jira: null
     parallel: true
     requirements:
@@ -1359,8 +1447,8 @@ phase_tasks:
     - NFR-PERF-002
     - SC-009
   - local_id: T048
-    title: Add the e2e realm `apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json` and the
-      opt-in e2e suite `apps/dokploy/__test__/keycloak-
+    title: Add the e2e realm `apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json` and the opt-in
+      e2e suite `apps/dokploy/__test__/oidc-sso/e2e/
     jira: null
     parallel: true
     requirements:
@@ -1369,8 +1457,8 @@ phase_tasks:
     - SC-001
     - SC-008
   - local_id: T049
-    title: 'Write the operator guide in `specs/001-keycloak-sso/operations.md`: Keycloak client, redirect
-      URI, Group Membership mapper, env vars, emerge'
+    title: 'Write the operator guide in `specs/001-oidc-sso/operations.md`: Keycloak client, redirect
+      URI, Group Membership mapper, env vars, emergency '
     jira: null
     parallel: true
     requirements:
@@ -1394,12 +1482,70 @@ phase_tasks:
     - NFR-SEC-008
     - SC-007
   - local_id: T052
-    title: 'Update `specs/001-keycloak-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping
-      (local only, `jira: null` until `/sdd-sync`'
+    title: 'Update `specs/001-oidc-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping
+      (local only, `jira: null` until `/sdd-sync`) [F'
     jira: null
     parallel: false
     requirements:
     - FR-013
+- name: Proveedores OIDC genéricos
+  tasks:
+  - local_id: T053
+    title: 'Rename the feature to generic OIDC naming (FR-022): module `packages/server/src/oidc-sso/`,
+      tables `oidc_sso_config`/`oidc_sso_auth_event` ('
+    jira: null
+    parallel: false
+    requirements:
+    - FR-022
+  - local_id: T054
+    title: 'Write failing tests for groups claim formats in `apps/dokploy/__test__/oidc-sso/claims.test.ts`:
+      configurable claim name, list, single strin'
+    jira: null
+    parallel: true
+    requirements:
+    - FR-023
+  - local_id: T055
+    title: 'Implement the configurable groups claim end to end: `groupsClaim` column (default `groups`),
+      `SSO_OIDC_GROUPS_CLAIM`, `extractIdentity(claim'
+    jira: null
+    parallel: false
+    requirements:
+    - FR-023
+  - local_id: T056
+    title: 'Write failing tests and implement the signed-out screen: sign-out in sso-only without an end-session
+      URL returns `/?signed_out=1`, and the l'
+    jira: null
+    parallel: false
+    requirements:
+    - FR-025
+  - local_id: T057
+    title: Add provider presets (Keycloak, Okta, Authentik, Zitadel, Authelia, generic) to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-ss
+    jira: null
+    parallel: true
+    requirements:
+    - FR-024
+  - local_id: T058
+    title: Update `specs/001-oidc-sso/operations.md` with per-provider setup (client, redirect URI, groups/roles
+      claim, logout support) [FR-022]
+    jira: null
+    parallel: true
+    requirements:
+    - FR-022
+  - local_id: T059
+    title: 'Update plan, research, data model, contracts and quickstart to the generic naming, re-run
+      lint, typecheck, tests, coverage and traceability '
+    jira: null
+    parallel: false
+    requirements:
+    - FR-022
+  - local_id: T060
+    title: 'Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`,
+      RFC 6749 scope validation, appended to `openid'
+    jira: null
+    parallel: false
+    requirements:
+    - FR-023
+    - FR-023a
 bugs: []
 orphans:
   requirements_without_issue:
@@ -1412,6 +1558,7 @@ orphans:
   - FR-007
   - FR-007a
   - FR-007b
+  - FR-007c
   - FR-008
   - FR-008a
   - FR-008b
@@ -1430,6 +1577,11 @@ orphans:
   - FR-019
   - FR-020
   - FR-021
+  - FR-022
+  - FR-023
+  - FR-023a
+  - FR-024
+  - FR-025
   - NFR-PERF-001
   - NFR-PERF-002
   - NFR-PERF-003
