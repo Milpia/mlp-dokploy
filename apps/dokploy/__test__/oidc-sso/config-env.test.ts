@@ -23,6 +23,7 @@ describe("readEnvOverrides", () => {
 				SSO_OIDC_ADMIN_GROUP: "dokploy-admins",
 				SSO_OIDC_BUTTON_LABEL: "Entrar con Milpia",
 				SSO_OIDC_ALLOW_INSECURE_HTTP: "false",
+				SSO_OIDC_GROUPS_CLAIM: "urn:zitadel:iam:org:project:roles",
 			},
 			noFile,
 		);
@@ -36,6 +37,7 @@ describe("readEnvOverrides", () => {
 			adminGroup: "dokploy-admins",
 			buttonLabel: "Entrar con Milpia",
 			allowInsecureHttp: false,
+			groupsClaim: "urn:zitadel:iam:org:project:roles",
 		});
 	});
 

@@ -136,8 +136,9 @@ export const completeLogin = async (
 			state: tx.state,
 			nonce: tx.nonce,
 			codeVerifier: tx.codeVerifier,
+			groupsClaim: config.groupsClaim,
 		});
-		identity = extractIdentity(result.claims);
+		identity = extractIdentity(result.claims, config.groupsClaim);
 		idToken = result.idToken;
 	} catch (error) {
 		logFailure(correlationId, "code exchange", error);

@@ -75,6 +75,32 @@ describe("completeLogin", () => {
 		});
 	});
 
+	it("FR-022/FR-023: grants access from Zitadel project roles", async () => {
+		const claim = "urn:zitadel:iam:org:project:roles";
+		const oidc = fakeOidc({
+			exchangeCode: vi.fn(async () => ({
+				claims: {
+					sub: "zitadel-sub",
+					email: "dev@example.com",
+					email_verified: true,
+					[claim]: { "dokploy-users": { "1": "example" } },
+				},
+				idToken: "t",
+			})),
+		});
+		const { deps } = makeDeps({
+			oidc,
+			config: { ...activeConfig, groupsClaim: claim },
+		});
+		await expect(
+			completeLogin(deps, { tx, callbackUrl: callback(), redirectUri }),
+		).resolves.toMatchObject({ ok: true });
+		expect(oidc.exchangeCode).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ groupsClaim: claim }),
+		);
+	});
+
 	it("US1-5: a cancelled login is reported as cancelled", async () => {
 		const { deps, oidc } = makeDeps();
 		const result = await completeLogin(deps, {

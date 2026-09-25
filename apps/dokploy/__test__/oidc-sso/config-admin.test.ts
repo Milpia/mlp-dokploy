@@ -80,6 +80,15 @@ describe("updateSsoConfig", () => {
 		expect(JSON.stringify(recorded)).not.toContain("s3cret");
 	});
 
+	it("FR-023: saves the groups claim and falls back to groups when blank", async () => {
+		const { services, repository } = makeServices();
+		await updateSsoConfig(services, { groupsClaim: "roles" }, actor);
+		expect(repository.save).toHaveBeenLastCalledWith({ groupsClaim: "roles" });
+		await updateSsoConfig(services, { groupsClaim: "  " }, actor);
+		expect(repository.save).toHaveBeenLastCalledWith({ groupsClaim: "groups" });
+		expect((await getConfigView(services)).groupsClaim).toBe("groups");
+	});
+
 	it("FR-015: an empty secret keeps the stored one", async () => {
 		const { services, repository } = makeServices();
 		await updateSsoConfig(

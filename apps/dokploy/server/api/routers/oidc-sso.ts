@@ -45,6 +45,7 @@ const updateInput = connectionInput.extend({
 	mode: z.enum(SSO_MODES).optional(),
 	accessGroup: optionalText,
 	adminGroup: optionalText,
+	groupsClaim: z.string().max(256).optional(),
 	buttonLabel: z.string().trim().min(1).max(BUTTON_LABEL_MAX_LENGTH).optional(),
 });
 

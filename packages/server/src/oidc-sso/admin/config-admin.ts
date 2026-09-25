@@ -1,5 +1,6 @@
 import { normalizeIssuerUrl } from "../config/env";
 import type { ConfigPatch } from "../config/repository";
+import { DEFAULT_GROUPS_CLAIM } from "../domain/claims";
 import { canTransitionMode } from "../domain/mode-transition";
 import { newCorrelationId } from "../events/auth-events";
 import type { TestResult } from "../oidc/client";
@@ -38,6 +39,7 @@ export interface ConfigUpdateInput {
 	clientSecret?: string;
 	accessGroup?: string | null;
 	adminGroup?: string | null;
+	groupsClaim?: string;
 	buttonLabel?: string;
 	allowInsecureHttp?: boolean;
 }
@@ -51,6 +53,7 @@ export interface ConfigView {
 	hasClientSecret: boolean;
 	accessGroup: string | null;
 	adminGroup: string | null;
+	groupsClaim: string;
 	buttonLabel: string;
 	allowInsecureHttp: boolean;
 	verified: boolean;
@@ -81,6 +84,7 @@ const toView = (
 	hasClientSecret: !!effective.clientSecret,
 	accessGroup: effective.accessGroup,
 	adminGroup: effective.adminGroup,
+	groupsClaim: effective.groupsClaim,
 	buttonLabel: effective.buttonLabel,
 	allowInsecureHttp: effective.allowInsecureHttp,
 	verified: effective.verified,
@@ -143,6 +147,9 @@ export const updateSsoConfig = async (
 			: {}),
 		...(input.adminGroup !== undefined
 			? { adminGroup: blankToNull(input.adminGroup) }
+			: {}),
+		...(input.groupsClaim !== undefined
+			? { groupsClaim: input.groupsClaim.trim() || DEFAULT_GROUPS_CLAIM }
 			: {}),
 		...(input.buttonLabel !== undefined
 			? { buttonLabel: input.buttonLabel.trim() }

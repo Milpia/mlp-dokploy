@@ -17,6 +17,7 @@ const CONFIG_FIELDS: ConfigField[] = [
 	"clientSecret",
 	"accessGroup",
 	"adminGroup",
+	"groupsClaim",
 	"buttonLabel",
 	"allowInsecureHttp",
 ];

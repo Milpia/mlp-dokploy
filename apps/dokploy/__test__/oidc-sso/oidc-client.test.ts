@@ -231,6 +231,31 @@ describe("createOpenIdClient", () => {
 		expect(lib.fetchUserInfo).not.toHaveBeenCalled();
 	});
 
+	it("FR-023: the userinfo fallback uses the configured claim name", async () => {
+		const claim = "urn:zitadel:iam:org:project:roles";
+		const lib = fakeLib({
+			authorizationCodeGrant: vi.fn(async () => ({
+				id_token: "t",
+				access_token: "access",
+				claims: () => ({ sub: "sub-1" }),
+			})),
+			fetchUserInfo: vi.fn(async () => ({
+				sub: "sub-1",
+				[claim]: { "dokploy-users": {} },
+			})),
+		});
+		const client = createOpenIdClient(lib as never);
+		const result = await client.exchangeCode(settings, {
+			callbackUrl: new URL("https://x/cb?code=c"),
+			redirectUri: "https://x/cb",
+			state: "s",
+			nonce: "n",
+			codeVerifier: "v",
+			groupsClaim: claim,
+		});
+		expect(result.claims[claim]).toEqual({ "dokploy-users": {} });
+	});
+
 	it("falls back to userinfo when the ID token carries no groups", async () => {
 		const lib = fakeLib({
 			authorizationCodeGrant: vi.fn(async () => ({

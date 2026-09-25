@@ -10,19 +10,32 @@ export interface SsoIdentity {
 const optionalString = (value: unknown): string | undefined =>
 	typeof value === "string" && value.trim() ? value.trim() : undefined;
 
+export const DEFAULT_GROUPS_CLAIM = "groups";
+
+/**
+ * Providers disagree on the shape: a list (Keycloak, Okta, Authentik,
+ * Authelia), a single string, or an object keyed by role name (Zitadel's
+ * urn:zitadel:iam:org:project:roles).
+ */
+const readGroups = (value: unknown): string[] => {
+	if (typeof value === "string") return value.trim() ? [value.trim()] : [];
+	if (Array.isArray(value)) {
+		return value.filter((group): group is string => typeof group === "string");
+	}
+	if (value && typeof value === "object") return Object.keys(value);
+	return [];
+};
+
 export const extractIdentity = (
 	claims: Record<string, unknown>,
+	groupsClaim: string = DEFAULT_GROUPS_CLAIM,
 ): SsoIdentity => {
 	const sub = optionalString(claims.sub);
 	if (!sub) {
 		throw new Error("ID token has no subject");
 	}
 	const email = optionalString(claims.email)?.toLowerCase();
-	const groups = Array.isArray(claims.groups)
-		? claims.groups.filter(
-				(group): group is string => typeof group === "string",
-			)
-		: [];
+	const groups = readGroups(claims[groupsClaim]);
 
 	return {
 		sub,
