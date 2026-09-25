@@ -1,3 +1,20 @@
+<!--
+Sync Impact Report
+- Version change: 1.1.0 → 1.2.0 (MINOR: principio nuevo y secciones ampliadas)
+- Principios añadidos:
+  - VII. Identidad humana consolidada: alineado con el principio VIII de la constitución de
+    Milpia/mlp-infrastructure (v1.5.8). Keycloak `milpia-infra` como identidad del equipo y «los
+    grupos deciden», sin grupos por servicio; OIDC genérico en el código.
+- Secciones modificadas:
+  - Flujo de desarrollo: formato de PR (título Conventional Commits, cuerpo «Qué cambia / Deploy /
+    Verificar / Vuelta atrás», clave Jira en el cuerpo y en los trailers, no en el título), PRs de
+    gobernanza y documentación separados del código desplegable.
+  - Governance: AGENTS.md como guía canónica para agentes, CLAUDE.md apunta a él; el Sync Impact
+    Report se conserva al inicio del archivo; la aprobación formal es el merge del owner.
+- Documentos alineados: AGENTS.md (nuevo), CLAUDE.md (apunta a AGENTS.md).
+- Pendiente: registrar el Epic maestro propio de mlp-dokploy en `.specify/jira/master-epic.yaml`
+  con la primera ejecución de /sdd-sync.
+-->
 # Milpia Dokploy Constitution
 
 Este repositorio es el fork de Milpia de Dokploy (`Milpia/mlp-dokploy`), basado en la rama
@@ -113,6 +130,22 @@ y detectar requisitos sin implementar antes de una release.
 Rationale: el panel es la herramienta diaria de despliegue; una regresión de rendimiento la paga
 todo el equipo en cada operación, y sin números acordados no se puede detectar.
 
+### VII. Identidad humana consolidada
+
+- Las personas acceden a las instancias que opera Milpia con la identidad de la organización:
+  Keycloak, realm `milpia-infra`, alineado con el principio VIII de Milpia/mlp-infrastructure.
+- **Los grupos deciden**: el acceso y los roles MUST derivarse de los grupos existentes de la
+  organización (`admins`, `leads`, `developers`, `qa`). No se crean grupos por servicio.
+- El código MUST implementar estándares (OpenID Connect) y MUST NOT fijar un proveedor, un realm ni
+  nombres de grupo. Lo específico de Milpia vive en la configuración (variables de entorno o
+  interfaz), para que las funcionalidades sigan siendo válidas para cualquier usuario del fork.
+- Las cuentas locales quedan solo como vía de emergencia del owner de la instancia, documentada y
+  registrada (principio III).
+
+Rationale: una sola identidad y una sola fuente de verdad para permisos evitan cuentas huérfanas y
+accesos que nadie revisa. Mantener el código genérico conserva el valor del fork fuera de Milpia y
+reduce la divergencia (principio II).
+
 ## Restricciones técnicas
 
 - Stack heredado de upstream: TypeScript, Node.js 24.4 (`.nvmrc`), pnpm workspaces
@@ -134,6 +167,13 @@ todo el equipo en cada operación, y sin números acordados no se puede detectar
   vulnerabilidades altas o críticas; revisión de al menos una persona; revisión de seguridad si
   aplica el principio III; resultados de rendimiento del principio VI adjuntos; y comprobación
   explícita de los principios I y II.
+- Pull requests:
+  - título en formato Conventional Commits;
+  - cuerpo en español con las secciones «Qué cambia», «Deploy», «Verificar» y «Vuelta atrás»;
+  - la clave de Jira va en el cuerpo del PR y en los trailers de los commits, nunca en el título.
+- Los cambios de gobernanza, tooling y documentación SHOULD ir en un PR separado del código
+  desplegable. Antes de hacer push a una rama que ya tiene PR, MUST comprobarse su estado
+  (`gh pr view`).
 - `/speckit-analyze` SHOULD ejecutarse antes de `/speckit-implement`, y `/sdd-trace` SHOULD
   ejecutarse antes de cerrar una feature o preparar una release.
 
@@ -142,11 +182,14 @@ todo el equipo en cada operación, y sin números acordados no se puede detectar
 - Esta constitución prevalece sobre cualquier otra práctica del repositorio para el trabajo de
   Milpia. Donde no diga nada, se siguen `CONTRIBUTING.md` y las convenciones de upstream.
 - Enmiendas: se proponen por pull request que modifique este archivo, explicando el motivo y el
-  impacto en specs abiertas, y requieren la aprobación de un responsable técnico de Milpia.
+  impacto en specs abiertas. Cada enmienda actualiza el Sync Impact Report (comentario HTML al
+  inicio del archivo), y la aprobación formal es el merge del owner.
+- `AGENTS.md` es la guía canónica para cualquier agente en este repositorio; `CLAUDE.md` apunta a
+  ella y solo añade lo específico de Claude Code.
 - Versionado semántico: MAJOR si se elimina o redefine un principio de forma incompatible; MINOR si
   se añade un principio o sección o se amplía materialmente; PATCH para aclaraciones y redacción.
 - Cumplimiento: cada plan (`/speckit-plan`) MUST incluir la comprobación de esta constitución, y
   cada revisión de pull request MUST verificarla. Cualquier excepción MUST justificarse por escrito
   en el plan, en su sección de seguimiento de complejidad.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-25 | **Last Amended**: 2026-09-25
+**Version**: 1.2.0 | **Ratified**: 2026-09-25 | **Last Amended**: 2026-09-25
