@@ -9,7 +9,7 @@
 
 **Created**: 2026-09-25
 
-**Status**: Implemented (pendiente de revisión)
+**Status**: Implemented
 
 **Input**: User description: "SSO con Keycloak para la edición free (self-hosted) de Dokploy. La instancia free debe poder conectarse a un servidor Keycloak (OIDC) y usarlo como proveedor de identidad. Dos modos, ambos casos especiales configurables: (1) Modo SSO-only: al entrar, el usuario es redirigido directamente a Keycloak y tras autenticarse aterriza en el panel, sin ver la pantalla de login local. (2) Modo botón: la pantalla de login normal muestra un botón «Iniciar sesión con Keycloak» que redirige a Keycloak y al volver lleva al panel."
 
@@ -21,9 +21,9 @@
 - Q: ¿Qué rol recibe en Dokploy un usuario al que el SSO le crea la cuenta? → A: Según grupos de Keycloak, actualizado en cada login: el grupo de administración (p. ej. `dokploy-admins`, que agrupa a admins y leads) → admin; el resto → member.
 - Q: Si la instancia está en modo SSO-only y Keycloak se cae, ¿cómo recupera el owner el acceso al panel? → A: Ambas vías: una ruta web de emergencia que solo acepta la contraseña local del owner, y un comando en el servidor que desactiva SSO-only.
 - Q: ¿Desde dónde se configura la conexión con Keycloak: desde la interfaz del owner, desde variables de entorno o desde las dos? → A: Ambas; cada valor definido por variable de entorno manda y aparece bloqueado en la interfaz.
-- Q: Si se elimina a un usuario en Dokploy pero sigue en el grupo de acceso de Keycloak, ¿qué pasa cuando vuelve a iniciar sesión? → A: Keycloak es la fuente de verdad: se vuelve a crear su cuenta. Para quitarle el acceso hay que sacarlo del grupo o banearlo en Dokploy. *(Decisión autónoma durante la implementación nocturna; pendiente de revisión.)*
-- Q: Cuando hay grupo de acceso configurado, ¿los usuarios que ya existían en Dokploy (no owner) también deben pertenecer a él para entrar por SSO? → A: Sí; el grupo de acceso se exige a todos salvo al owner. *(Decisión autónoma; pendiente de revisión.)*
-- Q: En modo SSO-only, ¿cómo se incorpora a una persona nueva si el registro local está cerrado? → A: Se añade al grupo de acceso en Keycloak; las invitaciones de Dokploy quedan desactivadas en SSO-only y siguen funcionando en modo botón. *(Decisión autónoma; pendiente de revisión.)*
+- Q: Si se elimina a un usuario en Dokploy pero sigue en el grupo de acceso de Keycloak, ¿qué pasa cuando vuelve a iniciar sesión? → A: Keycloak es la fuente de verdad: se vuelve a crear su cuenta. Para quitarle el acceso hay que sacarlo del grupo o banearlo en Dokploy. *(Decisión autónoma confirmada por el owner el 2026-09-25.)*
+- Q: Cuando hay grupo de acceso configurado, ¿los usuarios que ya existían en Dokploy (no owner) también deben pertenecer a él para entrar por SSO? → A: Sí; el grupo de acceso se exige a todos salvo al owner. *(Decisión autónoma confirmada por el owner el 2026-09-25.)*
+- Q: En modo SSO-only, ¿cómo se incorpora a una persona nueva si el registro local está cerrado? → A: Se añade al grupo de acceso en Keycloak; las invitaciones de Dokploy quedan desactivadas en SSO-only y siguen funcionando en modo botón. *(Decisión autónoma confirmada por el owner el 2026-09-25.)*
 - Q: ¿Debe el SSO limitarse a Keycloak? → A: No. Debe funcionar principalmente con Keycloak, pero también con Okta, Authentik, Zitadel y Authelia (cualquier proveedor OIDC estándar).
 - Q: ¿Cómo se nombra la funcionalidad ahora que no es solo Keycloak? → A: De forma genérica: «Single sign-on (OIDC)» en la interfaz, variables `SSO_OIDC_*` y nombres internos `oidc-sso`; Keycloak es el preset por defecto.
 - Q: En modo SSO-only no se exigen cambios para los endpoints SAML del SSO enterprise ni para las API keys, que siguen funcionando. → A: Se mantienen así a propósito.
