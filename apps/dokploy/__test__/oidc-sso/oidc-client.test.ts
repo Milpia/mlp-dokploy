@@ -42,7 +42,12 @@ const fakeLib = (overrides: Record<string, unknown> = {}) => {
 				),
 		),
 		fetchUserInfo: vi.fn(async () => ({ sub: "sub-1", groups: ["/from-ui"] })),
-		clientCredentialsGrant: vi.fn(async () => ({})),
+		genericGrantRequest: vi.fn(async () => {
+			throw Object.assign(new Error("x"), {
+				error: "invalid_grant",
+				status: 400,
+			});
+		}),
 		randomPKCECodeVerifier: vi.fn(() => "verifier"),
 		calculatePKCECodeChallenge: vi.fn(async () => "challenge"),
 		randomState: vi.fn(() => "state"),
@@ -360,16 +365,33 @@ describe("testConnection (FR-014)", () => {
 		});
 	});
 
-	it("treats unauthorized_client as valid credentials", async () => {
+	it("treats invalid_grant on the made-up code as valid credentials", async () => {
+		const lib = fakeLib();
+		const client = createOpenIdClient(lib as never);
+		await expect(client.testConnection(settings)).resolves.toMatchObject({
+			ok: true,
+		});
+		expect(lib.genericGrantRequest).toHaveBeenCalledWith(
+			expect.anything(),
+			"authorization_code",
+			expect.objectContaining({ code: "dokploy-connection-test" }),
+		);
+	});
+
+	it("reports Keycloak's unauthorized_client (401) as invalid_client", async () => {
 		const client = createOpenIdClient(
 			fakeLib({
-				clientCredentialsGrant: vi.fn(async () => {
-					throw Object.assign(new Error("x"), { error: "unauthorized_client" });
+				genericGrantRequest: vi.fn(async () => {
+					throw Object.assign(new Error("x"), {
+						error: "unauthorized_client",
+						status: 401,
+					});
 				}),
 			}) as never,
 		);
 		await expect(client.testConnection(settings)).resolves.toMatchObject({
-			ok: true,
+			ok: false,
+			code: "invalid_client",
 		});
 	});
 
@@ -420,7 +442,7 @@ describe("testConnection (FR-014)", () => {
 			"invalid_client",
 			settings,
 			{
-				clientCredentialsGrant: vi.fn(async () => {
+				genericGrantRequest: vi.fn(async () => {
 					throw Object.assign(new Error("x"), { error: "invalid_client" });
 				}),
 			},
@@ -429,7 +451,7 @@ describe("testConnection (FR-014)", () => {
 			"timeout",
 			settings,
 			{
-				clientCredentialsGrant: vi.fn(async () => {
+				genericGrantRequest: vi.fn(async () => {
 					throw timeoutError();
 				}),
 			},

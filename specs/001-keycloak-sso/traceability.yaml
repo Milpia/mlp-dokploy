@@ -15,8 +15,8 @@ feature:
   story: MIL-394
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-25T15:23:38Z'
-  synced_from_sha: b13660f642f760b23dd1272979ca46d45aceafcd
+  synced_at: '2026-09-25T15:36:34Z'
+  synced_from_sha: 39293381af3fa931b30a57ade19d0ff64c79738e
   spec_digest: sha256:f11f271e80daf5fdf9055d712b5ffb7ea3ebbae8ecf163c46261083c68c05b34
 requirements:
   FR-001:
@@ -1026,7 +1026,7 @@ requirements:
     commits:
     - 1fb91daa6
     bugs: []
-    status: in_progress
+    status: implemented
   NFR-QA-001:
     text: La lógica nueva de la funcionalidad MUST tener al menos un 90 % de cobertura de líneas y un
       85 % de cobertura de ramas en pruebas automáticas, y el 100 % de las decisiones de acceso (conceder,
@@ -1054,7 +1054,7 @@ requirements:
     commits:
     - bce5e5466
     bugs: []
-    status: in_progress
+    status: implemented
   NFR-QA-003:
     text: El código MUST pasar lint, formato y comprobación de tipos del repositorio sin errores ni supresiones
       nuevas.
@@ -1738,7 +1738,15 @@ phase_tasks:
     requirements:
     - FR-023
     - FR-023a
-bugs: []
+bugs:
+- jira: MIL-421
+  summary: La prueba de conexión da por válido un secreto incorrecto con Keycloak (resuelto)
+  violates:
+  - FR-014
+  breaks: []
+  detected_in: MIL-411
+  regression_test: 'apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts::FR-014: a wrong secret is
+    reported as invalid_client'
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []

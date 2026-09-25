@@ -62,9 +62,12 @@ TestFailure = "invalid_url" | "insecure_http" | "unreachable" | "timeout"
 ```
 
 - Hace el discovery.
-- Después intenta `client_credentials` para validar el `client_id` y el secreto. Si
-  `client_credentials` no está permitido pero el proveedor responde `unauthorized_client`, las
-  credenciales se dan por válidas; `invalid_client` significa secreto o cliente incorrectos.
+- Después intercambia un código inventado (`dokploy-connection-test`) en el token endpoint. El
+  servidor autentica al cliente antes de mirar el código (RFC 6749 §4.1.3):
+  - `invalid_client`, `unauthorized_client` o 401 → client ID o secreto incorrectos;
+  - `invalid_grant` → credenciales válidas.
+  No se usa `client_credentials` porque, sin *service accounts*, Keycloak responde
+  `unauthorized_client` tanto con el secreto bueno como con el malo (hallado por el e2e).
 
 ## `listEvents` (owner query)
 
