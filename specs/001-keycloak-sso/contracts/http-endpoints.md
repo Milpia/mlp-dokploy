@@ -63,7 +63,8 @@ Cierra la sesión de Dokploy (si existe) y borra su cookie.
 | Ruta | Comportamiento |
 |---|---|
 | `/sign-in/email` | solo se permite si `email` es el del owner; si no, `403` con mensaje genérico. Se registra un evento `emergency_login` |
-| `/sign-up/email`, `/sign-in/social`, `/sign-in/passkey`, `/passkey/verify-authentication`, `/passkey/generate-authenticate-options`, `/request-password-reset`, `/forget-password`, `/reset-password` | `403` |
+| `/sign-up/email` (incluye la aceptación de invitaciones, que usa esta ruta con `x-dokploy-token`) | `403` con el mensaje «Keycloak single sign-on is required on this instance. Ask your administrator to add you to the Keycloak access group.», que la página de invitación ya muestra como error |
+| `/sign-in/social`, `/sign-in/passkey`, `/passkey/verify-authentication`, `/passkey/generate-authenticate-options`, `/request-password-reset`, `/forget-password`, `/reset-password` | `403` |
 | resto | sin cambios |
 
 El hook `after` sobre `/sign-in/email` registra si el login de emergencia del owner salió bien.

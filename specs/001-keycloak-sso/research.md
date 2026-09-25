@@ -275,7 +275,7 @@ la tabla `user` de upstream, no código propietario.
 | Redirect URI exacta (RFC 9700 §4.1) | URI fija `…/api/auth/keycloak/callback`; la guía exige coincidencia exacta en Keycloak |
 | Open redirect (ASVS 5.1.5) | `sanitizeReturnTo`: solo rutas relativas que empiezan por `/` y no por `//` ni `/\`, sin esquema |
 | Sesión nueva tras login (ASVS 3.2.1) | `internalAdapter.createSession` emite un token nuevo |
-| Cookies (ASVS 3.4) | `HttpOnly`, `SameSite=Lax`, `Secure` cuando la instancia usa HTTPS (política de upstream) |
+| Cookies (ASVS 3.4) | Sesión: política de upstream sin cambios (`HttpOnly`, `SameSite=Lax`; en self-hosted upstream fija `secure:false`, se documenta como riesgo heredado). Cookie de transacción: `HttpOnly`, `SameSite=Lax`, firmada, `Secure` si la petición es HTTPS |
 | Secretos (ASVS 6.4, 7.1.1) | Secreto cifrado en reposo, nunca devuelto por la API (solo `hasSecret`), sin tokens en logs |
 | Mensajes de error (ASVS 7.4.1) | Códigos genéricos al usuario más `correlationId`; el detalle queda en el log del servidor |
 | Anti-automatización (ASVS 2.2.1) | Rate limiting (R13) |

@@ -92,6 +92,8 @@ quickstart §2, pasos 5–8.
 - [ ] T020 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/provisioning.test.ts`:
   - link by `sub`;
   - link by verified email when not yet linked;
+  - existing non-owner outside the access group denied (FR-007b);
+  - deleted user still in the access group re-provisioned;
   - create user + account + member in one transaction (rollback when the member insert fails);
   - role recalculated per login;
   - owner row never modified;
@@ -166,7 +168,7 @@ local queda cerrado; el logout cierra también la sesión de Keycloak.
 ### Tests for User Story 2 ⚠️
 
 - [ ] T035 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts`:
-  - in `sso-only`, block sign-up, social, passkey and password-reset paths with 403;
+  - in `sso-only`, block sign-up (including invitation acceptance), social, passkey and password-reset paths with 403;
   - allow `/sign-in/email` only for the owner's email (case-insensitive);
   - in `button`/`disabled`, never interfere (FR-009).
 - [ ] T036 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sign-out.test.ts`:
@@ -212,10 +214,10 @@ registrados.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T047 [P] Add a benchmark in `apps/dokploy/__test__/keycloak-sso/performance.bench.ts` for the guard hook with the SSO disabled (target ≤ 5 ms p95, NFR-PERF-001) and for callback processing with a fake OIDC (target ≤ 300 ms p95, NFR-PERF-002)
-- [ ] T048 [P] Add the e2e realm `apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json` and the opt-in e2e suite `apps/dokploy/__test__/keycloak-sso/e2e/keycloak.e2e.test.ts`, gated by `KEYCLOAK_E2E=1`, covering the acceptance scenarios and 50 concurrent logins (NFR-QA-002, NFR-PERF-006, SC-008)
+- [ ] T047 [P] Add a benchmark in `apps/dokploy/__test__/keycloak-sso/performance.bench.ts` for the guard hook with the SSO disabled (target ≤ 5 ms p95, NFR-PERF-001), for callback processing with a fake OIDC (target ≤ 300 ms p95, NFR-PERF-002), and a baseline comparison of an auth request with and without the plugin registered (≤ 2 % regression, SC-009)
+- [ ] T048 [P] Add the e2e realm `apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json` and the opt-in e2e suite `apps/dokploy/__test__/keycloak-sso/e2e/keycloak.e2e.test.ts`, gated by `KEYCLOAK_E2E=1`, covering the acceptance scenarios, time-to-dashboard with an existing Keycloak session under 5 s (SC-001) and 50 concurrent logins (NFR-QA-002, NFR-PERF-006, SC-008)
 - [ ] T049 [P] Write the operator guide in `specs/001-keycloak-sso/operations.md`: Keycloak client, redirect URI, Group Membership mapper, env vars, emergency procedures (NFR-QA-005)
-- [ ] T050 Run `pnpm format-and-lint`, `pnpm typecheck` and the full `pnpm test`, plus coverage for the module, and fix issues (NFR-QA-001, NFR-QA-003)
+- [ ] T050 Run `pnpm format-and-lint`, `pnpm typecheck`, the full `pnpm test`, coverage for the module and `pnpm audit --prod` for high/critical advisories on new or changed dependencies, and fix issues (NFR-QA-001, NFR-QA-003, NFR-SEC-009)
 - [ ] T051 Run a security review of the branch diff (`/security-review` equivalent) against research R16 and fix findings (NFR-SEC-008/009, SC-007)
 - [ ] T052 Update `specs/001-keycloak-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping (local only, `jira: null` until `/sdd-sync`)
 
@@ -268,6 +270,8 @@ configurarlo desde la interfaz.
 4. Polish → e2e, benchmarks, guía de operación y revisión de seguridad.
 
 ## Notes
+
+- Cada prueba cita en su nombre (`it("FR-007: ...")`) o en un comentario el requisito que cubre (principio IV).
 
 - Commits por task o grupo lógico, con trailers `Spec: 001-keycloak-sso`, `Requirement:` y
   `Task:`. El trailer `Jira:` se omite hasta que `/sdd-sync` cree las claves reales: poner

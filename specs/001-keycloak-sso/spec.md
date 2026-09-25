@@ -16,6 +16,9 @@
 - Q: ¿Qué rol recibe en Dokploy un usuario al que el SSO le crea la cuenta? → A: Según grupos de Keycloak, actualizado en cada login: el grupo de administración (p. ej. `dokploy-admins`, que agrupa a admins y leads) → admin; el resto → member.
 - Q: Si la instancia está en modo SSO-only y Keycloak se cae, ¿cómo recupera el owner el acceso al panel? → A: Ambas vías: una ruta web de emergencia que solo acepta la contraseña local del owner, y un comando en el servidor que desactiva SSO-only.
 - Q: ¿Desde dónde se configura la conexión con Keycloak: desde la interfaz del owner, desde variables de entorno o desde las dos? → A: Ambas; cada valor definido por variable de entorno manda y aparece bloqueado en la interfaz.
+- Q: Si se elimina a un usuario en Dokploy pero sigue en el grupo de acceso de Keycloak, ¿qué pasa cuando vuelve a iniciar sesión? → A: Keycloak es la fuente de verdad: se vuelve a crear su cuenta. Para quitarle el acceso hay que sacarlo del grupo o banearlo en Dokploy. *(Decisión autónoma durante la implementación nocturna; pendiente de revisión.)*
+- Q: Cuando hay grupo de acceso configurado, ¿los usuarios que ya existían en Dokploy (no owner) también deben pertenecer a él para entrar por SSO? → A: Sí; el grupo de acceso se exige a todos salvo al owner. *(Decisión autónoma; pendiente de revisión.)*
+- Q: En modo SSO-only, ¿cómo se incorpora a una persona nueva si el registro local está cerrado? → A: Se añade al grupo de acceso en Keycloak; las invitaciones de Dokploy quedan desactivadas en SSO-only y siguen funcionando en modo botón. *(Decisión autónoma; pendiente de revisión.)*
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -99,7 +102,10 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - Un admin sale del grupo de administración en Keycloak: en su siguiente login pasa a member. Las sesiones abiertas conservan el rol anterior hasta que caducan.
 - Un usuario creado por SSO sale después del grupo de acceso en Keycloak: pierde el acceso por SSO en su siguiente login.
 - Un usuario que ya existe en Dokploy se da de baja o se deshabilita en Keycloak: deja de poder entrar por SSO en su próximo login. Las sesiones de Dokploy que ya estuvieran abiertas duran hasta que caduquen.
-- Un usuario deshabilitado o eliminado en Dokploy se autentica en Keycloak: no obtiene acceso.
+- Un usuario baneado en Dokploy se autentica en Keycloak: no obtiene acceso.
+- Un usuario eliminado en Dokploy que sigue en el grupo de acceso se autentica en Keycloak: se vuelve a crear su cuenta con el rol que le correspondan sus grupos. Para revocar el acceso hay que sacarlo del grupo o banearlo.
+- Un usuario que ya existía en Dokploy (no owner) y no pertenece al grupo de acceso configurado intenta entrar por SSO: se rechaza.
+- En modo SSO-only, alguien abre un enlace de invitación de Dokploy: ve un mensaje que le indica que pida acceso al grupo de Keycloak; no se puede crear una cuenta local.
 - El reloj de la instancia está desincronizado con Keycloak y la respuesta llega como caducada: se muestra un error comprensible en vez de un fallo genérico.
 - La instancia se sirve por una URL distinta de la registrada en Keycloak como URL de retorno: la prueba de conexión o el primer login indican el desajuste.
 - El modo SSO-only viene de una variable de entorno y Keycloak está caído: la ruta web de emergencia sigue funcionando para el owner, pero el comando de emergencia avisa de que el modo solo se desactiva cambiando la variable.
@@ -118,11 +124,12 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - **FR-006**: El sistema MUST vincular un login de Keycloak con la cuenta existente de Dokploy que tenga el mismo email, solo si Keycloak marca ese email como verificado.
 - **FR-007**: Cuando llega un usuario de Keycloak sin cuenta en Dokploy, el sistema MUST crearle la cuenta automáticamente solo si pertenece al grupo de acceso configurado en Keycloak; si no pertenece, MUST rechazar el login con un mensaje que indique que no tiene acceso a esta instancia.
 - **FR-007a**: El owner MUST poder configurar el nombre del grupo de acceso de Keycloak. Sin grupo configurado, el sistema MUST NOT crear cuentas nuevas por SSO (solo se vinculan cuentas existentes según FR-006).
-- **FR-008**: El sistema MUST asignar el rol de Dokploy según los grupos de Keycloak del usuario: los miembros del grupo de administración configurado (p. ej. `dokploy-admins`, que en la organización incluye a admins y leads) reciben el rol admin; el resto de miembros del grupo de acceso reciben el rol member.
+- **FR-007b**: Cuando hay grupo de acceso configurado, el sistema MUST exigir pertenecer a él a todo usuario que entre por SSO, sea nuevo o existente, salvo al owner.
+- **FR-008**: Cuando hay grupo de administración configurado, el sistema MUST asignar el rol de Dokploy según los grupos de Keycloak del usuario: los miembros del grupo de administración (p. ej. `dokploy-admins`, que en la organización incluye a admins y leads) reciben el rol admin; el resto, el rol member. Sin grupo de administración configurado, los usuarios nuevos reciben member y los existentes conservan su rol.
 - **FR-008a**: El sistema MUST recalcular el rol en cada login por SSO, de modo que añadir o quitar a alguien del grupo de administración en Keycloak se refleje en su siguiente login.
 - **FR-008b**: El rol owner MUST NOT asignarse ni retirarse por SSO: el owner conserva su rol aunque no esté en el grupo de administración, y nadie obtiene el rol owner a través de Keycloak.
 - **FR-008c**: El owner MUST poder configurar el nombre del grupo de administración. Los cambios manuales de rol en Dokploy sobre usuarios de SSO se sobrescriben en su siguiente login; la interfaz MUST advertirlo.
-- **FR-009**: En modo SSO-only, el sistema MUST rechazar el login con email y contraseña, el registro de nuevas cuentas y el restablecimiento de contraseña, salvo por la vía de emergencia de FR-012.
+- **FR-009**: En modo SSO-only, el sistema MUST rechazar el login con email y contraseña, el registro de nuevas cuentas (incluida la aceptación de invitaciones) y el restablecimiento de contraseña, salvo por la ruta web de emergencia de FR-012.
 - **FR-010**: En modo SSO-only, cerrar sesión en Dokploy MUST cerrar también la sesión en Keycloak. En modo botón, cerrar sesión solo cierra la sesión de Dokploy.
 - **FR-011**: El sistema MUST impedir activar SSO-only hasta que el owner que lo activa haya completado al menos un login correcto por Keycloak con su propia cuenta.
 - **FR-012**: El sistema MUST ofrecer una ruta web de emergencia, documentada, que permita solo al owner iniciar sesión con su email y contraseña local cuando el modo SSO-only está activo. Cualquier otra cuenta MUST ser rechazada en esa ruta.
@@ -145,7 +152,7 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - **NFR-SEC-002**: Toda respuesta de identidad de Keycloak MUST validarse antes de conceder acceso: firma, emisor, destinatario, caducidad, fecha de emisión y `nonce`. Si falla cualquiera de estas validaciones, se deniega el acceso.
 - **NFR-SEC-003**: La redirección posterior al login (FR-005) MUST aceptar solo rutas internas de la propia instancia; cualquier otro destino MUST sustituirse por el panel, para impedir redirecciones abiertas.
 - **NFR-SEC-004**: Toda comunicación con Keycloak MUST hacerse por HTTPS con verificación de certificado. Solo se permite HTTP sin cifrar si el owner lo activa de forma explícita para entornos de desarrollo, y la interfaz MUST mostrar una advertencia visible mientras esté activo.
-- **NFR-SEC-005**: Tras un login por SSO, el sistema MUST emitir una sesión nueva (sin reutilizar identificadores de sesión previos), con cookies seguras, `HttpOnly` y con la política `SameSite` que ya usa Dokploy.
+- **NFR-SEC-005**: Tras un login por SSO, el sistema MUST emitir una sesión nueva (sin reutilizar identificadores de sesión previos) cuya cookie siga exactamente la política de cookies de sesión de Dokploy (`HttpOnly`, `SameSite=Lax`; `Secure` según la configuración existente de la instancia). La cookie temporal del login MUST ser `HttpOnly`, `SameSite=Lax`, firmada, de 10 minutos como máximo, y `Secure` cuando la petición llega por HTTPS.
 - **NFR-SEC-006**: La ruta web de emergencia y los endpoints de retorno del login MUST limitar los intentos repetidos por origen, y los mensajes de error MUST NOT revelar si una cuenta existe.
 - **NFR-SEC-007**: Los tokens de Keycloak MUST NOT guardarse en el navegador ni en logs. Solo se conserva lo imprescindible para cerrar la sesión en Keycloak (FR-010).
 - **NFR-SEC-008**: Los controles de seguridad de la funcionalidad MUST cumplir los requisitos de autenticación y gestión de sesión de OWASP ASVS nivel 2 que le apliquen, y el plan MUST incluir su lista de comprobación.
@@ -196,5 +203,7 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - Se da por hecho que el cliente de Keycloak es confidencial (con secreto) y que el administrador de Keycloak registra la URL de retorno que muestre Dokploy.
 - Los cambios en variables de entorno requieren reiniciar la instancia para aplicarse; es la forma habitual de configurar un despliegue automatizado (p. ej. con los secretos inyectados desde Vault).
 - La ruta web de emergencia usa la protección contra intentos repetidos que ya tenga el login local; esta funcionalidad no añade una propia.
+- Los eventos de autenticación se conservan 90 días.
+- Terminología: «ruta web de emergencia» es la página de login local solo para el owner; «comando de emergencia» es el comando que se ejecuta en el servidor. Ambos forman la «vía de emergencia».
 - La duración de la sesión de Dokploy sigue la configuración de sesión que ya existe. No se sincroniza con la duración de la sesión de Keycloak.
 - Aunque la funcionalidad se llama «Keycloak», se basa en OIDC estándar. No se garantiza soporte para otros proveedores OIDC, aunque probablemente funcionen.
