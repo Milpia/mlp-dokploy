@@ -1,10 +1,15 @@
-# Feature Specification: SSO con Keycloak para la edición free
+# Feature Specification: SSO por OpenID Connect para la edición free (Keycloak, Okta, Authentik, Zitadel, Authelia)
+
+> **Alcance ampliado (sesión 2026-09-25, tarde):** la funcionalidad es un SSO por OpenID Connect genérico,
+> con Keycloak como proveedor principal y de referencia. Donde este documento dice «Keycloak» debe leerse
+> «el proveedor OIDC configurado» (Keycloak, Okta, Authentik, Zitadel, Authelia u otro compatible), salvo
+> en los requisitos FR-022 a FR-025, que tratan las diferencias entre proveedores.
 
 **Feature Branch**: `001-keycloak-sso`
 
 **Created**: 2026-09-25
 
-**Status**: Draft
+**Status**: Implemented (pendiente de revisión)
 
 **Input**: User description: "SSO con Keycloak para la edición free (self-hosted) de Dokploy. La instancia free debe poder conectarse a un servidor Keycloak (OIDC) y usarlo como proveedor de identidad. Dos modos, ambos casos especiales configurables: (1) Modo SSO-only: al entrar, el usuario es redirigido directamente a Keycloak y tras autenticarse aterriza en el panel, sin ver la pantalla de login local. (2) Modo botón: la pantalla de login normal muestra un botón «Iniciar sesión con Keycloak» que redirige a Keycloak y al volver lleva al panel."
 
@@ -19,6 +24,9 @@
 - Q: Si se elimina a un usuario en Dokploy pero sigue en el grupo de acceso de Keycloak, ¿qué pasa cuando vuelve a iniciar sesión? → A: Keycloak es la fuente de verdad: se vuelve a crear su cuenta. Para quitarle el acceso hay que sacarlo del grupo o banearlo en Dokploy. *(Decisión autónoma durante la implementación nocturna; pendiente de revisión.)*
 - Q: Cuando hay grupo de acceso configurado, ¿los usuarios que ya existían en Dokploy (no owner) también deben pertenecer a él para entrar por SSO? → A: Sí; el grupo de acceso se exige a todos salvo al owner. *(Decisión autónoma; pendiente de revisión.)*
 - Q: En modo SSO-only, ¿cómo se incorpora a una persona nueva si el registro local está cerrado? → A: Se añade al grupo de acceso en Keycloak; las invitaciones de Dokploy quedan desactivadas en SSO-only y siguen funcionando en modo botón. *(Decisión autónoma; pendiente de revisión.)*
+- Q: ¿Debe el SSO limitarse a Keycloak? → A: No. Debe funcionar principalmente con Keycloak, pero también con Okta, Authentik, Zitadel y Authelia (cualquier proveedor OIDC estándar).
+- Q: ¿Cómo se nombra la funcionalidad ahora que no es solo Keycloak? → A: De forma genérica: «Single sign-on (OIDC)» en la interfaz, variables `SSO_OIDC_*` y nombres internos `oidc-sso`; Keycloak es el preset por defecto.
+- Q: En modo SSO-only no se exigen cambios para los endpoints SAML del SSO enterprise ni para las API keys, que siguen funcionando. → A: Se mantienen así a propósito.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -143,6 +151,10 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - **FR-019**: Cada valor de la configuración de SSO (URL del realm, cliente, secreto, grupos, modo y texto del botón) MUST poder definirse también mediante variables de entorno. Un valor definido así MUST prevalecer sobre el guardado desde la interfaz.
 - **FR-020**: La interfaz MUST mostrar como bloqueados, e indicar su origen, los valores que vienen de variables de entorno. Los demás valores MUST seguir siendo editables.
 - **FR-021**: El comando de emergencia de FR-012a MUST advertir si el modo SSO-only viene de una variable de entorno, porque en ese caso solo se desactiva cambiando la variable y reiniciando.
+- **FR-022**: El sistema MUST funcionar con cualquier proveedor OpenID Connect que publique un documento de discovery y emita ID tokens firmados, y MUST verificarse al menos con Keycloak, Okta, Authentik, Zitadel y Authelia.
+- **FR-023**: El nombre del claim que contiene los grupos o roles MUST ser configurable (por defecto `groups`). El sistema MUST aceptar ese claim como lista de textos, como texto único o como objeto cuyas claves son los nombres (formato de roles de Zitadel, `urn:zitadel:iam:org:project:roles`).
+- **FR-024**: La configuración MUST ofrecer presets para Keycloak, Okta, Authentik, Zitadel, Authelia y «Otro (OIDC genérico)», que rellenan el claim de grupos y muestran el formato de la URL del issuer de cada proveedor. Los presets solo ayudan a rellenar: no limitan la configuración.
+- **FR-025**: En modo SSO-only, si el proveedor no ofrece cierre de sesión (`end_session_endpoint`, p. ej. Authelia), cerrar sesión MUST llevar a una pantalla de «sesión cerrada» que no redirige automáticamente al proveedor, para que el usuario no vuelva a entrar sin querer.
 
 ### Non-Functional Requirements
 
@@ -177,7 +189,7 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 
 ### Key Entities *(include if feature involves data)*
 
-- **Configuración de Keycloak**: una por instancia. Contiene la URL del realm, el identificador del cliente, el secreto (protegido), el grupo de acceso, el grupo de administración, el modo (desactivado, botón o SSO-only), el texto del botón y la marca de «login de prueba completado».
+- **Configuración de Keycloak**: una por instancia. Contiene la URL del realm, el identificador del cliente, el secreto (protegido), el grupo de acceso, el grupo de administración, el nombre del claim de grupos, el modo (desactivado, botón o SSO-only), el texto del botón y la marca de «login de prueba completado».
 - **Vínculo de identidad**: relaciona una cuenta de Dokploy con su identidad en Keycloak (identificador estable del usuario en el realm), para reconocerlo aunque cambie de email en Keycloak.
 - **Evento de autenticación**: el registro de un login por SSO fallido o de un uso de la vía de emergencia, con la hora, el usuario y el resultado.
 
@@ -206,4 +218,5 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - Los eventos de autenticación se conservan 90 días.
 - Terminología: «ruta web de emergencia» es la página de login local solo para el owner; «comando de emergencia» es el comando que se ejecuta en el servidor. Ambos forman la «vía de emergencia».
 - La duración de la sesión de Dokploy sigue la configuración de sesión que ya existe. No se sincroniza con la duración de la sesión de Keycloak.
-- Aunque la funcionalidad se llama «Keycloak», se basa en OIDC estándar. No se garantiza soporte para otros proveedores OIDC, aunque probablemente funcionen.
+- La funcionalidad se basa solo en OIDC estándar (discovery, authorization code con PKCE, ID token, userinfo, RP-initiated logout). Las diferencias entre proveedores se cubren con configuración (FR-023, FR-024), no con código específico de cada uno.
+- La verificación de email se mantiene estricta con todos los proveedores: los cinco soportados envían `email_verified`.
