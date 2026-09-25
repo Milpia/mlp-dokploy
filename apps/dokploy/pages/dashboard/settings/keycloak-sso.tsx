@@ -1,4 +1,5 @@
 import { IS_CLOUD, validateRequest } from "@dokploy/server";
+import { getKeycloakSsoServices } from "@dokploy/server/keycloak-sso";
 import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
@@ -25,7 +26,10 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 	const { req, res } = ctx;
 	const { user, session } = await validateRequest(req);
 
-	if (IS_CLOUD || !user || user.role !== "owner") {
+	const instanceOwnerId = IS_CLOUD
+		? null
+		: await getKeycloakSsoServices().instanceOwnerId();
+	if (IS_CLOUD || !user || user.id !== instanceOwnerId) {
 		return {
 			redirect: {
 				permanent: false,

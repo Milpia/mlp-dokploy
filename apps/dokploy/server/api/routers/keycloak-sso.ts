@@ -15,11 +15,15 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
-const ownerProcedure = protectedProcedure.use(({ ctx, next }) => {
+const ownerProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 	if (IS_CLOUD) {
 		throw new TRPCError({ code: "NOT_FOUND" });
 	}
-	if (ctx.user.role !== "owner") {
+	// ctx.user.role is the role in the active organization, and any admin can
+	// create an organization they own; the instance-wide IdP config belongs to
+	// the instance owner only.
+	const instanceOwnerId = await getKeycloakSsoServices().instanceOwnerId();
+	if (!instanceOwnerId || ctx.user.id !== instanceOwnerId) {
 		throw new TRPCError({
 			code: "FORBIDDEN",
 			message: "Only the instance owner can manage Keycloak SSO.",

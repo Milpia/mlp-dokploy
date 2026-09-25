@@ -6,12 +6,18 @@ import { readEnvOverrides } from "./config/env";
 import { KeycloakConfigProvider } from "./config/provider";
 import { drizzleConfigRepository } from "./config/repository";
 import { AuthEventRecorder, drizzleAuthEventStore } from "./events/auth-events";
+import { drizzleProvisioningStore } from "./identity/provisioning";
 import { createOpenIdClient, type OidcClient } from "./oidc/client";
 
 export interface KeycloakSsoServices {
 	config: KeycloakConfigProvider;
 	events: AuthEventRecorder;
 	oidc: OidcClient;
+	/**
+	 * The instance owner (oldest owner membership). Owning *an* organization
+	 * is not enough: any admin can create one and own it.
+	 */
+	instanceOwnerId(): Promise<string | null>;
 }
 
 /**
@@ -42,6 +48,8 @@ const createServices = (): KeycloakSsoServices => {
 		}),
 		events: new AuthEventRecorder(drizzleAuthEventStore),
 		oidc: createOpenIdClient(),
+		instanceOwnerId: async () =>
+			(await drizzleProvisioningStore.findOwner())?.userId ?? null,
 	};
 };
 

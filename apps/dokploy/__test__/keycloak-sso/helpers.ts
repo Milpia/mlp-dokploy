@@ -101,6 +101,7 @@ export const makeServices = ({
 		}),
 		events: events.recorder,
 		oidc,
+		instanceOwnerId: async () => "owner-id",
 	};
 	return { services, repository, oidc, recorded: events.recorded };
 };
