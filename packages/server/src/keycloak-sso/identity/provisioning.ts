@@ -1,6 +1,6 @@
 import { db } from "@dokploy/server/db";
 import { account, member, user } from "@dokploy/server/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { decideAccess } from "../domain/access-policy";
 import type { KeycloakIdentity } from "../domain/claims";
 import { type DenyReason, KEYCLOAK_PROVIDER_ID, type SsoRole } from "../types";
@@ -231,4 +231,26 @@ export const drizzleProvisioningStore: ProvisioningStore = {
 	transaction(fn) {
 		return db.transaction((tx) => fn(drizzleTx(tx)));
 	},
+};
+
+export const findKeycloakIdToken = async (
+	userId: string,
+): Promise<string | null> => {
+	const linked = await db.query.account.findFirst({
+		where: and(
+			eq(account.userId, userId),
+			eq(account.providerId, KEYCLOAK_PROVIDER_ID),
+		),
+		orderBy: [desc(account.updatedAt)],
+	});
+	return linked?.idToken ?? null;
+};
+
+export const findOwnerEmail = async (): Promise<string | null> => {
+	const owner = await db.query.member.findFirst({
+		where: eq(member.role, "owner"),
+		orderBy: (m, { asc }) => [asc(m.createdAt)],
+		with: { user: { columns: { email: true } } },
+	});
+	return owner?.user?.email ?? null;
 };

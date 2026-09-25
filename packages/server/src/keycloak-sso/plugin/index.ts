@@ -1,40 +1,20 @@
-import { db } from "@dokploy/server/db";
-import { account, member } from "@dokploy/server/db/schema";
 import type { BetterAuthPlugin } from "better-auth";
-import { and, desc, eq } from "drizzle-orm";
-import { drizzleProvisioningStore } from "../identity/provisioning";
+import {
+	drizzleProvisioningStore,
+	findKeycloakIdToken,
+	findOwnerEmail,
+} from "../identity/provisioning";
 import { getKeycloakSsoServices } from "../services";
-import { KEYCLOAK_PROVIDER_ID } from "../types";
 import {
 	createKeycloakEndpoints,
 	type KeycloakEndpointDeps,
 } from "./endpoints";
 import { createSsoOnlyGuard } from "./sso-only-guard";
 
-const findIdToken = async (userId: string): Promise<string | null> => {
-	const linked = await db.query.account.findFirst({
-		where: and(
-			eq(account.userId, userId),
-			eq(account.providerId, KEYCLOAK_PROVIDER_ID),
-		),
-		orderBy: [desc(account.updatedAt)],
-	});
-	return linked?.idToken ?? null;
-};
-
-const findOwnerEmail = async (): Promise<string | null> => {
-	const owner = await db.query.member.findFirst({
-		where: eq(member.role, "owner"),
-		orderBy: (m, { asc }) => [asc(m.createdAt)],
-		with: { user: { columns: { email: true } } },
-	});
-	return owner?.user?.email ?? null;
-};
-
 const defaultDeps = (): KeycloakEndpointDeps => ({
 	services: getKeycloakSsoServices(),
 	provisioningStore: drizzleProvisioningStore,
-	findIdToken,
+	findIdToken: findKeycloakIdToken,
 	findOwnerEmail,
 });
 
