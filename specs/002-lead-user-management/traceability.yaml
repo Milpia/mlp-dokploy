@@ -1,0 +1,714 @@
+# Sincronizado con Jira por sdd-jira-backlog (MIL-393 → MIL-439 + 17 Subtasks, MIL-440..MIL-456).
+schema: sdd-jira/v2
+feature:
+  id: 002-lead-user-management
+  title: Los leads operan como admin pero no gestionan usuarios
+  spec: specs/002-lead-user-management/spec.md
+  plan: specs/002-lead-user-management/plan.md
+  tasks: specs/002-lead-user-management/tasks.md
+  branch: 002-lead-user-management
+  jira_site: pabelandino.atlassian.net
+  jira_project: MIL
+  master_epic: MIL-393
+  story: MIL-439
+  issue_type: Story
+  task_issue_type: Subtask
+  synced_at: '2026-09-25T19:21:31Z'
+  synced_from_sha: a757a6142c38da88f392f765d372aec59ce6fe62
+  spec_digest: sha256:3c5c3a885b24b6188a41a033ffc5583967952755d4a797f735e350e1fe9cb558
+links:
+- type: relates
+  issue: MIL-423
+  note: Story de infra de la spec 014 (punto 4), origen de la petición
+requirements:
+  FR-001:
+    text: El owner MUST poder configurar un grupo de gestión de usuarios del proveedor de identidad, desde la pantalla
+      de SSO o por variable de entorno, con la misma precedencia que el resto de ajustes del SSO (el valor del entorno
+      manda y aparece bloqueado).
+    tasks:
+    - MIL-440
+    - MIL-442
+    - MIL-452
+    - MIL-454
+    local_tasks:
+    - T001
+    - T002
+    - T005
+    - T006
+    - T023
+    - T024
+    - T025
+    - T027
+    bugs: []
+    status: planned
+  FR-002:
+    text: El grupo de gestión de usuarios MUST admitir una lista separada por comas; basta con pertenecer a uno
+      de los grupos.
+    tasks:
+    - MIL-441
+    - MIL-442
+    - MIL-452
+    local_tasks:
+    - T003
+    - T004
+    - T005
+    - T006
+    - T023
+    - T024
+    - T025
+    bugs: []
+    status: planned
+  FR-003:
+    text: 'Cuando el grupo de gestión de usuarios está configurado, el sistema MUST permitir gestionar usuarios
+      solo al owner y a los admins cuyo último login por SSO mostró que pertenecen a ese grupo. El grupo funciona
+      como lista de permitidos: si falta la información de grupos o el grupo no coincide, el sistema MUST negar
+      la gestión.'
+    tasks:
+    - MIL-441
+    - MIL-451
+    local_tasks:
+    - T003
+    - T004
+    - T021
+    - T022
+    bugs: []
+    status: planned
+  FR-004:
+    text: 'Gestionar usuarios comprende: borrar un usuario o quitarlo de la organización, invitar a un usuario,
+      crear un usuario con credenciales, reenviar o cancelar una invitación, cambiar el rol de un miembro, cambiar
+      los permisos de un miembro y crear, modificar o borrar definiciones de roles. La restricción MUST cubrir todas
+      las vías por las que el servidor permite esas acciones, no solo las que usa la interfaz.'
+    tasks:
+    - MIL-440
+    - MIL-444
+    - MIL-445
+    - MIL-446
+    - MIL-447
+    - MIL-450
+    local_tasks:
+    - T001
+    - T002
+    - T009
+    - T010
+    - T011
+    - T012
+    - T013
+    - T014
+    - T015
+    - T016
+    - T017
+    - T020
+    bugs: []
+    status: planned
+  FR-005:
+    text: Un admin sin permiso de gestión de usuarios MUST conservar el resto de capacidades del rol admin.
+    tasks:
+    - MIL-445
+    local_tasks:
+    - T013
+    - T016
+    bugs: []
+    status: planned
+  FR-006:
+    text: El sistema MUST rechazar en el servidor toda acción de gestión de usuarios de quien no tiene el permiso,
+      aunque la petición no venga de la interfaz, con un error de falta de permisos y sin cambiar nada.
+    tasks:
+    - MIL-444
+    - MIL-445
+    - MIL-447
+    - MIL-450
+    local_tasks:
+    - T009
+    - T010
+    - T011
+    - T012
+    - T013
+    - T015
+    - T016
+    - T017
+    - T020
+    bugs: []
+    status: planned
+  FR-007:
+    text: La interfaz MUST ocultar las acciones de gestión de usuarios a quien no tiene el permiso, sin ocultarle
+      la lista de usuarios. Si el admin pertenece al grupo de gestión pero su permiso caducó (FR-015), la sección
+      de usuarios MUST mostrarle un aviso que le indique que vuelva a iniciar sesión por SSO para recuperarlo.
+    tasks:
+    - MIL-448
+    - MIL-449
+    local_tasks:
+    - T018
+    - T019
+    - T031
+    bugs: []
+    status: planned
+  FR-008:
+    text: El sistema MUST recalcular la pertenencia al grupo de gestión de usuarios en cada login por SSO, igual
+      que el rol (spec 001, FR-008a).
+    tasks:
+    - MIL-440
+    - MIL-443
+    local_tasks:
+    - T001
+    - T002
+    - T007
+    - T008
+    bugs: []
+    status: planned
+  FR-009:
+    text: Sin grupo de gestión de usuarios configurado, el sistema MUST mantener las reglas actuales de Dokploy
+      sin ningún cambio.
+    tasks:
+    - MIL-441
+    - MIL-452
+    local_tasks:
+    - T003
+    - T004
+    - T023
+    - T024
+    - T025
+    bugs: []
+    status: planned
+  FR-010:
+    text: El owner MUST poder gestionar usuarios siempre, con independencia de sus grupos.
+    tasks:
+    - MIL-441
+    - MIL-451
+    local_tasks:
+    - T003
+    - T004
+    - T021
+    - T022
+    bugs: []
+    status: planned
+  FR-011:
+    text: 'La restricción MUST NOT ampliar ningún permiso respecto a upstream: una acción que Dokploy rechaza hoy
+      (por ejemplo, que un admin cambie el rol de otro admin por la interfaz) MUST seguir rechazándose también para
+      quien pertenece al grupo de gestión.'
+    tasks:
+    - MIL-451
+    local_tasks:
+    - T021
+    - T022
+    bugs: []
+    status: planned
+  FR-012:
+    text: El sistema MUST registrar en los eventos del SSO (los que el owner ya consulta en la pantalla de SSO)
+      cada intento rechazado de gestión de usuarios, con quién lo intentó, la acción y el usuario afectado cuando
+      la petición lo identifica (un id de usuario, un id de miembro o el email de un usuario existente). En invitaciones
+      nuevas y en definiciones de roles no hay usuario afectado.
+    tasks:
+    - MIL-440
+    - MIL-444
+    - MIL-450
+    - MIL-454
+    local_tasks:
+    - T001
+    - T002
+    - T009
+    - T010
+    - T011
+    - T012
+    - T020
+    - T027
+    bugs: []
+    status: planned
+  FR-013:
+    text: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
+    tasks:
+    - MIL-455
+    - MIL-456
+    local_tasks:
+    - T028
+    - T029
+    - T030
+    bugs: []
+    status: planned
+  FR-014:
+    text: Cuando el grupo de gestión de usuarios está configurado, un admin que nunca ha entrado por SSO MUST NOT
+      poder gestionar usuarios hasta que un login por SSO confirme que pertenece al grupo. El owner queda exento
+      (FR-010).
+    tasks:
+    - MIL-441
+    - MIL-443
+    local_tasks:
+    - T003
+    - T004
+    - T007
+    - T008
+    bugs: []
+    status: planned
+  FR-015:
+    text: El permiso de gestión de usuarios de un admin MUST caducar 8 horas después de su último login por SSO.
+      Pasado ese plazo, el sistema MUST rechazar las acciones de gestión con un mensaje que pida volver a iniciar
+      sesión por SSO, sin cerrar la sesión ni afectar al resto de capacidades. El owner queda exento (FR-010).
+    tasks:
+    - MIL-441
+    - MIL-448
+    - MIL-451
+    - MIL-454
+    local_tasks:
+    - T003
+    - T004
+    - T018
+    - T021
+    - T022
+    - T027
+    bugs: []
+    status: planned
+  NFR-PERF-001:
+    text: Con el grupo de gestión de usuarios sin configurar o el SSO inactivo, la funcionalidad MUST NOT añadir
+      consultas ni más de 1 ms (p95) a ninguna petición.
+    tasks:
+    - MIL-444
+    - MIL-445
+    - MIL-453
+    local_tasks:
+    - T009
+    - T010
+    - T011
+    - T012
+    - T013
+    - T016
+    - T026
+    bugs: []
+    status: planned
+  NFR-PERF-002:
+    text: Con el grupo configurado, la comprobación MUST añadir como máximo 20 ms (p95) a cada acción de gestión
+      de usuarios y MUST NOT añadir consultas al resto de peticiones.
+    tasks:
+    - MIL-444
+    - MIL-453
+    local_tasks:
+    - T009
+    - T010
+    - T011
+    - T012
+    - T026
+    bugs: []
+    status: planned
+  NFR-SEC-001:
+    text: Cualquier error al comprobar el permiso (configuración ilegible, fallo de base de datos, sesión sin organización)
+      MUST resolverse denegando la acción de gestión.
+    tasks:
+    - MIL-441
+    - MIL-444
+    - MIL-455
+    local_tasks:
+    - T003
+    - T004
+    - T009
+    - T010
+    - T011
+    - T012
+    - T029
+    bugs: []
+    status: planned
+success_criteria:
+  SC-001:
+    text: El 100 % de las acciones de gestión de usuarios de FR-004 intentadas por un lead se rechazan, tanto desde
+      la interfaz como por llamada directa.
+    verified_by:
+    - MIL-456
+  SC-002:
+    text: Un lead completa las tareas habituales de admin (crear un proyecto, desplegar un servicio, revisar contenedores)
+      sin ningún rechazo.
+    verified_by:
+    - MIL-456
+  SC-003:
+    text: Los admins del grupo de gestión y el owner completan el 100 % de las acciones de gestión que hoy pueden
+      hacer.
+    verified_by:
+    - MIL-456
+  SC-004:
+    text: 'Una instancia que actualiza sin configurar el grupo no cambia de comportamiento: las pruebas actuales
+      de gestión de usuarios pasan sin modificarse.'
+    verified_by:
+    - MIL-456
+  SC-005:
+    text: Un cambio de grupo en el proveedor de identidad se refleja en el permiso de gestión en el siguiente login
+      del usuario y, como mucho, 8 horas después de su último login por SSO.
+    verified_by:
+    - MIL-456
+user_stories:
+- local_id: US1
+  title: Un lead opera la plataforma sin poder tocar las cuentas de otros
+  priority: P1
+  requirements:
+  - FR-004
+  - FR-005
+  - FR-006
+  - FR-007
+  - FR-012
+  - FR-015
+  - NFR-PERF-001
+  success_criteria: []
+  tasks:
+  - local_id: T013
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-trpc.test.ts` for the tRPC middleware
+    jira: MIL-445
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-trpc.test.ts
+    requirements:
+    - FR-004
+    - FR-005
+    - FR-006
+    - NFR-PERF-001
+  - local_id: T014
+    title: Write the router drift test in `apps/dokploy/__test__/oidc-sso/user-management-drift.test.ts`
+    jira: MIL-446
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-drift.test.ts
+    requirements:
+    - FR-004
+  - local_id: T015
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-hook.test.ts` for the better-auth
+      `before` hook
+    jira: MIL-447
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-hook.test.ts
+    requirements:
+    - FR-004
+    - FR-006
+  - local_id: T016
+    title: Implement `userManagementGuard`
+    jira: MIL-445
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/middlewares/user-management.ts
+    - apps/dokploy/server/api/trpc.ts
+    requirements:
+    - FR-004
+    - FR-005
+    - FR-006
+    - NFR-PERF-001
+  - local_id: T017
+    title: 'Implement `createUserManagementHook` in `packages/server/src/oidc-sso/plugin/user-management-hook.ts`
+      using `getSessionFromCtx`, passing `memberIdOrEmail` from '
+    jira: MIL-447
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/plugin/index.ts
+    - packages/server/src/oidc-sso/plugin/user-management-hook.ts
+    requirements:
+    - FR-004
+    - FR-006
+  - local_id: T018
+    title: Add the protected query `userManagementStatus` → `{ canManageUsers, reason, expiresAt }` to `apps/dokploy/server/api/routers/oidc-sso.ts`,
+      following contracts/u
+    jira: MIL-448
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/router.test.ts
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-007
+    - FR-015
+  - local_id: T019
+    title: Implement `userManagementVisibility` in `apps/dokploy/components/dashboard/settings/oidc-sso/user-management-visibility.ts`
+      to pass T031, then use it at the ups
+    jira: MIL-449
+    parallel: false
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/user-management-visibility.ts
+    requirements:
+    - FR-007
+  - local_id: T020
+    title: Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` and the realm in `apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json`
+    jira: MIL-450
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts
+    - apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-012
+  - local_id: T031
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-visibility.test.ts` for the pure
+      helper `userManagementVisibility
+    jira: MIL-449
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-visibility.test.ts
+    requirements:
+    - FR-007
+- local_id: US2
+  title: Los admins y el owner siguen gestionando usuarios como hoy
+  priority: P1
+  requirements:
+  - FR-003
+  - FR-010
+  - FR-011
+  - FR-015
+  success_criteria: []
+  tasks:
+  - local_id: T021
+    title: Add allow-path tests to `apps/dokploy/__test__/oidc-sso/user-management-trpc.test.ts` and `user-management-hook.test.ts`
+    jira: MIL-451
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-trpc.test.ts
+    requirements:
+    - FR-003
+    - FR-010
+    - FR-011
+    - FR-015
+  - local_id: T022
+    title: Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`
+    jira: MIL-451
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts
+    requirements:
+    - FR-003
+    - FR-010
+    - FR-011
+    - FR-015
+- local_id: US3
+  title: El owner activa la restricción sin romper instancias existentes
+  priority: P2
+  requirements:
+  - FR-001
+  - FR-002
+  - FR-009
+  success_criteria: []
+  tasks:
+  - local_id: T023
+    title: Add tests to `apps/dokploy/__test__/oidc-sso/router.test.ts`
+    jira: MIL-452
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/router.test.ts
+    requirements:
+    - FR-001
+    - FR-002
+    - FR-009
+  - local_id: T024
+    title: Accept and return `userManagementGroup` in `oidcSso.get` and `oidcSso.update` in `apps/dokploy/server/api/routers/oidc-sso.ts`,
+      with a zod `string
+    jira: MIL-452
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-001
+    - FR-002
+    - FR-009
+  - local_id: T025
+    title: Add the "User management group" field in `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx`
+    jira: MIL-452
+    parallel: false
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx
+    requirements:
+    - FR-001
+    - FR-002
+    - FR-009
+phase_tasks:
+- name: Setup
+  tasks:
+  - local_id: T001
+    title: Add domain types to `packages/server/src/oidc-sso/types.ts`
+    jira: MIL-440
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/types.ts
+    requirements:
+    - FR-001
+    - FR-004
+    - FR-008
+    - FR-012
+- name: Setup y Foundational
+  tasks:
+  - local_id: T002
+    title: Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration in `apps/dokploy/drizzle/`
+      after `0197_lying_hitman.sql` with `pnpm --filt
+    jira: MIL-440
+    parallel: false
+    paths:
+    - apps/dokploy/drizzle/
+    - packages/server/src/db/schema/oidc-sso.ts
+    requirements:
+    - FR-001
+    - FR-004
+    - FR-008
+    - FR-012
+- name: Foundational
+  tasks:
+  - local_id: T003
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-policy.test.ts` covering every
+      branch of research R4, in order
+    jira: MIL-441
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-policy.test.ts
+    requirements:
+    - FR-002
+    - FR-003
+    - FR-009
+    - FR-010
+    - FR-014
+    - FR-015
+    - NFR-SEC-001
+  - local_id: T004
+    title: Implement the pure `decideUserManagement
+    jira: MIL-441
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/domain/user-management.ts
+    requirements:
+    - FR-002
+    - FR-003
+    - FR-009
+    - FR-010
+    - FR-014
+    - FR-015
+    - NFR-SEC-001
+  - local_id: T005
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`, `config-provider.test.ts`
+      and `db-adapters.test.ts` for `userManagementGroup`
+    jira: MIL-442
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/config-env.test.ts
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T006
+    title: Add `userManagementGroup` to `packages/server/src/oidc-sso/config/env.ts`, `config/repository.ts` and
+      `config/provider.ts`, following `adminGroup` exactly, to p
+    jira: MIL-442
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/config/env.ts
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T007
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/login-state.test.ts`
+    jira: MIL-443
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/login-state.test.ts
+    requirements:
+    - FR-008
+    - FR-014
+  - local_id: T008
+    title: Implement `LoginStateStore`
+    jira: MIL-443
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/identity/login-state.ts
+    - packages/server/src/oidc-sso/identity/provisioning.ts
+    requirements:
+    - FR-008
+    - FR-014
+  - local_id: T009
+    title: Extend `AuthEventInput`, the store and `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts`
+      with optional `action` and `targetUserId`, wi
+    jira: MIL-444
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/auth-events.test.ts
+    - packages/server/src/oidc-sso/events/auth-events.ts
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-012
+    - NFR-SEC-001
+    - NFR-PERF-001
+    - NFR-PERF-002
+  - local_id: T010
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-guard.test.ts` for `checkUserManagement
+    jira: MIL-444
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/user-management-guard.test.ts
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-012
+    - NFR-SEC-001
+    - NFR-PERF-001
+    - NFR-PERF-002
+  - local_id: T011
+    title: Implement `checkUserManagement` in `packages/server/src/oidc-sso/user-management/guard.ts` to pass T010.
+      It reads config from the cached provider. It runs the `
+    jira: MIL-444
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/user-management/guard.ts
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-012
+    - NFR-SEC-001
+    - NFR-PERF-001
+    - NFR-PERF-002
+  - local_id: T012
+    title: Create `packages/server/src/oidc-sso/user-management/paths.ts` with `TRPC_USER_MANAGEMENT_PATHS` and
+      `AUTH_USER_MANAGEMENT_PATHS`, both `ReadonlyMap<string, Use
+    jira: MIL-444
+    parallel: true
+    paths:
+    - packages/server/src/oidc-sso/user-management/paths.ts
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-012
+    - NFR-SEC-001
+    - NFR-PERF-001
+    - NFR-PERF-002
+- name: Polish
+  tasks:
+  - local_id: T026
+    title: Add benchmarks to `apps/dokploy/__test__/oidc-sso/performance.test.ts` for the three cases in quickstart
+      §3
+    jira: MIL-453
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/performance.test.ts
+    requirements:
+    - NFR-PERF-001
+    - NFR-PERF-002
+  - local_id: T027
+    title: Document `SSO_OIDC_USER_MANAGEMENT_GROUP`, the 8-hour re-login rule and the new event reasons in `specs/001-keycloak-sso/operations.md`
+    jira: MIL-454
+    parallel: true
+    paths: []
+    requirements:
+    - FR-001
+    - FR-012
+    - FR-015
+  - local_id: T028
+    title: Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint`
+    jira: MIL-456
+    parallel: false
+    paths: []
+    requirements:
+    - FR-013
+  - local_id: T029
+    title: Run `/security-review` on the branch and resolve HIGH/MEDIUM findings before opening the PR
+    jira: MIL-455
+    parallel: false
+    paths: []
+    requirements:
+    - FR-013
+    - NFR-SEC-001
+  - local_id: T030
+    title: Run the quickstart.md manual scenarios 1–10 against the e2e Keycloak and record the results in the PR
+      description
+    jira: MIL-456
+    parallel: false
+    paths: []
+    requirements:
+    - FR-013
+bugs: []
+orphans:
+  requirements_without_issue: []
+  tasks_without_requirement: []
+  issues_without_local_id: []
