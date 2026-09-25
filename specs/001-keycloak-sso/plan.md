@@ -64,6 +64,7 @@ una migración de Drizzle aditiva.
 | IV. Calidad y pruebas | Pruebas primero en los caminos de denegación. Cobertura ≥ 90 % líneas / 85 % ramas del módulo. Un test por escenario de aceptación (unitario más e2e opcional) | ✅ |
 | V. Trazabilidad | Spec Kit completo. Commits con trailers `Spec/Requirement/Task/Jira`. `traceability.yaml` local con `jira: null`; el trailer `Jira:` se añade tras `/sdd-sync` (excepción temporal, ver tasks.md › Notes) | ✅ |
 | VI. Rendimiento | Objetivos NFR-PERF cuantificados. Caché de configuración y de cliente OIDC. Timeouts. Benchmarks con `vitest bench` | ✅ |
+| VII. Identidad consolidada (v1.2.0) | OIDC genérico sin proveedor, realm ni grupos en el código. Milpia configura `milpia-infra` y `admins,leads` por variables (operations.md §3). Las cuentas locales quedan solo como vía de emergencia del owner | ✅ |
 
 ### Archivos de upstream que se tocan (principio II)
 
