@@ -4,15 +4,15 @@ import {
 	isAdminPresent,
 } from "@dokploy/server";
 import {
-	getKeycloakSsoServices,
+	getOidcSsoServices,
 	sanitizeReturnTo,
-} from "@dokploy/server/keycloak-sso";
-import { getPublicConfig } from "@dokploy/server/keycloak-sso/admin/config-admin";
+} from "@dokploy/server/oidc-sso";
+import { getPublicConfig } from "@dokploy/server/oidc-sso/admin/config-admin";
 import {
 	LOGIN_ERROR_CODES,
 	type LoginErrorCode,
 	type SsoMode,
-} from "@dokploy/server/keycloak-sso/types";
+} from "@dokploy/server/oidc-sso/types";
 import { validateRequest } from "@dokploy/server/lib/auth";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
@@ -24,7 +24,7 @@ import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { SignInWithKeycloak } from "@/components/auth/sign-in-with-keycloak";
+import { SignInWithSso } from "@/components/auth/sign-in-with-sso";
 import { OnboardingLayout } from "@/components/layouts/onboarding-layout";
 import { SignInWithGithub } from "@/components/proprietary/auth/sign-in-with-github";
 import { SignInWithGoogle } from "@/components/proprietary/auth/sign-in-with-google";
@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-import { keycloakSignInUrl } from "@/lib/keycloak-sso";
+import { ssoSignInUrl } from "@/lib/oidc-sso";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { generateServerSideHelper } from "@/utils/create-server-helpers";
@@ -74,21 +74,21 @@ const _TwoFactorSchema = z.object({
 
 type LoginForm = z.infer<typeof LoginSchema>;
 
-const KEYCLOAK_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
-	keycloak_cancelled: "Sign-in with Keycloak was cancelled.",
-	keycloak_invalid_response:
-		"We couldn't verify the response from Keycloak. Please try again.",
-	keycloak_email_unverified:
-		"Your Keycloak account has no verified email address. Ask your administrator to verify it.",
-	keycloak_access_denied:
-		"Your Keycloak account doesn't have access to this Dokploy instance. Ask your administrator to add you to the access group.",
-	keycloak_unavailable:
-		"Keycloak is not available right now. Please try again in a few minutes.",
-	keycloak_clock_skew:
-		"The sign-in response from Keycloak has an invalid timestamp. Ask your administrator to check that the server clocks are synchronized.",
+const SSO_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
+	sso_cancelled: "Single sign-on was cancelled.",
+	sso_invalid_response:
+		"We couldn't verify the response from the identity provider. Please try again.",
+	sso_email_unverified:
+		"Your identity provider account has no verified email address. Ask your administrator to verify it.",
+	sso_access_denied:
+		"Your identity provider account doesn't have access to this Dokploy instance. Ask your administrator to add you to the access group.",
+	sso_unavailable:
+		"The identity provider is not available right now. Please try again in a few minutes.",
+	sso_clock_skew:
+		"The sign-in response from the identity provider has an invalid timestamp. Ask your administrator to check that the server clocks are synchronized.",
 };
 
-const isKeycloakError = (value: string): value is LoginErrorCode =>
+const isSsoError = (value: string): value is LoginErrorCode =>
 	(LOGIN_ERROR_CODES as readonly string[]).includes(value);
 
 const firstQueryValue = (value: string | string[] | undefined) =>
@@ -97,14 +97,14 @@ const firstQueryValue = (value: string | string[] | undefined) =>
 interface Props {
 	IS_CLOUD: boolean;
 	enforceSSO: boolean;
-	keycloak?: { mode: SsoMode; buttonLabel: string };
+	sso?: { mode: SsoMode; buttonLabel: string };
 	returnTo?: string | null;
 	emergency?: boolean;
 }
 export default function Home({
 	IS_CLOUD,
 	enforceSSO,
-	keycloak = { mode: "disabled", buttonLabel: "" },
+	sso = { mode: "disabled", buttonLabel: "" },
 	returnTo = null,
 	emergency = false,
 }: Props) {
@@ -138,8 +138,8 @@ export default function Home({
 		const reference = firstQueryValue(router.query.ref);
 
 		setError(
-			isKeycloakError(raw)
-				? `${KEYCLOAK_ERROR_MESSAGES[raw]}${
+			isSsoError(raw)
+				? `${SSO_ERROR_MESSAGES[raw]}${
 						reference && /^[0-9A-F]{12}$/.test(reference)
 							? ` (Reference: ${reference})`
 							: ""
@@ -283,14 +283,14 @@ export default function Home({
 		}
 	};
 
-	const isKeycloakOnly = keycloak.mode === "sso-only" && !emergency;
+	const isSsoOnly = sso.mode === "sso-only" && !emergency;
 
 	const loginContent = (
 		<>
-			{keycloak.mode === "button" && (
+			{sso.mode === "button" && (
 				<div className="flex flex-col gap-4 mb-4">
-					<SignInWithKeycloak
-						label={keycloak.buttonLabel}
+					<SignInWithSso
+						label={sso.buttonLabel}
 						returnTo={returnTo ?? undefined}
 					/>
 					<div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -382,7 +382,7 @@ export default function Home({
 					<span>{error}</span>
 				</AlertBlock>
 			)}
-			{emergency && keycloak.mode === "sso-only" && (
+			{emergency && sso.mode === "sso-only" && (
 				<AlertBlock type="warning" className="my-2">
 					<span>
 						Emergency access — only the instance owner can sign in here. Every
@@ -393,9 +393,9 @@ export default function Home({
 			<CardContent className="p-0">
 				{!isTwoFactor ? (
 					<>
-						{isKeycloakOnly ? (
-							<SignInWithKeycloak
-								label={keycloak.buttonLabel}
+						{isSsoOnly ? (
+							<SignInWithSso
+								label={sso.buttonLabel}
 								returnTo={returnTo ?? undefined}
 							/>
 						) : enforceSSO ? (
@@ -575,7 +575,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// render correctly on the server (no flash of default branding).
 	await helpers.whitelabeling.getPublic.prefetch();
 	await helpers.sso.showSignInWithSSO.prefetch();
-	await helpers.keycloakSso.publicConfig.prefetch();
+	await helpers.oidcSso.publicConfig.prefetch();
 
 	if (IS_CLOUD) {
 		try {
@@ -621,7 +621,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	}
 
 	const webServerSettings = await getWebServerSettings();
-	const keycloak = await getPublicConfig(getKeycloakSsoServices());
+	const sso = await getPublicConfig(getOidcSsoServices());
 	const requestedReturnTo = firstQueryValue(context.query.returnTo);
 	const returnTo = requestedReturnTo
 		? sanitizeReturnTo(requestedReturnTo)
@@ -631,11 +631,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 	// SSO-only skips the local form entirely (FR-004), except to show a login
 	// error (FR-016, no redirect loop) or on the emergency route (FR-012).
-	if (keycloak.mode === "sso-only" && !emergency && !hasError) {
+	if (sso.mode === "sso-only" && !emergency && !hasError) {
 		return {
 			redirect: {
 				permanent: false,
-				destination: keycloakSignInUrl(returnTo ?? undefined),
+				destination: ssoSignInUrl(returnTo ?? undefined),
 			},
 		};
 	}
@@ -645,7 +645,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			trpcState: helpers.dehydrate(),
 			hasAdmin,
 			enforceSSO: webServerSettings?.enforceSSO ?? false,
-			keycloak,
+			sso,
 			returnTo,
 			emergency,
 		},

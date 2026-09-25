@@ -437,10 +437,10 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
-			title: "Keycloak SSO",
-			url: "/dashboard/settings/keycloak-sso",
+			title: "OIDC SSO",
+			url: "/dashboard/settings/oidc-sso",
 			icon: KeyRound,
-			// Free self-hosted integration, owner only (specs/001-keycloak-sso)
+			// Free self-hosted integration, owner only (specs/001-oidc-sso)
 			isEnabled: ({ auth, isCloud }) => !!(auth?.role === "owner" && !isCloud),
 		},
 		{

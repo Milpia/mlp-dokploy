@@ -14,7 +14,7 @@ export default defineConfig({
 			reporter: ["text"],
 			allowExternal: true,
 			include: [
-				path.resolve(__dirname, "../../../packages/server/src/keycloak-sso/**"),
+				path.resolve(__dirname, "../../../packages/server/src/oidc-sso/**"),
 			],
 			thresholds: {
 				lines: 90,

@@ -1,5 +1,5 @@
 {
-  "id": "bc651a53-6650-4dc7-ab72-fee535f33676",
+  "id": "73545d54-599c-4f0b-939e-1e77543ac019",
   "prevId": "c9ad226a-7a8f-4c3b-8f04-fef6bccf9bfb",
   "version": "7",
   "dialect": "postgresql",
@@ -4038,8 +4038,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.keycloak_auth_event": {
-      "name": "keycloak_auth_event",
+    "public.oidc_sso_auth_event": {
+      "name": "oidc_sso_auth_event",
       "schema": "",
       "columns": {
         "id": {
@@ -4099,8 +4099,8 @@
         }
       },
       "indexes": {
-        "keycloakAuthEvent_createdAt_idx": {
-          "name": "keycloakAuthEvent_createdAt_idx",
+        "oidcSsoAuthEvent_createdAt_idx": {
+          "name": "oidcSsoAuthEvent_createdAt_idx",
           "columns": [
             {
               "expression": "created_at",
@@ -4122,8 +4122,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.keycloak_sso_config": {
-      "name": "keycloak_sso_config",
+    "public.oidc_sso_config": {
+      "name": "oidc_sso_config",
       "schema": "",
       "columns": {
         "id": {
@@ -4169,12 +4169,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "groups_claim": {
+          "name": "groups_claim",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'groups'"
+        },
         "button_label": {
           "name": "button_label",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'Sign in with Keycloak'"
+          "default": "'Sign in with SSO'"
         },
         "allow_insecure_http": {
           "name": "allow_insecure_http",
