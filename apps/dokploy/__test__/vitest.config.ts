@@ -8,6 +8,17 @@ export default defineConfig({
 		exclude: ["**/node_modules/**", "**/dist/**", "**/.docker/**"],
 		pool: "forks",
 		setupFiles: [path.resolve(__dirname, "setup.ts")],
+		coverage: {
+			provider: "v8",
+			allowExternal: true,
+			include: [
+				path.resolve(__dirname, "../../../packages/server/src/keycloak-sso/**"),
+			],
+			thresholds: {
+				lines: 90,
+				branches: 85,
+			},
+		},
 	},
 	define: {
 		"process.env": {
