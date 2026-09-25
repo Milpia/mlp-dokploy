@@ -164,8 +164,8 @@ ve la configuración efectiva.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T016 [P] Add `onRequest` benchmarks to `apps/dokploy/__test__/oidc-sso/performance.test.ts` for three cases: no variable; variable set but a different origin; variable set on an emergency path. Assert ≤ 1 ms p95 added and no dependency calls in the first two, and attach the results to the PR (NFR-PERF-001, NFR-PERF-002).
-- [ ] T017 [P] Document `SSO_OIDC_EMERGENCY_ORIGIN` and the tunnel procedure (FR-001, FR-002, SC-001):
+- [X] T016 [P] Add `onRequest` benchmarks to `apps/dokploy/__test__/oidc-sso/performance.test.ts` for three cases: no variable; variable set but a different origin; variable set on an emergency path. Assert ≤ 1 ms p95 added and no dependency calls in the first two, and attach the results to the PR (NFR-PERF-001, NFR-PERF-002).
+- [X] T017 [P] Document `SSO_OIDC_EMERGENCY_ORIGIN` and the tunnel procedure (FR-001, FR-002, SC-001):
   - In `specs/001-keycloak-sso/operations.md`: `ssh -L 3900:127.0.0.1:3000`, open `http://localhost:3900/?emergency=1`, owner login with second factor, disable SSO-only if needed, sign out, close the tunnel. Also cover what is still rejected from that origin.
   - In `specs/001-keycloak-sso/contracts/cli-and-env.md`: the variable.
 - [ ] T018 Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint` (FR-008, principle IV):

@@ -103,6 +103,7 @@ Configura el claim que lleva los grupos o roles y los scopes necesarios para rec
 | `SSO_OIDC_EXTRA_SCOPES` | scopes adicionales separados por espacios |
 | `SSO_OIDC_BUTTON_LABEL` | texto del botón |
 | `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
+| `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto desde el que el owner puede usar la ruta de emergencia por un túnel (spec 003), p. ej. `http://localhost:3900` |
 
 - Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen
   bloqueados en ella.
@@ -114,15 +115,17 @@ Configura el claim que lleva los grupos o roles y los scopes necesarios para rec
 
 #### Ejemplo: Milpia (Keycloak `milpia-infra`)
 
-Pendiente de la decisión del owner; ver la spec 013 de infraestructura.
+Adoptado: primero en el laboratorio y después en prod. Los valores definitivos los fija la spec 014 de
+infraestructura (`contracts/sso-env.md`); en prod el modo es `sso-only`.
 
 ```dotenv
-SSO_OIDC_MODE=button
+SSO_OIDC_MODE=sso-only
 SSO_OIDC_ISSUER_URL=https://auth.milpia.com/realms/milpia-infra
 SSO_OIDC_CLIENT_ID=dokploy
 SSO_OIDC_CLIENT_SECRET=<desde PROD_ENV_FILE, con copia en Vault>
 SSO_OIDC_ACCESS_GROUP=admins,leads
-SSO_OIDC_ADMIN_GROUP=admins
+SSO_OIDC_ADMIN_GROUP=admins,leads
+SSO_OIDC_EMERGENCY_ORIGIN=http://localhost:3900
 BETTER_AUTH_URL=https://deploy.milpia.com
 ```
 
@@ -138,6 +141,31 @@ cliente (ver MIL-213). El cliente `dokploy` se crea a mano y se documenta como a
 3. En **Settings → OIDC SSO**, cambia a **Button** o **Disabled**.
 
 Solo la cuenta del owner puede entrar por esta ruta, y cada intento queda registrado.
+
+### El proveedor está caído y la dirección pública no responde (túnel)
+
+Si delante de Dokploy hay algo que también depende del proveedor (en Milpia, oauth2-proxy delante
+de Traefik), la dirección pública deja de responder. En ese caso se entra por un túnel SSH directo
+al contenedor. Requiere `SSO_OIDC_EMERGENCY_ORIGIN` con el origen local del túnel (spec 003).
+
+1. Abre el túnel: `ssh -L 3900:127.0.0.1:3000 <servidor>`. El puerto local tiene que coincidir con
+   el de `SSO_OIDC_EMERGENCY_ORIGIN` (`http://localhost:3900`).
+2. Abre `http://localhost:3900/?emergency=1` y entra con el email y la contraseña local del owner.
+   Si el owner tiene 2FA, introduce el código TOTP o un código de respaldo.
+3. En **Settings → OIDC SSO**, cambia a **Button** o **Disabled** si hace falta. Si el modo
+   viene de `SSO_OIDC_MODE`, hay que cambiar la variable y reiniciar.
+4. Cierra sesión desde el menú y cierra el túnel.
+
+Desde ese origen solo se aceptan cuatro peticiones, y solo con SSO-only activo:
+- el login del owner;
+- el TOTP;
+- el código de respaldo;
+- el cierre de sesión.
+
+Todo lo demás se rechaza con «Invalid origin»: registro, restablecer o cambiar la contraseña,
+passkeys, organización, y activar o desactivar el 2FA. Cada intento por el túnel aparece en los
+eventos con la marca «via emergency origin». El resto del panel (proyectos, ajustes del SSO)
+funciona con normalidad.
 
 ### El owner no recuerda su contraseña local
 
