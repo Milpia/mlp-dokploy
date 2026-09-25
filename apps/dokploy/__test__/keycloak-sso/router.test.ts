@@ -57,6 +57,36 @@ describe("keycloakSso router", () => {
 		},
 	);
 
+	it("security: owning another organization does not make you the instance owner", async () => {
+		const orgOwner = keycloakSsoRouter.createCaller({
+			session: { id: "s", activeOrganizationId: "attacker-org" } as never,
+			user: {
+				id: "admin-who-created-an-org",
+				email: "admin@example.com",
+				role: "owner",
+				ownerId: "admin-who-created-an-org",
+			} as never,
+			req: { headers: {} } as never,
+			res: {} as never,
+			db: {} as never,
+		});
+		await expect(orgOwner.get()).rejects.toMatchObject({ code: "FORBIDDEN" });
+		await expect(
+			orgOwner.update({
+				issuerUrl: "https://attacker.example.com/realms/x",
+				mode: "button",
+			}),
+		).rejects.toMatchObject({ code: "FORBIDDEN" });
+		expect(built.repository.save).not.toHaveBeenCalled();
+	});
+
+	it("denies everyone when the instance has no owner yet", async () => {
+		built.services.instanceOwnerId = async () => null;
+		await expect(caller("owner").get()).rejects.toMatchObject({
+			code: "FORBIDDEN",
+		});
+	});
+
 	it("requires a session for owner procedures", async () => {
 		await expect(caller(null).get()).rejects.toMatchObject({
 			code: "UNAUTHORIZED",

@@ -140,6 +140,7 @@ const setup = () => {
 			}),
 			events: events.recorder,
 			oidc: createOpenIdClient(),
+			instanceOwnerId: async () => "owner-id",
 		},
 		provisioningStore: provisioning,
 		findIdToken: async () => null,
