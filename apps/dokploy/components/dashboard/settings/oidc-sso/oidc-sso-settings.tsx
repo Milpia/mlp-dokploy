@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { api, type RouterOutputs } from "@/utils/api";
+import { DEFAULT_PRESET, PROVIDER_PRESETS } from "./provider-presets";
 import { SsoAuthEvents } from "./sso-auth-events";
 
 type ConfigView = RouterOutputs["oidcSso"]["get"];
@@ -45,18 +46,20 @@ const schema = z.object({
 	clientSecret: z.string().max(1024),
 	accessGroup: z.string().trim().max(512),
 	adminGroup: z.string().trim().max(512),
+	groupsClaim: z.string().trim().max(256),
+	extraScopes: z.string().trim().max(1024),
 	buttonLabel: z.string().trim().min(1, "Required").max(64),
 	allowInsecureHttp: z.boolean(),
 });
 type FormValues = z.infer<typeof schema>;
 
 const INACTIVE_REASONS: Record<string, string> = {
-	disabled: "Keycloak sign-in is disabled.",
+	disabled: "Single sign-on is disabled.",
 	incomplete:
 		"The configuration is incomplete: issuer URL, client ID and client secret are required.",
 	enterprise:
 		"An enterprise license is active; the enterprise SSO takes precedence and this integration is off.",
-	cloud: "Keycloak SSO is only available on self-hosted instances.",
+	cloud: "Single sign-on (OIDC) is only available on self-hosted instances.",
 };
 
 const toFormValues = (view: ConfigView): FormValues => ({
@@ -66,6 +69,8 @@ const toFormValues = (view: ConfigView): FormValues => ({
 	clientSecret: "",
 	accessGroup: view.accessGroup ?? "",
 	adminGroup: view.adminGroup ?? "",
+	groupsClaim: view.groupsClaim,
+	extraScopes: view.extraScopes,
 	buttonLabel: view.buttonLabel,
 	allowInsecureHttp: view.allowInsecureHttp,
 });
@@ -85,6 +90,10 @@ export const OidcSsoSettings = () => {
 	const { mutateAsync: testConnection, isPending: isTesting } =
 		api.oidcSso.testConnection.useMutation();
 	const [callbackUrl, setCallbackUrl] = useState("");
+	const [presetId, setPresetId] = useState("keycloak");
+	const preset =
+		PROVIDER_PRESETS.find((candidate) => candidate.id === presetId) ??
+		DEFAULT_PRESET;
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(schema),
@@ -127,6 +136,8 @@ export const OidcSsoSettings = () => {
 			"clientId",
 			"accessGroup",
 			"adminGroup",
+			"groupsClaim",
+			"extraScopes",
 			"buttonLabel",
 			"allowInsecureHttp",
 		];
@@ -139,7 +150,7 @@ export const OidcSsoSettings = () => {
 		try {
 			await update(payload);
 			await utils.oidcSso.invalidate();
-			toast.success("Keycloak SSO settings saved");
+			toast.success("Single sign-on settings saved");
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : "Could not save the settings",
@@ -171,17 +182,18 @@ export const OidcSsoSettings = () => {
 					<CardHeader>
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<KeyRound className="size-6 text-muted-foreground self-center" />
-							Keycloak SSO
+							Single sign-on (OIDC)
 						</CardTitle>
 						<CardDescription>
-							Let your team sign in with your Keycloak realm, either with a
-							button on the login page or as the only way in.
+							Let your team sign in with your identity provider (Keycloak, Okta,
+							Authentik, Zitadel, Authelia or any OpenID Connect provider),
+							either with a button on the login page or as the only way in.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4 py-6 border-t">
 						{view.active ? (
 							<AlertBlock type="success">
-								Keycloak sign-in is active in{" "}
+								Single sign-on is active in{" "}
 								<strong>
 									{view.effectiveMode === "sso-only" ? "SSO-only" : "button"}
 								</strong>{" "}
@@ -195,8 +207,8 @@ export const OidcSsoSettings = () => {
 						{view.mode === "sso-only" && view.effectiveMode !== "sso-only" && (
 							<AlertBlock type="warning">
 								SSO-only is requested but the issuer has not been verified, so
-								the login page still shows the local form. Sign in once with
-								Keycloak using the owner account to verify it.
+								the login page still shows the local form. Sign in once through
+								the identity provider using the owner account to verify it.
 							</AlertBlock>
 						)}
 						{view.envErrors.map((message) => (
@@ -204,6 +216,43 @@ export const OidcSsoSettings = () => {
 								{message}
 							</AlertBlock>
 						))}
+
+						<div className="flex flex-col gap-2">
+							<span className="text-sm font-medium">Provider</span>
+							<Select
+								value={presetId}
+								onValueChange={(id) => {
+									setPresetId(id);
+									const next = PROVIDER_PRESETS.find((p) => p.id === id);
+									if (!next) return;
+									if (editable("groupsClaim")) {
+										form.setValue("groupsClaim", next.groupsClaim, {
+											shouldDirty: true,
+										});
+									}
+									if (editable("extraScopes")) {
+										form.setValue("extraScopes", next.extraScopes, {
+											shouldDirty: true,
+										});
+									}
+								}}
+							>
+								<SelectTrigger className="md:w-80">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{PROVIDER_PRESETS.map((option) => (
+										<SelectItem key={option.id} value={option.id}>
+											{option.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<span className="text-xs text-muted-foreground">
+								Presets fill the groups claim and extra scopes; every field
+								stays editable.
+							</span>
+						</div>
 
 						<div className="flex flex-col gap-2">
 							<span className="text-sm font-medium">Redirect URI</span>
@@ -223,9 +272,8 @@ export const OidcSsoSettings = () => {
 								</Button>
 							</div>
 							<span className="text-xs text-muted-foreground">
-								Register it as a valid redirect URI of the Keycloak client, and
-								add a "Group Membership" mapper with the token claim name{" "}
-								<code>groups</code>.
+								Register it as the exact redirect URI of the client in your
+								identity provider. {preset.groupsHint}
 							</span>
 						</div>
 
@@ -245,7 +293,7 @@ export const OidcSsoSettings = () => {
 											</FormLabel>
 											<FormControl>
 												<Input
-													placeholder="https://keycloak.example.com/realms/my-realm"
+													placeholder={preset.issuerPlaceholder}
 													disabled={!editable("issuerUrl")}
 													{...field}
 												/>
@@ -317,8 +365,9 @@ export const OidcSsoSettings = () => {
 												/>
 											</FormControl>
 											<FormDescription>
-												Members get an account on first sign-in. Leave empty to
-												only allow existing users.
+												Members get an account on first sign-in. Separate
+												several groups with commas. Leave empty to only allow
+												existing users.
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -342,7 +391,8 @@ export const OidcSsoSettings = () => {
 											</FormControl>
 											<FormDescription>
 												Members become admins; everyone else becomes a member.
-												Leave empty to manage roles in Dokploy.
+												Separate several groups with commas. Leave empty to
+												manage roles in Dokploy.
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -350,11 +400,59 @@ export const OidcSsoSettings = () => {
 								/>
 								{adminGroup && (
 									<AlertBlock type="warning" className="md:col-span-2">
-										Roles are recalculated on every Keycloak sign-in: role
-										changes made in Dokploy for these users are overwritten. The
-										owner is never changed.
+										Roles are recalculated on every single sign-on: role changes
+										made in Dokploy for these users are overwritten. The owner
+										is never changed.
 									</AlertBlock>
 								)}
+								<FormField
+									control={form.control}
+									name="groupsClaim"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Groups claim
+												<EnvBadge show={fromEnv("groupsClaim")} />
+											</FormLabel>
+											<FormControl>
+												<Input
+													placeholder="groups"
+													disabled={!editable("groupsClaim")}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription>
+												Claim with the user's groups or roles: a list, a single
+												value or an object keyed by role (Zitadel).
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="extraScopes"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												Extra scopes
+												<EnvBadge show={fromEnv("extraScopes")} />
+											</FormLabel>
+											<FormControl>
+												<Input
+													placeholder="groups"
+													disabled={!editable("extraScopes")}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription>
+												Requested in addition to openid email profile, separated
+												by spaces.
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 								<FormField
 									control={form.control}
 									name="buttonLabel"
@@ -401,14 +499,14 @@ export const OidcSsoSettings = () => {
 															!view.verified && view.mode !== "sso-only"
 														}
 													>
-														SSO-only (redirect to Keycloak)
+														SSO-only (redirect to the identity provider)
 													</SelectItem>
 												</SelectContent>
 											</Select>
 											<FormDescription>
 												{view.verified
 													? "SSO-only is available: the issuer was verified by an owner sign-in."
-													: "SSO-only unlocks after you sign in once with Keycloak using the owner account."}
+													: "SSO-only unlocks after you sign in once through the identity provider using the owner account."}
 											</FormDescription>
 											<FormMessage />
 										</FormItem>
@@ -425,8 +523,8 @@ export const OidcSsoSettings = () => {
 													<EnvBadge show={fromEnv("allowInsecureHttp")} />
 												</FormLabel>
 												<FormDescription>
-													Only for local development. Production Keycloak must
-													use HTTPS.
+													Only for local development. A production identity
+													provider must use HTTPS.
 												</FormDescription>
 											</div>
 											<FormControl>
@@ -442,7 +540,7 @@ export const OidcSsoSettings = () => {
 								{allowInsecureHttp && issuerUrl.startsWith("http:") && (
 									<AlertBlock type="warning" className="md:col-span-2">
 										Plain HTTP is allowed: credentials and tokens travel
-										unencrypted between Dokploy and Keycloak.
+										unencrypted between Dokploy and the identity provider.
 									</AlertBlock>
 								)}
 								<div className="flex w-full justify-end gap-2 md:col-span-2">
