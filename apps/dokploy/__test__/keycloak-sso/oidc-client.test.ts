@@ -23,7 +23,7 @@ const fakeConfig = (metadata: Record<string, unknown> = {}) => ({
 
 const fakeLib = (overrides: Record<string, unknown> = {}) => {
 	const lib = {
-		discovery: vi.fn(async () => fakeConfig()),
+		discovery: vi.fn(async (..._args: unknown[]) => fakeConfig()),
 		buildAuthorizationUrl: vi.fn(
 			(_config: unknown, params: Record<string, string>) =>
 				new URL(

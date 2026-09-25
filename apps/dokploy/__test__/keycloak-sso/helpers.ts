@@ -12,7 +12,7 @@ import type { OidcClient } from "@dokploy/server/keycloak-sso/oidc/client";
 import type { KeycloakEndpointDeps } from "@dokploy/server/keycloak-sso/plugin/endpoints";
 import type { KeycloakSsoServices } from "@dokploy/server/keycloak-sso/services";
 import type { StoredConfig } from "@dokploy/server/keycloak-sso/types";
-import { vi } from "vitest";
+import { type Mock, vi } from "vitest";
 
 export const ISSUER = "https://kc.example.com/realms/milpia";
 
@@ -38,7 +38,11 @@ export const memoryRepository = (initial: StoredConfig = activeConfig) => {
 	return repository;
 };
 
-export const fakeOidc = (overrides: Partial<OidcClient> = {}) => {
+export type MockedOidc = { [K in keyof OidcClient]: Mock<OidcClient[K]> };
+
+export const fakeOidc = (
+	overrides: { [K in keyof OidcClient]?: OidcClient[K] } = {},
+): MockedOidc => {
 	const oidc = {
 		createAuthorizationRequest: vi.fn(async () => ({
 			url: `${ISSUER}/protocol/openid-connect/auth?state=st`,
@@ -62,7 +66,7 @@ export const fakeOidc = (overrides: Partial<OidcClient> = {}) => {
 		reset: vi.fn(),
 		...overrides,
 	};
-	return oidc;
+	return oidc as unknown as MockedOidc;
 };
 
 export const fakeEvents = () => {
