@@ -1,12 +1,15 @@
-# Contrato: router tRPC `keycloakSso`
+# Contrato: router tRPC `oidcSso`
 
-Se registra en `apps/dokploy/server/api/root.ts`. Todas las mutaciones son **solo para el owner**
-(`ctx.user.role === "owner"`); cualquier otro rol recibe `FORBIDDEN`. En cloud, todas devuelven
+Se registra en `apps/dokploy/server/api/root.ts`. Todos los procedimientos salvo `publicConfig` son
+**solo para el owner de la instancia**: `ctx.user.id` debe ser el de la membresía de owner más
+antigua. No basta con `ctx.user.role === "owner"`, que es el rol en la organización activa: un admin
+puede crear su propia organización y ser owner de ella (hallazgo de la revisión de seguridad).
+Cualquier otro usuario recibe `FORBIDDEN`. En cloud, todas devuelven
 `NOT_FOUND`.
 
 ## `publicConfig` (public query)
 
-Lo usan la página de login y el menú de usuario. No hace llamadas a Keycloak y lee de la caché.
+Lo usan la página de login y el menú de usuario. No hace llamadas al proveedor y lee de la caché.
 
 ```ts
 output: { mode: "disabled" | "button" | "sso-only"; buttonLabel: string }
@@ -18,9 +21,9 @@ output: { mode: "disabled" | "button" | "sso-only"; buttonLabel: string }
 
 ```ts
 output: {
-  mode, issuerUrl, clientId, accessGroup, adminGroup, buttonLabel, allowInsecureHttp,
+  mode, issuerUrl, clientId, accessGroup, adminGroup, groupsClaim, extraScopes, buttonLabel, allowInsecureHttp,
   hasClientSecret: boolean,              // FR-015: nunca se devuelve el secreto
-  callbackUrl: string,                   // para copiarla en Keycloak
+  callbackUrl: string,                   // para registrarla en el proveedor
   verified: boolean,                     // verifiedIssuer === issuerUrl && owner vinculado
   active: boolean, inactiveReason?: "disabled" | "incomplete" | "enterprise" | "cloud",
   sources: Record<Field, "env" | "db">,  // FR-020
@@ -32,7 +35,8 @@ output: {
 ```ts
 input: {
   issuerUrl?: string (url), clientId?: string, clientSecret?: string,   // vacío = no se cambia
-  accessGroup?: string | null, adminGroup?: string | null,
+  accessGroup?: string | null, adminGroup?: string | null,   // listas separadas por comas
+  groupsClaim?: string, extraScopes?: string,              // vacío = "groups" / sin scopes extra
   buttonLabel?: string (1..64), allowInsecureHttp?: boolean,
   mode?: "disabled" | "button" | "sso-only",
 }
@@ -41,6 +45,7 @@ input: {
 **Errores**:
 - `BAD_REQUEST`: se intenta cambiar un campo que viene de una variable de entorno.
 - `BAD_REQUEST`: `http:` sin `allowInsecureHttp`.
+- `BAD_REQUEST`: scopes adicionales con caracteres no válidos (RFC 6749 §3.3).
 - `PRECONDITION_FAILED`: se pasa a `button` o `sso-only` con la configuración incompleta.
 - `PRECONDITION_FAILED`: se pasa a `sso-only` sin verificar (FR-011).
 - `PRECONDITION_FAILED`: se cambia `issuerUrl` estando en `sso-only`.
@@ -58,7 +63,7 @@ TestFailure = "invalid_url" | "insecure_http" | "unreachable" | "timeout"
 
 - Hace el discovery.
 - Después intenta `client_credentials` para validar el `client_id` y el secreto. Si
-  `client_credentials` no está permitido pero Keycloak responde `unauthorized_client`, las
+  `client_credentials` no está permitido pero el proveedor responde `unauthorized_client`, las
   credenciales se dan por válidas; `invalid_client` significa secreto o cliente incorrectos.
 
 ## `listEvents` (owner query)

@@ -12,13 +12,13 @@
 ```bash
 docker run --rm -d --name kc-dev -p 8080:8080 \
   -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
-  -v "$PWD/apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json:/opt/keycloak/data/import/realm.json" \
+  -v "$PWD/apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json:/opt/keycloak/data/import/realm.json" \
   quay.io/keycloak/keycloak:26.0 start-dev --import-realm
 ```
 
 El realm `dokploy-test` incluye:
 - **El cliente `dokploy`**: confidencial, con secreto `dokploy-secret`, URL de retorno
-  `http://localhost:3000/api/auth/keycloak/callback` y mapper *Group Membership* sobre el
+  `http://localhost:3000/api/auth/oidc/callback` y mapper *Group Membership* sobre el
   claim `groups`.
 - **Los grupos** `dokploy-users` y `dokploy-admins`.
 - **Los usuarios (contraseña `Passw0rd!`)**:
@@ -65,21 +65,21 @@ El realm `dokploy-test` incluye:
 1. `docker stop kc-dev` y abre `/` → página de error con **Retry**, sin bucles.
 2. Abre `/?emergency=1` e inicia sesión con el email y la contraseña del owner → entras.
 3. Con otra cuenta local → rechazada.
-4. `pnpm --filter=dokploy run keycloak:disable-sso-only` → el modo pasa a Button.
+4. `pnpm --filter=dokploy run sso:disable-sso-only` → el modo pasa a Button.
 
 ## 5. Variables de entorno (FR-019/020)
 
-Añade `KEYCLOAK_SSO_ISSUER_URL=...` en `apps/dokploy/.env` y reinicia. El campo aparece
+Añade `SSO_OIDC_ISSUER_URL=...` en `apps/dokploy/.env` y reinicia. El campo aparece
 bloqueado con la etiqueta «from environment».
 
 ## 6. Pruebas automáticas
 
 ```bash
-pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts run keycloak-sso
-pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts run keycloak-sso --coverage   # NFR-QA-001
-pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts bench keycloak-sso            # NFR-PERF-001/002
-KEYCLOAK_E2E=1 pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts run keycloak-sso/e2e   # NFR-QA-002
+pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts run oidc-sso
+pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts run oidc-sso --coverage   # NFR-QA-001
+pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts bench oidc-sso            # NFR-PERF-001/002
+KEYCLOAK_E2E=1 pnpm --filter=dokploy exec vitest --config __test__/vitest.config.ts run oidc-sso/e2e   # NFR-QA-002
 ```
 
 Resultado esperado: todo en verde, con cobertura ≥ 90 % de líneas y ≥ 85 % de ramas en
-`packages/server/src/keycloak-sso/**`.
+`packages/server/src/oidc-sso/**`.

@@ -1,8 +1,8 @@
 # Implementation Plan: SSO con Keycloak para la edición free
 
-**Branch**: `001-keycloak-sso` | **Date**: 2026-09-25 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-oidc-sso` | **Date**: 2026-09-25 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/001-keycloak-sso/spec.md`
+**Input**: Feature specification from `/specs/001-oidc-sso/spec.md`
 
 ## Summary
 
@@ -11,7 +11,7 @@ La instancia self-hosted podrá usar Keycloak (OIDC) como proveedor de identidad
 emergencia y configuración por interfaz o por variables de entorno.
 
 Enfoque técnico:
-- **Plugin propio de better-auth** (`keycloakSso()`), en un módulo nuevo e independiente de
+- **Plugin propio de better-auth** (`oidcSso()`), en un módulo nuevo e independiente de
   `/proprietary`.
 - **Validación OIDC** delegada en `openid-client` v6 (certificado): PKCE, `state`, `nonce` y
   validación del ID token.
@@ -30,7 +30,7 @@ Ver [research.md](./research.md).
   Drizzle ORM 0.45 y zod 4.
 - **Nueva**: `openid-client` ^6 (R2).
 
-**Storage**: PostgreSQL, con 2 tablas nuevas (`keycloak_sso_config`, `keycloak_auth_event`) y
+**Storage**: PostgreSQL, con 2 tablas nuevas (`oidc_sso_config`, `oidc_sso_auth_event`) y
 una migración de Drizzle aditiva.
 
 **Testing**: Vitest 4 (`apps/dokploy/__test__`), `@vitest/coverage-v8` para la cobertura y
@@ -58,7 +58,7 @@ una migración de Drizzle aditiva.
 
 | Principio | Comprobación | Estado |
 |---|---|---|
-| I. Frontera de licencia | Módulo nuevo `packages/server/src/keycloak-sso/`. No se importa nada de `/proprietary`: ni `@better-auth/sso` en sus wrappers, ni `audit-log`, ni `license-key`. La precedencia enterprise se detecta con columnas de la tabla `user` de upstream (R14) | ✅ |
+| I. Frontera de licencia | Módulo nuevo `packages/server/src/oidc-sso/`. No se importa nada de `/proprietary`: ni `@better-auth/sso` en sus wrappers, ni `audit-log`, ni `license-key`. La precedencia enterprise se detecta con columnas de la tabla `user` de upstream (R14) | ✅ |
 | II. Divergencia mínima | El modo por defecto es `disabled`. Tablas nuevas, sin tocar las de upstream. Los archivos de upstream que se tocan están listados y justificados abajo | ✅ (ver Complexity Tracking por `proxy.ts`) |
 | III. Seguridad | Lista ASVS L2 / RFC 9700 en research R16. Secreto cifrado. Fallo cerrado (R7). Dos vías de recuperación (R11). Eventos registrados (R12). Rate limit (R13). Se ejecutará `/security-review` | ✅ |
 | IV. Calidad y pruebas | Pruebas primero en los caminos de denegación. Cobertura ≥ 90 % líneas / 85 % ramas del módulo. Un test por escenario de aceptación (unitario más e2e opcional) | ✅ |
@@ -69,12 +69,12 @@ una migración de Drizzle aditiva.
 
 | Archivo | Cambio | Por qué es imprescindible |
 |---|---|---|
-| `packages/server/src/lib/auth.ts` | añadir `keycloakSso()` a `plugins` | único punto de registro de plugins |
-| `packages/server/src/db/schema/index.ts` | `export * from "./keycloak-sso"` | Drizzle y el adaptador de better-auth leen el esquema desde aquí |
+| `packages/server/src/lib/auth.ts` | añadir `oidcSso()` a `plugins` | único punto de registro de plugins |
+| `packages/server/src/db/schema/index.ts` | `export * from "./oidc-sso"` | Drizzle y el adaptador de better-auth leen el esquema desde aquí |
 | `packages/server/package.json` | dependencia `openid-client` | R2 |
-| `apps/dokploy/server/api/root.ts` | registrar `keycloakSso` | registro de routers |
+| `apps/dokploy/server/api/root.ts` | registrar `oidcSso` | registro de routers |
 | `apps/dokploy/pages/index.tsx` | botón, redirección SSO-only, aviso de emergencia y mensajes de error | pantalla de login única |
-| `apps/dokploy/components/layouts/user-nav.tsx` | logout que pasa por `/api/auth/keycloak/sign-out` en SSO-only | FR-010 |
+| `apps/dokploy/components/layouts/user-nav.tsx` | logout que pasa por `/api/auth/oidc/sign-out` en SSO-only | FR-010 |
 | `apps/dokploy/components/layouts/side.tsx` | entrada de menú «Keycloak SSO» (solo owner, no cloud) | navegación a la configuración |
 | `apps/dokploy/esbuild.config.ts`, `apps/dokploy/package.json` | entrada y script del comando de emergencia | patrón de `reset-password` |
 | `apps/dokploy/drizzle/*` | migración generada | obligatorio para las tablas nuevas |
@@ -82,7 +82,7 @@ una migración de Drizzle aditiva.
 | `apps/dokploy/__test__/vitest.config.ts` | bloque `coverage` limitado al módulo | umbrales de cobertura del principio IV |
 
 > Implementación: el barrel `packages/server/src/index.ts` no se tocó. Los consumidores importan
-> `@dokploy/server/keycloak-sso/...` por subruta, lo que evita colisiones de nombres en el barrel
+> `@dokploy/server/oidc-sso/...` por subruta, lo que evita colisiones de nombres en el barrel
 > y reduce la divergencia.
 
 ## Project Structure
@@ -90,7 +90,7 @@ una migración de Drizzle aditiva.
 ### Documentation (this feature)
 
 ```text
-specs/001-keycloak-sso/
+specs/001-oidc-sso/
 ├── spec.md
 ├── plan.md              # este archivo
 ├── research.md          # Phase 0
@@ -98,7 +98,7 @@ specs/001-keycloak-sso/
 ├── quickstart.md        # Phase 1
 ├── contracts/           # Phase 1
 │   ├── http-endpoints.md
-│   ├── trpc-keycloak-sso.md
+│   ├── trpc-oidc-sso.md
 │   └── cli-and-env.md
 ├── checklists/requirements.md
 ├── traceability.yaml    # trazabilidad local (sin sincronizar con Jira)
@@ -109,13 +109,13 @@ specs/001-keycloak-sso/
 
 ```text
 packages/server/src/
-├── db/schema/keycloak-sso.ts           # tablas keycloak_sso_config, keycloak_auth_event
-└── keycloak-sso/                       # módulo de dominio (sin dependencias de UI)
+├── db/schema/oidc-sso.ts           # tablas oidc_sso_config, oidc_sso_auth_event
+└── oidc-sso/                       # módulo de dominio (sin dependencias de UI)
     ├── index.ts                        # API pública del módulo
     ├── types.ts                        # tipos de dominio y códigos de error
     ├── config/
-    │   ├── env.ts                      # lectura y validación de KEYCLOAK_SSO_*
-    │   ├── repository.ts               # acceso a keycloak_sso_config (cifrado del secreto)
+    │   ├── env.ts                      # lectura y validación de SSO_OIDC_*
+    │   ├── repository.ts               # acceso a oidc_sso_config (cifrado del secreto)
     │   └── provider.ts                 # merge env > db, caché TTL, estado activo, invalidación
     ├── domain/
     │   ├── access-policy.ts            # decideAccess (pura)
@@ -129,24 +129,24 @@ packages/server/src/
     ├── events/
     │   └── auth-events.ts              # registro, retención y consulta de eventos
     └── plugin/
-        ├── index.ts                    # keycloakSso(): endpoints, hooks, rateLimit
+        ├── index.ts                    # oidcSso(): endpoints, hooks, rateLimit
         ├── endpoints.ts                # sign-in, callback, sign-out
         └── sso-only-guard.ts           # hook before/after de rutas locales
 
 apps/dokploy/
-├── server/api/routers/keycloak-sso.ts   # router tRPC (publicConfig, get, update, testConnection, listEvents)
+├── server/api/routers/oidc-sso.ts   # router tRPC (publicConfig, get, update, testConnection, listEvents)
 ├── proxy.ts                             # añade returnTo en /dashboard/* sin cookie de sesión
-├── pages/dashboard/settings/keycloak-sso.tsx
-├── components/dashboard/settings/keycloak-sso/
-│   ├── keycloak-sso-settings.tsx        # formulario, prueba de conexión, selector de modo
-│   └── keycloak-auth-events.tsx         # tabla de eventos recientes
-├── components/auth/sign-in-with-keycloak.tsx
-├── scripts/keycloak-sso-disable-sso-only.ts
-└── __test__/keycloak-sso/               # unitarias, bench, e2e (con KEYCLOAK_E2E=1)
+├── pages/dashboard/settings/oidc-sso.tsx
+├── components/dashboard/settings/oidc-sso/
+│   ├── oidc-sso-settings.tsx        # formulario, prueba de conexión, selector de modo
+│   └── sso-auth-events.tsx         # tabla de eventos recientes
+├── components/auth/sign-in-with-sso.tsx
+├── scripts/oidc-sso-disable-sso-only.ts
+└── __test__/oidc-sso/               # unitarias, bench, e2e (con KEYCLOAK_E2E=1)
 ```
 
 **Structure Decision**:
-- **Dominio en `packages/server`**: vive en un módulo propio (`keycloak-sso/`), ordenado en
+- **Dominio en `packages/server`**: vive en un módulo propio (`oidc-sso/`), ordenado en
   capas: dominio puro → adaptadores (OIDC, repositorio) → orquestación (plugin). Las
   dependencias apuntan hacia el dominio, y el dominio no conoce ni better-auth ni Drizzle.
 - **UI y API en `apps/dokploy`**: siguen las convenciones existentes (routers tRPC,

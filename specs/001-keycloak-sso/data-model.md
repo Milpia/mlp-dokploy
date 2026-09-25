@@ -1,9 +1,9 @@
-# Data Model: SSO con Keycloak
+# Data Model: SSO por OIDC
 
 Todos los cambios de esquema son **aditivos** (principio II): dos tablas nuevas y ningún cambio en
 tablas de upstream. Se reutilizan `user`, `account`, `member` y `session` tal como están.
 
-## Tabla nueva `keycloak_sso_config` (una fila)
+## Tabla nueva `oidc_sso_config` (una fila)
 
 | Campo | Tipo | Reglas |
 |---|---|---|
@@ -12,9 +12,11 @@ tablas de upstream. Se reutilizan `user`, `account`, `member` y `session` tal co
 | `issuerUrl` | text, nullable | URL absoluta; `https:` salvo `allowInsecureHttp` (NFR-SEC-004) |
 | `clientId` | text, nullable | 1–255 caracteres |
 | `clientSecret` | text, nullable | cifrado con `encryptValue` (`enc:v1:`); nunca sale por la API (FR-015) |
-| `accessGroup` | text, nullable | nombre o ruta de grupo; vacío = no se crean cuentas (FR-007a) |
+| `accessGroup` | text, nullable | uno o varios grupos separados por comas; vacío = no se crean cuentas (FR-007a) |
 | `adminGroup` | text, nullable | vacío = no se sincronizan roles (R7) |
-| `buttonLabel` | text | default `Sign in with Keycloak`; 1–64 caracteres (FR-003) |
+| `groupsClaim` | text | default `groups`; claim con grupos o roles (lista, texto u objeto con los roles como claves) (FR-023) |
+| `extraScopes` | text | default vacío; scopes separados por espacios, sintaxis RFC 6749 §3.3 (FR-023a) |
+| `buttonLabel` | text | default `Sign in with SSO`; 1–64 caracteres (FR-003) |
 | `allowInsecureHttp` | boolean | default `false` |
 | `verifiedIssuer` | text, nullable | issuer con el que el owner completó un login de prueba (FR-011) |
 | `verifiedAt` | timestamp, nullable | cuándo |
@@ -44,12 +46,12 @@ disabled ──► button ──► sso-only
 
 - Pasar a `button` exige `issuerUrl`, `clientId` y `clientSecret`.
 - Pasar a `sso-only` exige, además, `verifiedIssuer === issuerUrl` **y** que el owner tenga
-  un vínculo de Keycloak (FR-011).
+  un vínculo con el proveedor (FR-011).
 - El comando de emergencia fuerza `sso-only → button` (FR-012a).
 - Cambiar `issuerUrl` invalida `verifiedIssuer`. Si el modo era `sso-only`, la actualización
   se rechaza: primero hay que bajar a `button`.
 
-## Tabla nueva `keycloak_auth_event`
+## Tabla nueva `oidc_sso_auth_event`
 
 | Campo | Tipo | Reglas |
 |---|---|---|
@@ -67,7 +69,7 @@ Retención: 90 días (R12).
 
 ## Entidades reutilizadas
 
-- **`account`** (vínculo de identidad, R8): `providerId = "keycloak"`, `accountId = sub`,
+- **`account`** (vínculo de identidad, R8): `providerId = "oidc"`, `accountId = sub`,
   `idToken` = último ID token (solo para el logout). `accessToken` y `refreshToken` quedan en
   `null` (NFR-SEC-007).
 - **`member`**: rol `admin` o `member` en la organización del owner, recalculado en cada

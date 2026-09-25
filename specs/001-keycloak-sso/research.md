@@ -1,14 +1,14 @@
 # Research: SSO con Keycloak para la edición free
 
-**Feature**: `001-keycloak-sso` · **Fecha**: 2026-09-25
+**Feature**: `001-oidc-sso` · **Fecha**: 2026-09-25
 
 Cada entrada sigue el formato Decision / Rationale / Alternatives considered.
 
 ## R1. Cómo se integra con la autenticación existente
 
-**Decision**: Un plugin propio de better-auth (`keycloakSso()`), en un módulo nuevo
-`packages/server/src/keycloak-sso/`, registrado junto a los demás plugins en
-`packages/server/src/lib/auth.ts`. El plugin expone sus endpoints bajo `/api/auth/keycloak/*`
+**Decision**: Un plugin propio de better-auth (`oidcSso()`), en un módulo nuevo
+`packages/server/src/oidc-sso/`, registrado junto a los demás plugins en
+`packages/server/src/lib/auth.ts`. El plugin expone sus endpoints bajo `/api/auth/oidc/*`
 y añade un hook `before` que aplica el modo SSO-only a las rutas de login locales.
 
 **Rationale**:
@@ -71,7 +71,7 @@ de vida corta.
 ## R4. Dónde se guarda la configuración y cómo se cachea
 
 **Decision**:
-- Una tabla nueva `keycloak_sso_config` de una sola fila. El secreto del cliente se cifra con
+- Una tabla nueva `oidc_sso_config` de una sola fila. El secreto del cliente se cifra con
   `encryptValue` (AES-256-GCM, `lib/encryption.ts`).
 - Encima, un proveedor de configuración que:
   1. aplica los overrides de variables de entorno, que prevalecen (FR-019);
@@ -94,18 +94,18 @@ de vida corta.
 
 ## R5. Variables de entorno
 
-**Decision**: Prefijo `KEYCLOAK_SSO_`:
+**Decision**: Prefijo `SSO_OIDC_`:
 
 | Variable | Campo |
 |---|---|
-| `KEYCLOAK_SSO_MODE` | `disabled` \| `button` \| `sso-only` |
-| `KEYCLOAK_SSO_ISSUER_URL` | URL del realm (`https://kc/realms/milpia`) |
-| `KEYCLOAK_SSO_CLIENT_ID` | ID de cliente |
-| `KEYCLOAK_SSO_CLIENT_SECRET` / `KEYCLOAK_SSO_CLIENT_SECRET_FILE` | secreto (el `_FILE` sigue el patrón de Docker secrets ya usado en `auth-secret.ts`) |
-| `KEYCLOAK_SSO_ACCESS_GROUP` | grupo de acceso |
-| `KEYCLOAK_SSO_ADMIN_GROUP` | grupo de administración |
-| `KEYCLOAK_SSO_BUTTON_LABEL` | texto del botón |
-| `KEYCLOAK_SSO_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
+| `SSO_OIDC_MODE` | `disabled` \| `button` \| `sso-only` |
+| `SSO_OIDC_ISSUER_URL` | URL del realm (`https://kc/realms/milpia`) |
+| `SSO_OIDC_CLIENT_ID` | ID de cliente |
+| `SSO_OIDC_CLIENT_SECRET` / `SSO_OIDC_CLIENT_SECRET_FILE` | secreto (el `_FILE` sigue el patrón de Docker secrets ya usado en `auth-secret.ts`) |
+| `SSO_OIDC_ACCESS_GROUP` | grupo de acceso |
+| `SSO_OIDC_ADMIN_GROUP` | grupo de administración |
+| `SSO_OIDC_BUTTON_LABEL` | texto del botón |
+| `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
 
 **Rationale**: sigue el patrón `X` / `X_FILE` del repositorio y permite que Vault inyecte el
 secreto.
@@ -182,7 +182,7 @@ logout (FR-010, NFR-SEC-007). Los tokens de acceso y de refresco no se guardan.
 ## R10. Modo SSO-only, enlaces profundos y bucles
 
 **Decision**:
-- `pages/index.tsx` (login) redirige en `getServerSideProps` a `/api/auth/keycloak/sign-in`
+- `pages/index.tsx` (login) redirige en `getServerSideProps` a `/api/auth/oidc/sign-in`
   cuando el modo es SSO-only, salvo en estos casos:
   - la URL trae `error`, para mostrar el error y el botón de reintentar (FR-016);
   - la URL trae `emergency=1`, que es la ruta de emergencia.
@@ -208,9 +208,9 @@ el `Referer` (poco fiable tras un 307).
   - rechaza siempre registro, social, passkey y reset de contraseña.
 
   El control real está en el servidor: la URL solo decide qué se muestra.
-- **Comando**: `apps/dokploy/scripts/keycloak-sso-disable-sso-only.ts`, empaquetado con
-  esbuild como `reset-password.ts`, con el script `pnpm run keycloak:disable-sso-only`. Pone
-  el modo guardado en `button` y avisa si `KEYCLOAK_SSO_MODE` lo fuerza (FR-021).
+- **Comando**: `apps/dokploy/scripts/oidc-sso-disable-sso-only.ts`, empaquetado con
+  esbuild como `reset-password.ts`, con el script `pnpm run sso:disable-sso-only`. Pone
+  el modo guardado en `button` y avisa si `SSO_OIDC_MODE` lo fuerza (FR-021).
 
 **Rationale**:
 - Mantener `/sign-in/email` conserva el 2FA del owner, en lugar de abrir una puerta paralela
@@ -220,7 +220,7 @@ el `Referer` (poco fiable tras un 307).
 ## R12. Registro de eventos
 
 **Decision**:
-- Tabla propia `keycloak_auth_event` con: id, hora, tipo, resultado, email, userId, motivo,
+- Tabla propia `oidc_sso_auth_event` con: id, hora, tipo, resultado, email, userId, motivo,
   ip, `correlationId`, más un índice por fecha.
 - Retención de 90 días, con limpieza oportunista como máximo una vez por hora en el proceso.
 - El owner la consulta en la pantalla de configuración (últimos 50 eventos).
@@ -234,7 +234,7 @@ el `Referer` (poco fiable tras un 307).
 ## R13. Rate limiting
 
 **Decision**: declarar reglas `rateLimit` en el plugin:
-- `/keycloak/*`: 20 por minuto por IP.
+- `/oidc/*`: 20 por minuto por IP.
 - `/sign-in/email` ya tiene la regla por defecto de better-auth (3 cada 10 s).
 
 better-auth aplica el rate limiting en producción por defecto, con almacenamiento en memoria.
@@ -253,16 +253,16 @@ la tabla `user` de upstream, no código propietario.
 ## R15. Pruebas y medición
 
 **Decision**:
-- **Unitarias (Vitest, `apps/dokploy/__test__/keycloak-sso/`)**: política de acceso, grupos,
+- **Unitarias (Vitest, `apps/dokploy/__test__/oidc-sso/`)**: política de acceso, grupos,
   `returnTo`, merge de configuración y variables de entorno, caché, hook de SSO-only y
   endpoints con el cliente OIDC y la BD simulados.
-- **Extremo a extremo**: un script en `apps/dokploy/__test__/keycloak-sso/e2e/` que levanta
+- **Extremo a extremo**: un script en `apps/dokploy/__test__/oidc-sso/e2e/` que levanta
   Keycloak efímero en Docker con un realm de prueba importado. Se activa con
   `KEYCLOAK_E2E=1` y se ejecuta aparte.
 - **Rendimiento**: un benchmark con `vitest bench` del hook y del procesamiento del callback,
   con la red simulada, para NFR-PERF-001/002. La prueba de carga de 50 logins se hace sobre el
   entorno e2e.
-- **Cobertura**: con `@vitest/coverage-v8` limitada a `packages/server/src/keycloak-sso/**`.
+- **Cobertura**: con `@vitest/coverage-v8` limitada a `packages/server/src/oidc-sso/**`.
 
 ## R16. Lista de comprobación de seguridad (ASVS L2 / RFC 9700)
 
@@ -272,7 +272,7 @@ la tabla `user` de upstream, no código propietario.
 | `state` contra CSRF (RFC 9700 §4.7) | Aleatorio, en la cookie firmada, se valida en `authorizationCodeGrant` |
 | `nonce` y validación del ID token (OIDC Core §3.1.3.7) | `expectedNonce`, firma, `iss`, `aud`, `exp`, `iat` validados por la librería |
 | Sin implicit ni ROPC (RFC 9700 §2.1.2, §2.4) | Solo `response_type=code` |
-| Redirect URI exacta (RFC 9700 §4.1) | URI fija `…/api/auth/keycloak/callback`; la guía exige coincidencia exacta en Keycloak |
+| Redirect URI exacta (RFC 9700 §4.1) | URI fija `…/api/auth/oidc/callback`; la guía exige coincidencia exacta en Keycloak |
 | Open redirect (ASVS 5.1.5) | `sanitizeReturnTo`: solo rutas relativas que empiezan por `/` y no por `//` ni `/\`, sin esquema |
 | Sesión nueva tras login (ASVS 3.2.1) | `internalAdapter.createSession` emite un token nuevo |
 | Cookies (ASVS 3.4) | Sesión: política de upstream sin cambios (`HttpOnly`, `SameSite=Lax`; en self-hosted upstream fija `secure:false`, se documenta como riesgo heredado). Cookie de transacción: `HttpOnly`, `SameSite=Lax`, firmada, `Secure` si la petición es HTTPS |
@@ -282,3 +282,38 @@ la tabla `user` de upstream, no código propietario.
 | Registro de eventos de seguridad (ASVS 7.2) | R12 |
 | TLS (ASVS 9.2.1) | HTTPS obligatorio salvo el flag explícito de desarrollo, con aviso en la interfaz |
 | Autorización en el servidor (ASVS 4.1.1) | Endpoints de configuración solo para el owner; política de acceso en el servidor |
+
+## R17. Varios proveedores OIDC (FR-022 a FR-025)
+
+**Decision**: nada de código específico por proveedor. Las diferencias reales se cubren con
+configuración y con presets en la interfaz:
+
+| Proveedor | Claim de grupos | Scope extra | Logout del proveedor |
+|---|---|---|---|
+| Keycloak | `groups` (mapper Group Membership o client scope `groups`) | — | sí |
+| Okta | `groups` (claim del authorization server) | `groups` | sí |
+| Authentik | `groups` (scope `profile` por defecto) | — | sí |
+| Zitadel | `urn:zitadel:iam:org:project:roles` (objeto con los roles como claves) | `urn:zitadel:iam:org:projects:roles` | sí |
+| Authelia | `groups` | `groups` | **no** |
+
+- El claim de grupos admite lista, texto u objeto (de un objeto se usan sus claves). Así Zitadel
+  funciona sin adaptador propio.
+- Scopes adicionales configurables y validados (RFC 6749 §3.3). El scope base
+  `openid email profile` no se puede quitar.
+- Sin `end_session_endpoint`, el logout en SSO-only lleva a `/?signed_out=1`, que no redirige.
+  Si no, `/` volvería a iniciar sesión en silencio.
+- Los grupos de acceso y de administración admiten listas separadas por comas. La infraestructura
+  de Milpia, por ejemplo, reutiliza sus grupos `admins` y `leads` en vez de crear grupos por
+  servicio.
+- La verificación de email sigue siendo estricta: los cinco proveedores envían `email_verified`.
+
+**Alternatives considered**: un adaptador por proveedor (más código y más superficie sin ganar
+funcionalidad), o detectar el proveedor por el documento de discovery (frágil, porque los nombres de
+issuer no siguen ningún estándar).
+
+## R18. Nombres genéricos
+
+**Decision**: el módulo es `oidc-sso`, con las tablas `oidc_sso_*`, las variables `SSO_OIDC_*`, los
+endpoints `/api/auth/oidc/*`, los códigos de error `sso_*` y el comando `sso:disable-sso-only`.
+Keycloak queda como preset por defecto. La carpeta de la spec conserva su identificador
+(`001-keycloak-sso`) para no romper la trazabilidad.

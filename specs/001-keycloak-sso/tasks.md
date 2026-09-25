@@ -1,10 +1,10 @@
 ---
-description: "Task list for 001-keycloak-sso"
+description: "Task list for 001-oidc-sso"
 ---
 
 # Tasks: SSO con Keycloak para la edición free
 
-**Input**: Design documents from `/specs/001-keycloak-sso/`
+**Input**: Design documents from `/specs/001-oidc-sso/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
@@ -19,7 +19,7 @@ fallar primero.
 - **[P]**: se puede hacer en paralelo (archivos distintos, sin dependencias pendientes).
 - **[Story]**: US1–US4 según spec.md.
 - Rutas relativas a la raíz del repositorio. Las pruebas viven en
-  `apps/dokploy/__test__/keycloak-sso/`; el dominio, en `packages/server/src/keycloak-sso/`.
+  `apps/dokploy/__test__/oidc-sso/`; el dominio, en `packages/server/src/oidc-sso/`.
 
 ---
 
@@ -28,8 +28,8 @@ fallar primero.
 **Purpose**: Dependencias y esqueleto del módulo.
 
 - [X] T001 Add `openid-client` ^6 to `packages/server/package.json` and `apps/dokploy/package.json` dependencies and update `pnpm-lock.yaml` with `pnpm install` (research R2)
-- [X] T002 [P] Add `@vitest/coverage-v8` (same major as vitest 4) to `apps/dokploy/package.json` devDependencies and a `coverage` block in `apps/dokploy/__test__/vitest.config.ts` limited to `packages/server/src/keycloak-sso/**` with thresholds lines 90 / branches 85 (NFR-QA-001)
-- [X] T003 [P] Create the module skeleton `packages/server/src/keycloak-sso/index.ts` and domain types in `packages/server/src/keycloak-sso/types.ts`: `SsoMode = "disabled" | "button" | "sso-only"` (FR-002), `Role = "admin" | "member"`, `DenyReason`, `LoginErrorCode` (`keycloak_cancelled`, `keycloak_invalid_response`, `keycloak_email_unverified`, `keycloak_access_denied`, `keycloak_unavailable`, `keycloak_clock_skew`), `AuthEventType`, `AuthEventOutcome` (data-model.md, contracts/http-endpoints.md)
+- [X] T002 [P] Add `@vitest/coverage-v8` (same major as vitest 4) to `apps/dokploy/package.json` devDependencies and a `coverage` block in `apps/dokploy/__test__/vitest.config.ts` limited to `packages/server/src/oidc-sso/**` with thresholds lines 90 / branches 85 (NFR-QA-001)
+- [X] T003 [P] Create the module skeleton `packages/server/src/oidc-sso/index.ts` and domain types in `packages/server/src/oidc-sso/types.ts`: `SsoMode = "disabled" | "button" | "sso-only"` (FR-002), `Role = "admin" | "member"`, `DenyReason`, `LoginErrorCode` (`sso_cancelled`, `sso_invalid_response`, `sso_email_unverified`, `sso_access_denied`, `sso_unavailable`, `sso_clock_skew`), `AuthEventType`, `AuthEventOutcome` (data-model.md, contracts/http-endpoints.md)
 
 ---
 
@@ -40,40 +40,40 @@ comparten todas las stories.
 
 **⚠️ CRITICAL**: Ninguna story empieza hasta completar esta fase.
 
-- [X] T004 Create Drizzle tables in `packages/server/src/db/schema/keycloak-sso.ts`:
-  - `keycloak_sso_config`: `mode` text default `disabled`; nullable `issuerUrl`, `clientId`, `clientSecret`, `accessGroup`, `adminGroup`; `buttonLabel` default `Sign in with Keycloak`; `allowInsecureHttp` boolean default false; `verifiedIssuer` and `verifiedAt` nullable; timestamps.
-  - `keycloak_auth_event`: `type`, `outcome`, `reason`, `email`, `userId` (no FK), `ip`, `correlationId`, `createdAt`, with an index on `createdAt`.
+- [X] T004 Create Drizzle tables in `packages/server/src/db/schema/oidc-sso.ts`:
+  - `oidc_sso_config`: `mode` text default `disabled`; nullable `issuerUrl`, `clientId`, `clientSecret`, `accessGroup`, `adminGroup`; `buttonLabel` default `Sign in with Keycloak`; `allowInsecureHttp` boolean default false; `verifiedIssuer` and `verifiedAt` nullable; timestamps.
+  - `oidc_sso_auth_event`: `type`, `outcome`, `reason`, `email`, `userId` (no FK), `ip`, `correlationId`, `createdAt`, with an index on `createdAt`.
   - Export it from `packages/server/src/db/schema/index.ts`.
 - [X] T005 Generate the additive migration with `pnpm --filter=dokploy run migration:generate` into `apps/dokploy/drizzle/` and verify it only contains `CREATE TABLE`/`CREATE INDEX` statements
-- [X] T006 [P] Write failing tests for env parsing in `apps/dokploy/__test__/keycloak-sso/config-env.test.ts`: every `KEYCLOAK_SSO_*` variable, `_FILE` secret, empty values treated as unset, invalid mode ignored (contracts/cli-and-env.md) [FR-019]
-- [X] T007 [P] Implement `readEnvOverrides()` in `packages/server/src/keycloak-sso/config/env.ts` to pass T006 [FR-019]
-- [X] T008 [P] Write failing tests for pure domain rules in `apps/dokploy/__test__/keycloak-sso/access-policy.test.ts` (all R7 rules, incl. owner exemption, banned, no access group → provisioning disabled, admin group absent → role unchanged), `claims.test.ts` (group normalisation `/a/b` vs `b`, missing email, `email_verified` not true), `return-to.test.ts` (reject `//evil`, `/\\evil`, `https://`, `javascript:`, encoded variants, non-string; default `/dashboard/home`), `mode-transition.test.ts` (data-model transitions)
-- [X] T009 [P] Implement `decideAccess` in `packages/server/src/keycloak-sso/domain/access-policy.ts` (FR-006, FR-007, FR-007a, FR-008, FR-008b)
-- [X] T010 [P] Implement `extractIdentity` and `isInGroup` in `packages/server/src/keycloak-sso/domain/claims.ts` (research R6)
-- [X] T011 [P] Implement `sanitizeReturnTo` in `packages/server/src/keycloak-sso/domain/return-to.ts` (NFR-SEC-003)
-- [X] T012 [P] Implement `canTransitionMode` in `packages/server/src/keycloak-sso/domain/mode-transition.ts` (FR-002, FR-011, data-model transitions)
-- [X] T013 Implement `ConfigRepository` in `packages/server/src/keycloak-sso/config/repository.ts`: single-row get/upsert, secret encrypted with `encryptValue`/`decryptValue` from `packages/server/src/lib/encryption.ts`, never returning the plaintext outside the module (FR-015)
-- [X] T014 Write failing tests in `apps/dokploy/__test__/keycloak-sso/config-provider.test.ts` [FR-017, FR-018, FR-019, FR-020]:
+- [X] T006 [P] Write failing tests for env parsing in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`: every `SSO_OIDC_*` variable, `_FILE` secret, empty values treated as unset, invalid mode ignored (contracts/cli-and-env.md) [FR-019]
+- [X] T007 [P] Implement `readEnvOverrides()` in `packages/server/src/oidc-sso/config/env.ts` to pass T006 [FR-019]
+- [X] T008 [P] Write failing tests for pure domain rules in `apps/dokploy/__test__/oidc-sso/access-policy.test.ts` (all R7 rules, incl. owner exemption, banned, no access group → provisioning disabled, admin group absent → role unchanged), `claims.test.ts` (group normalisation `/a/b` vs `b`, missing email, `email_verified` not true), `return-to.test.ts` (reject `//evil`, `/\\evil`, `https://`, `javascript:`, encoded variants, non-string; default `/dashboard/home`), `mode-transition.test.ts` (data-model transitions)
+- [X] T009 [P] Implement `decideAccess` in `packages/server/src/oidc-sso/domain/access-policy.ts` (FR-006, FR-007, FR-007a, FR-008, FR-008b)
+- [X] T010 [P] Implement `extractIdentity` and `isInGroup` in `packages/server/src/oidc-sso/domain/claims.ts` (research R6)
+- [X] T011 [P] Implement `sanitizeReturnTo` in `packages/server/src/oidc-sso/domain/return-to.ts` (NFR-SEC-003)
+- [X] T012 [P] Implement `canTransitionMode` in `packages/server/src/oidc-sso/domain/mode-transition.ts` (FR-002, FR-011, data-model transitions)
+- [X] T013 Implement `ConfigRepository` in `packages/server/src/oidc-sso/config/repository.ts`: single-row get/upsert, secret encrypted with `encryptValue`/`decryptValue` from `packages/server/src/lib/encryption.ts`, never returning the plaintext outside the module (FR-015)
+- [X] T014 Write failing tests in `apps/dokploy/__test__/oidc-sso/config-provider.test.ts` [FR-017, FR-018, FR-019, FR-020]:
   - env precedence and `sources` map (FR-019/020);
   - `active` false for incomplete, cloud or enterprise (R14);
   - env `sso-only` without verification degrades to `button`;
   - 5 s TTL and immediate `invalidate()` (NFR-PERF-005);
   - one DB read for N concurrent calls.
-- [X] T015 Implement `KeycloakConfigProvider` in `packages/server/src/keycloak-sso/config/provider.ts` to pass T014
-- [X] T016 [P] Write failing tests in `apps/dokploy/__test__/keycloak-sso/oidc-client.test.ts`:
+- [X] T015 Implement `SsoConfigProvider` in `packages/server/src/oidc-sso/config/provider.ts` to pass T014
+- [X] T016 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts`:
   - client cached per config fingerprint;
-  - 5 s timeout mapped to `keycloak_unavailable` (NFR-PERF-004);
+  - 5 s timeout mapped to `sso_unavailable` (NFR-PERF-004);
   - `allowInsecureHttp` required for `http:` (NFR-SEC-004);
   - error mapping for state mismatch, invalid ID token and clock skew.
-- [X] T017 Implement `OidcClient` port and `openid-client` adapter in `packages/server/src/keycloak-sso/oidc/client.ts`. It covers:
+- [X] T017 Implement `OidcClient` port and `openid-client` adapter in `packages/server/src/oidc-sso/oidc/client.ts`. It covers:
   - discovery;
   - `buildAuthorizationUrl` with S256 PKCE, `state` and `nonce`;
   - `exchangeCode` via `authorizationCodeGrant` with expected state, nonce and ID token;
   - userinfo fallback for groups;
   - `buildEndSessionUrl`;
   - `testCredentials`.
-- [X] T018 [P] Implement `AuthEventRecorder` in `packages/server/src/keycloak-sso/events/auth-events.ts`: `record()` never throws (logs on failure), `listRecent(limit)`, 90-day retention pruning at most once per hour (research R12, FR-013)
-- [X] T019 Export the module's public API from `packages/server/src/keycloak-sso/index.ts` and `packages/server/src/index.ts`
+- [X] T018 [P] Implement `AuthEventRecorder` in `packages/server/src/oidc-sso/events/auth-events.ts`: `record()` never throws (logs on failure), `listRecent(limit)`, 90-day retention pruning at most once per hour (research R12, FR-013)
+- [X] T019 Export the module's public API from `packages/server/src/oidc-sso/index.ts` and `packages/server/src/index.ts`
 
 **Checkpoint**: dominio, configuración y adaptadores listos y probados.
 
@@ -89,7 +89,7 @@ quickstart §2, pasos 5–8.
 
 ### Tests for User Story 1 ⚠️ (escribir primero, deben fallar)
 
-- [X] T020 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/provisioning.test.ts` [FR-006, FR-007, FR-008]:
+- [X] T020 [P] [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/provisioning.test.ts` [FR-006, FR-007, FR-008]:
   - link by `sub`;
   - link by verified email when not yet linked;
   - existing non-owner outside the access group denied (FR-007b);
@@ -98,7 +98,7 @@ quickstart §2, pasos 5–8.
   - role recalculated per login;
   - owner row never modified;
   - no owner → `no_owner`.
-- [X] T021 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/endpoints.test.ts` with fake `OidcClient` and fake provisioning [FR-005, FR-016]:
+- [X] T021 [P] [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/endpoints.test.ts` with fake `OidcClient` and fake provisioning [FR-005, FR-016]:
   - `sign-in` sets the signed tx cookie (HttpOnly, SameSite=Lax, 600 s) and redirects to the authorization URL;
   - `callback` maps every error to `/?error=<code>&ref=<id>`;
   - `callback` clears the tx cookie always;
@@ -107,14 +107,14 @@ quickstart §2, pasos 5–8.
 
 ### Implementation for User Story 1
 
-- [X] T022 [US1] Implement `provisionIdentity()` in `packages/server/src/keycloak-sso/identity/provisioning.ts` to pass T020: a Drizzle transaction over `user`, `account` (`providerId = "keycloak"`, `accountId = sub`, `idToken` only) and `member` in the owner's organization (research R8, R9, FR-006, FR-007, FR-008a)
-- [X] T023 [US1] Implement the `sign-in` and `callback` endpoints in `packages/server/src/keycloak-sso/plugin/endpoints.ts` using `createAuthEndpoint`, signed cookie `keycloak_sso_tx`, `internalAdapter.createSession` and `setSessionCookie`; record `sso_login` events with `correlationId` (contracts/http-endpoints.md, NFR-SEC-001/002/005/007, NFR-QA-004) [FR-005]
-- [X] T024 [US1] Implement `keycloakSso()` in `packages/server/src/keycloak-sso/plugin/index.ts` (endpoints plus `rateLimit` rule for `/keycloak/*` of 20 per 60 s) and register it in `packages/server/src/lib/auth.ts` plugins (NFR-SEC-006) [FR-005, FR-017]
-- [X] T025 [US1] Implement `keycloakSso.publicConfig` in `apps/dokploy/server/api/routers/keycloak-sso.ts` and register the router in `apps/dokploy/server/api/root.ts` (contracts/trpc-keycloak-sso.md) [FR-003]
-- [X] T026 [P] [US1] Create `apps/dokploy/components/auth/sign-in-with-keycloak.tsx`: an outline button with the configured label linking to `/api/auth/keycloak/sign-in` (with `returnTo` when present) (FR-003)
+- [X] T022 [US1] Implement `provisionIdentity()` in `packages/server/src/oidc-sso/identity/provisioning.ts` to pass T020: a Drizzle transaction over `user`, `account` (`providerId = "keycloak"`, `accountId = sub`, `idToken` only) and `member` in the owner's organization (research R8, R9, FR-006, FR-007, FR-008a)
+- [X] T023 [US1] Implement the `sign-in` and `callback` endpoints in `packages/server/src/oidc-sso/plugin/endpoints.ts` using `createAuthEndpoint`, signed cookie `oidc_sso_tx`, `internalAdapter.createSession` and `setSessionCookie`; record `sso_login` events with `correlationId` (contracts/http-endpoints.md, NFR-SEC-001/002/005/007, NFR-QA-004) [FR-005]
+- [X] T024 [US1] Implement `oidcSso()` in `packages/server/src/oidc-sso/plugin/index.ts` (endpoints plus `rateLimit` rule for `/oidc/*` of 20 per 60 s) and register it in `packages/server/src/lib/auth.ts` plugins (NFR-SEC-006) [FR-005, FR-017]
+- [X] T025 [US1] Implement `oidcSso.publicConfig` in `apps/dokploy/server/api/routers/oidc-sso.ts` and register the router in `apps/dokploy/server/api/root.ts` (contracts/trpc-oidc-sso.md) [FR-003]
+- [X] T026 [P] [US1] Create `apps/dokploy/components/auth/sign-in-with-sso.tsx`: an outline button with the configured label linking to `/api/auth/oidc/sign-in` (with `returnTo` when present) (FR-003)
 - [X] T027 [US1] Update `apps/dokploy/pages/index.tsx` [FR-003, FR-016]:
-  - prefetch `keycloakSso.publicConfig`;
-  - render `SignInWithKeycloak` above the local form in `button` mode;
+  - prefetch `oidcSso.publicConfig`;
+  - render `SignInWithSso` above the local form in `button` mode;
   - map `keycloak_*` error codes to clear messages that show the `ref` (acceptance US1-5, NFR-QA-004).
 - [X] T028 [US1] Run the US1 unit tests and `pnpm typecheck` for `packages/server` and `apps/dokploy`, and fix any failures [FR-005]
 
@@ -131,7 +131,7 @@ los valores que vienen del entorno aparecen bloqueados.
 
 ### Tests for User Story 3 ⚠️
 
-- [X] T029 [P] [US3] Write failing tests in `apps/dokploy/__test__/keycloak-sso/router.test.ts` [FR-011, FR-015, FR-020]:
+- [X] T029 [P] [US3] Write failing tests in `apps/dokploy/__test__/oidc-sso/router.test.ts` [FR-011, FR-015, FR-020]:
   - non-owner gets `FORBIDDEN`;
   - `get` never returns the secret, only `hasClientSecret`;
   - `update` rejects env-sourced fields, `http:` without the flag, incomplete configuration for `button`/`sso-only`, `sso-only` without verification, and an `issuerUrl` change while in `sso-only`;
@@ -140,9 +140,9 @@ los valores que vienen del entorno aparecen bloqueados.
 
 ### Implementation for User Story 3
 
-- [X] T030 [US3] Implement the `get`, `update`, `testConnection` and `listEvents` owner-only procedures in `apps/dokploy/server/api/routers/keycloak-sso.ts` using a shared `ownerProcedure` guard (`ctx.user.role === "owner"`) and `IS_CLOUD` → `NOT_FOUND` (FR-001, FR-014, FR-015, FR-018, FR-020)
-- [X] T031 [US3] Record the owner's successful Keycloak login as verification (`verifiedIssuer`, `verifiedAt`) inside the callback flow in `packages/server/src/keycloak-sso/plugin/endpoints.ts` (FR-011)
-- [X] T032 [P] [US3] Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx` [FR-008, FR-014, FR-015, FR-020]:
+- [X] T030 [US3] Implement the `get`, `update`, `testConnection` and `listEvents` owner-only procedures in `apps/dokploy/server/api/routers/oidc-sso.ts` using a shared `ownerProcedure` guard (`ctx.user.role === "owner"`) and `IS_CLOUD` → `NOT_FOUND` (FR-001, FR-014, FR-015, FR-018, FR-020)
+- [X] T031 [US3] Record the owner's successful Keycloak login as verification (`verifiedIssuer`, `verifiedAt`) inside the callback flow in `packages/server/src/oidc-sso/plugin/endpoints.ts` (FR-011)
+- [X] T032 [P] [US3] Create `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` [FR-008, FR-014, FR-015, FR-020]:
   - form built with react-hook-form and zod;
   - a secret field that is write-only;
   - the callback URL with a copy button;
@@ -151,8 +151,8 @@ los valores que vienen del entorno aparecen bloqueados.
   - env-sourced fields disabled with a "from environment" badge;
   - a role-overwrite warning (FR-008c);
   - a "Test connection" action.
-- [X] T033 [P] [US3] Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx` listing the last 50 events [FR-013]
-- [X] T034 [US3] Create the page `apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx` (owner only, not cloud, same `getServerSideProps` guard pattern as other settings pages) and add the sidebar entry in `apps/dokploy/components/layouts/side.tsx` [FR-001]
+- [X] T033 [P] [US3] Create `apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx` listing the last 50 events [FR-013]
+- [X] T034 [US3] Create the page `apps/dokploy/pages/dashboard/settings/oidc-sso.tsx` (owner only, not cloud, same `getServerSideProps` guard pattern as other settings pages) and add the sidebar entry in `apps/dokploy/components/layouts/side.tsx` [FR-001]
 
 **Checkpoint**: US1 + US3 = MVP completo y configurable.
 
@@ -167,23 +167,23 @@ local queda cerrado; el logout cierra también la sesión de Keycloak.
 
 ### Tests for User Story 2 ⚠️
 
-- [X] T035 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts` [FR-009, FR-012]:
+- [X] T035 [P] [US2] Write failing tests in `apps/dokploy/__test__/oidc-sso/sso-only-guard.test.ts` [FR-009, FR-012]:
   - in `sso-only`, block sign-up (including invitation acceptance), social, passkey and password-reset paths with 403;
   - allow `/sign-in/email` only for the owner's email (case-insensitive);
   - in `button`/`disabled`, never interfere (FR-009).
-- [X] T036 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sign-out.test.ts` [FR-010]:
+- [X] T036 [P] [US2] Write failing tests in `apps/dokploy/__test__/oidc-sso/sign-out.test.ts` [FR-010]:
   - `sso-only` redirects to the end-session URL with `id_token_hint`, `client_id` and `post_logout_redirect_uri`;
   - `button` redirects to `/`;
   - the local session is always deleted (FR-010).
-- [X] T037 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/proxy.test.ts`: `/dashboard/*` without a session cookie redirects to `/?returnTo=<path+query>`; with a cookie it passes through; other paths pass through. [FR-004]
+- [X] T037 [P] [US2] Write failing tests in `apps/dokploy/__test__/oidc-sso/proxy.test.ts`: `/dashboard/*` without a session cookie redirects to `/?returnTo=<path+query>`; with a cookie it passes through; other paths pass through. [FR-004]
 
 ### Implementation for User Story 2
 
-- [X] T038 [US2] Implement the SSO-only guard (`hooks.before`) in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts` and wire it in the plugin (FR-009, FR-012)
-- [X] T039 [US2] Implement the `sign-out` endpoint in `packages/server/src/keycloak-sso/plugin/endpoints.ts` (FR-010)
+- [X] T038 [US2] Implement the SSO-only guard (`hooks.before`) in `packages/server/src/oidc-sso/plugin/sso-only-guard.ts` and wire it in the plugin (FR-009, FR-012)
+- [X] T039 [US2] Implement the `sign-out` endpoint in `packages/server/src/oidc-sso/plugin/endpoints.ts` (FR-010)
 - [X] T040 [US2] Create `apps/dokploy/proxy.ts` with matcher `/dashboard/:path*` using `getSessionCookie` from `better-auth/cookies` (research R10) [FR-004]
-- [X] T041 [US2] Update `getServerSideProps` in `apps/dokploy/pages/index.tsx`: in `sso-only` without session, `error` or `emergency`, redirect to `/api/auth/keycloak/sign-in?returnTo=<sanitised>`; when `error` is present, render the error with a "Retry" link instead of redirecting (FR-004, FR-016)
-- [X] T042 [US2] Update logout in `apps/dokploy/components/layouts/user-nav.tsx`: when `publicConfig.mode === "sso-only"`, navigate to `/api/auth/keycloak/sign-out` instead of `authClient.signOut()` [FR-010]
+- [X] T041 [US2] Update `getServerSideProps` in `apps/dokploy/pages/index.tsx`: in `sso-only` without session, `error` or `emergency`, redirect to `/api/auth/oidc/sign-in?returnTo=<sanitised>`; when `error` is present, render the error with a "Retry" link instead of redirecting (FR-004, FR-016)
+- [X] T042 [US2] Update logout in `apps/dokploy/components/layouts/user-nav.tsx`: when `publicConfig.mode === "sso-only"`, navigate to `/api/auth/oidc/sign-out` instead of `authClient.signOut()` [FR-010]
 
 **Checkpoint**: US2 funciona sin romper US1 y US3.
 
@@ -198,14 +198,14 @@ registrados.
 
 ### Tests for User Story 4 ⚠️
 
-- [X] T043 [P] [US4] Write failing tests in `apps/dokploy/__test__/keycloak-sso/emergency.test.ts` [FR-012, FR-013, FR-021]:
+- [X] T043 [P] [US4] Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency.test.ts` [FR-012, FR-013, FR-021]:
   - `emergency_login` events for accepted and rejected attempts (`hooks.after` outcome);
-  - the disable command switches `sso-only` → `button`, reports "nothing to do", and exits 2 with a warning when `KEYCLOAK_SSO_MODE=sso-only` (contracts/cli-and-env.md, FR-012a, FR-021).
+  - the disable command switches `sso-only` → `button`, reports "nothing to do", and exits 2 with a warning when `SSO_OIDC_MODE=sso-only` (contracts/cli-and-env.md, FR-012a, FR-021).
 
 ### Implementation for User Story 4
 
-- [X] T044 [US4] Add `hooks.after` on `/sign-in/email` in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts` to record owner emergency logins (FR-013)
-- [X] T045 [US4] Implement `disableSsoOnlyMode()` in `packages/server/src/keycloak-sso/config/provider.ts` and the CLI in `apps/dokploy/scripts/keycloak-sso-disable-sso-only.ts`; add the esbuild entry in `apps/dokploy/esbuild.config.ts` and the `keycloak:disable-sso-only` script in `apps/dokploy/package.json` (FR-012a) [FR-012, FR-021]
+- [X] T044 [US4] Add `hooks.after` on `/sign-in/email` in `packages/server/src/oidc-sso/plugin/sso-only-guard.ts` to record owner emergency logins (FR-013)
+- [X] T045 [US4] Implement `disableSsoOnlyMode()` in `packages/server/src/oidc-sso/config/provider.ts` and the CLI in `apps/dokploy/scripts/oidc-sso-disable-sso-only.ts`; add the esbuild entry in `apps/dokploy/esbuild.config.ts` and the `sso:disable-sso-only` script in `apps/dokploy/package.json` (FR-012a) [FR-012, FR-021]
 - [X] T046 [US4] Show the emergency banner ("Emergency access — only the instance owner can sign in here") on `/?emergency=1` in `apps/dokploy/pages/index.tsx` (FR-012)
 
 **Checkpoint**: todas las stories funcionan.
@@ -214,12 +214,12 @@ registrados.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [X] T047 [P] Add a benchmark in `apps/dokploy/__test__/keycloak-sso/performance.bench.ts` for the guard hook with the SSO disabled (target ≤ 5 ms p95, NFR-PERF-001), for callback processing with a fake OIDC (target ≤ 300 ms p95, NFR-PERF-002), and a baseline comparison of an auth request with and without the plugin registered (≤ 2 % regression, SC-009)
-- [X] T048 [P] Add the e2e realm `apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json` and the opt-in e2e suite `apps/dokploy/__test__/keycloak-sso/e2e/keycloak.e2e.test.ts`, gated by `KEYCLOAK_E2E=1`, covering the acceptance scenarios, time-to-dashboard with an existing Keycloak session under 5 s (SC-001) and 50 concurrent logins (NFR-QA-002, NFR-PERF-006, SC-008)
-- [X] T049 [P] Write the operator guide in `specs/001-keycloak-sso/operations.md`: Keycloak client, redirect URI, Group Membership mapper, env vars, emergency procedures (NFR-QA-005)
+- [X] T047 [P] Add a benchmark in `apps/dokploy/__test__/oidc-sso/performance.bench.ts` for the guard hook with the SSO disabled (target ≤ 5 ms p95, NFR-PERF-001), for callback processing with a fake OIDC (target ≤ 300 ms p95, NFR-PERF-002), and a baseline comparison of an auth request with and without the plugin registered (≤ 2 % regression, SC-009)
+- [X] T048 [P] Add the e2e realm `apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json` and the opt-in e2e suite `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`, gated by `KEYCLOAK_E2E=1`, covering the acceptance scenarios, time-to-dashboard with an existing Keycloak session under 5 s (SC-001) and 50 concurrent logins (NFR-QA-002, NFR-PERF-006, SC-008)
+- [X] T049 [P] Write the operator guide in `specs/001-oidc-sso/operations.md`: Keycloak client, redirect URI, Group Membership mapper, env vars, emergency procedures (NFR-QA-005)
 - [X] T050 Run `pnpm format-and-lint`, `pnpm typecheck`, the full `pnpm test`, coverage for the module and `pnpm audit --prod` for high/critical advisories on new or changed dependencies, and fix issues (NFR-QA-001, NFR-QA-003, NFR-SEC-009)
 - [X] T051 Run a security review of the branch diff (`/security-review` equivalent) against research R16 and fix findings (NFR-SEC-008/009, SC-007) [FR-017]
-- [X] T052 Update `specs/001-keycloak-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping (local only, `jira: null` until `/sdd-sync`) [FR-013]
+- [X] T052 Update `specs/001-oidc-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping (local only, `jira: null` until `/sdd-sync`) [FR-013]
 
 ---
 
@@ -229,14 +229,14 @@ registrados.
 
 **Independent Test**: pruebas de claims con los formatos de cada proveedor; logout en SSO-only con un proveedor sin `end_session_endpoint`; la interfaz ofrece los presets.
 
-- [ ] T053 Rename the feature to generic OIDC naming (FR-022): module `packages/server/src/oidc-sso/`, tables `oidc_sso_config`/`oidc_sso_auth_event` (regenerated migration), endpoints `/api/auth/oidc/*`, env vars `SSO_OIDC_*`, error codes `sso_*`, tRPC router `oidcSso`, page `/dashboard/settings/oidc-sso`, command `sso:disable-sso-only`, tests in `apps/dokploy/__test__/oidc-sso/`
-- [ ] T054 [P] Write failing tests for groups claim formats in `apps/dokploy/__test__/oidc-sso/claims.test.ts`: configurable claim name, list, single string, Zitadel role object (keys), missing claim [FR-023]
-- [ ] T055 Implement the configurable groups claim end to end: `groupsClaim` column (default `groups`), `SSO_OIDC_GROUPS_CLAIM`, `extractIdentity(claims, groupsClaim)`, userinfo fallback on the configured claim in `packages/server/src/oidc-sso/oidc/client.ts` [FR-023]
-- [ ] T055a Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`, RFC 6749 scope validation, appended to `openid email profile` in the authorization request [FR-023a]
-- [ ] T056 Write failing tests and implement the signed-out screen: sign-out in sso-only without an end-session URL returns `/?signed_out=1`, and the login page does not auto-redirect on it, in `packages/server/src/oidc-sso/plugin/login-flow.ts` and `apps/dokploy/pages/index.tsx` [FR-025]
-- [ ] T057 [P] Add provider presets (Keycloak, Okta, Authentik, Zitadel, Authelia, generic) to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` and make all user-facing copy provider-neutral [FR-024]
-- [ ] T058 [P] Update `specs/001-keycloak-sso/operations.md` with per-provider setup (client, redirect URI, groups/roles claim, logout support) [FR-022]
-- [ ] T059 Update plan, research, data model, contracts and quickstart to the generic naming, re-run lint, typecheck, tests, coverage and traceability [FR-022]
+- [X] T053 Rename the feature to generic OIDC naming (FR-022): module `packages/server/src/oidc-sso/`, tables `oidc_sso_config`/`oidc_sso_auth_event` (regenerated migration), endpoints `/api/auth/oidc/*`, env vars `SSO_OIDC_*`, error codes `sso_*`, tRPC router `oidcSso`, page `/dashboard/settings/oidc-sso`, command `sso:disable-sso-only`, tests in `apps/dokploy/__test__/oidc-sso/`
+- [X] T054 [P] Write failing tests for groups claim formats in `apps/dokploy/__test__/oidc-sso/claims.test.ts`: configurable claim name, list, single string, Zitadel role object (keys), missing claim [FR-023]
+- [X] T055 Implement the configurable groups claim end to end: `groupsClaim` column (default `groups`), `SSO_OIDC_GROUPS_CLAIM`, `extractIdentity(claims, groupsClaim)`, userinfo fallback on the configured claim in `packages/server/src/oidc-sso/oidc/client.ts` [FR-023]
+- [X] T055a Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`, RFC 6749 scope validation, appended to `openid email profile` in the authorization request [FR-023a]
+- [X] T056 Write failing tests and implement the signed-out screen: sign-out in sso-only without an end-session URL returns `/?signed_out=1`, and the login page does not auto-redirect on it, in `packages/server/src/oidc-sso/plugin/login-flow.ts` and `apps/dokploy/pages/index.tsx` [FR-025]
+- [X] T057 [P] Add provider presets (Keycloak, Okta, Authentik, Zitadel, Authelia, generic) to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` and make all user-facing copy provider-neutral [FR-024]
+- [X] T058 [P] Update `specs/001-oidc-sso/operations.md` with per-provider setup (client, redirect URI, groups/roles claim, logout support) [FR-022]
+- [X] T059 Update plan, research, data model, contracts and quickstart to the generic naming, re-run lint, typecheck, tests, coverage and traceability [FR-022]
 
 ---
 
@@ -267,9 +267,9 @@ implementación.
 ## Parallel Example: User Story 1
 
 ```bash
-Task: "T020 provisioning tests in apps/dokploy/__test__/keycloak-sso/provisioning.test.ts"
-Task: "T021 endpoint tests in apps/dokploy/__test__/keycloak-sso/endpoints.test.ts"
-Task: "T026 SignInWithKeycloak button in apps/dokploy/components/auth/sign-in-with-keycloak.tsx"
+Task: "T020 provisioning tests in apps/dokploy/__test__/oidc-sso/provisioning.test.ts"
+Task: "T021 endpoint tests in apps/dokploy/__test__/oidc-sso/endpoints.test.ts"
+Task: "T026 SignInWithSso button in apps/dokploy/components/auth/sign-in-with-sso.tsx"
 ```
 
 ## Implementation Strategy
@@ -290,7 +290,7 @@ configurarlo desde la interfaz.
 
 - Cada prueba cita en su nombre (`it("FR-007: ...")`) o en un comentario el requisito que cubre (principio IV).
 
-- Commits por task o grupo lógico, con trailers `Spec: 001-keycloak-sso`, `Requirement:` y
+- Commits por task o grupo lógico, con trailers `Spec: 001-oidc-sso`, `Requirement:` y
   `Task:`. El trailer `Jira:` se omite hasta que `/sdd-sync` cree las claves reales: poner
   claves inventadas rompería la detección de Jira. `traceability.yaml` lleva `jira: null`
   mientras tanto.
