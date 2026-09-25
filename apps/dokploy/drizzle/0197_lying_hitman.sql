@@ -19,6 +19,7 @@ CREATE TABLE "oidc_sso_config" (
 	"access_group" text,
 	"admin_group" text,
 	"groups_claim" text DEFAULT 'groups' NOT NULL,
+	"extra_scopes" text DEFAULT '' NOT NULL,
 	"button_label" text DEFAULT 'Sign in with SSO' NOT NULL,
 	"allow_insecure_http" boolean DEFAULT false NOT NULL,
 	"verified_issuer" text,

@@ -15,6 +15,8 @@ export const oidcSsoConfig = pgTable("oidc_sso_config", {
 	accessGroup: text("access_group"),
 	adminGroup: text("admin_group"),
 	groupsClaim: text("groups_claim").notNull().default("groups"),
+	// Space-separated, appended to "openid email profile".
+	extraScopes: text("extra_scopes").notNull().default(""),
 	buttonLabel: text("button_label").notNull().default("Sign in with SSO"),
 	allowInsecureHttp: boolean("allow_insecure_http").notNull().default(false),
 	verifiedIssuer: text("verified_issuer"),

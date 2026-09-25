@@ -1,5 +1,5 @@
 {
-  "id": "73545d54-599c-4f0b-939e-1e77543ac019",
+  "id": "464d1a0a-d60d-4275-877e-c7131f4b555d",
   "prevId": "c9ad226a-7a8f-4c3b-8f04-fef6bccf9bfb",
   "version": "7",
   "dialect": "postgresql",
@@ -4175,6 +4175,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'groups'"
+        },
+        "extra_scopes": {
+          "name": "extra_scopes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
         },
         "button_label": {
           "name": "button_label",

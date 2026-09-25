@@ -46,6 +46,7 @@ const updateInput = connectionInput.extend({
 	accessGroup: optionalText,
 	adminGroup: optionalText,
 	groupsClaim: z.string().max(256).optional(),
+	extraScopes: z.string().max(1024).optional(),
 	buttonLabel: z.string().trim().min(1).max(BUTTON_LABEL_MAX_LENGTH).optional(),
 });
 

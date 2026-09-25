@@ -60,7 +60,7 @@ export const normalizeGroup = (group: string): string =>
  * switch. A configured bare name matches either form; a configured path must
  * match the full path exactly.
  */
-export const isInGroup = (groups: string[], configured: string): boolean => {
+const matchesGroup = (groups: string[], configured: string): boolean => {
 	const target = normalizeGroup(configured);
 	if (!target) return false;
 	const targetIsPath = target.includes("/");
@@ -72,3 +72,7 @@ export const isInGroup = (groups: string[], configured: string): boolean => {
 		return !targetIsPath && normalized.split("/").at(-1) === target;
 	});
 };
+
+/** `configured` may list several groups separated by commas (any matches). */
+export const isInGroup = (groups: string[], configured: string): boolean =>
+	configured.split(",").some((entry) => matchesGroup(groups, entry));

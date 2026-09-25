@@ -1,5 +1,6 @@
 import { extractIdentity, type SsoIdentity } from "../domain/claims";
 import { sanitizeReturnTo } from "../domain/return-to";
+import { parseScopes } from "../domain/scopes";
 import { newCorrelationId } from "../events/auth-events";
 import type {
 	ProvisioningStore,
@@ -9,6 +10,8 @@ import { provisionIdentity } from "../identity/provisioning";
 import { mapOidcError, type OidcSettings } from "../oidc/client";
 import type { OidcSsoServices } from "../services";
 import type { DenyReason, EffectiveConfig, LoginErrorCode } from "../types";
+
+export const SIGNED_OUT_PATH = "/?signed_out=1";
 
 export interface LoginFlowDeps {
 	services: OidcSsoServices;
@@ -56,6 +59,7 @@ export const startLogin = async (
 		const request = await services.oidc.createAuthorizationRequest(
 			toOidcSettings(config),
 			redirectUri,
+			parseScopes(config.extraScopes) ?? [],
 		);
 		return {
 			ok: true,
@@ -207,5 +211,7 @@ export const resolveSignOutTarget = async (
 		...(idToken ? { idTokenHint: idToken } : {}),
 		postLogoutRedirectUri: `${origin}/`,
 	});
-	return url ?? "/";
+	// Without provider logout (e.g. Authelia), "/" would bounce straight back
+	// into a silent sign-in; the signed-out screen waits for the user (FR-025).
+	return url ?? SIGNED_OUT_PATH;
 };
