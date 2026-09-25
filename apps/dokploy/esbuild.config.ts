@@ -29,6 +29,8 @@ try {
 				"reset-password": "reset-password.ts",
 				"reset-2fa": "reset-2fa.ts",
 				"migrate-auth-secret": "scripts/migrate-auth-secret.ts",
+				"oidc-sso-disable-sso-only":
+					"scripts/oidc-sso-disable-sso-only.ts",
 			},
 			bundle: true,
 			platform: "node",

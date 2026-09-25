@@ -12,6 +12,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { IS_CLOUD } from "../constants";
 import { db } from "../db";
 import * as schema from "../db/schema";
+import { oidcSso } from "../oidc-sso/plugin";
 import {
 	getTrustedOrigins,
 	getTrustedProviders,
@@ -498,6 +499,7 @@ const createBetterAuth = () =>
 					? { adminUserIds: [process.env.USER_ADMIN_ID as string] }
 					: { adminRoles: [] },
 			),
+			oidcSso(),
 		],
 	});
 

@@ -437,6 +437,14 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
+			title: "OIDC SSO",
+			url: "/dashboard/settings/oidc-sso",
+			icon: KeyRound,
+			// Free self-hosted integration, owner only (specs/001-oidc-sso)
+			isEnabled: ({ auth, isCloud }) => !!(auth?.role === "owner" && !isCloud),
+		},
+		{
+			isSingle: true,
 			title: "Whitelabeling",
 			url: "/dashboard/settings/whitelabeling",
 			icon: Palette,

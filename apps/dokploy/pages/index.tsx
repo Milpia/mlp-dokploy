@@ -4,8 +4,14 @@ import {
 	isAdminPresent,
 } from "@dokploy/server";
 import { validateRequest } from "@dokploy/server/lib/auth";
+import { getOidcSsoServices, sanitizeReturnTo } from "@dokploy/server/oidc-sso";
+import { getPublicConfig } from "@dokploy/server/oidc-sso/admin/config-admin";
+import {
+	LOGIN_ERROR_CODES,
+	type LoginErrorCode,
+	type SsoMode,
+} from "@dokploy/server/oidc-sso/types";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { generateServerSideHelper } from "@/utils/create-server-helpers";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Fingerprint } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
@@ -15,6 +21,7 @@ import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { SignInWithSso } from "@/components/auth/sign-in-with-sso";
 import { OnboardingLayout } from "@/components/layouts/onboarding-layout";
 import { SignInWithGithub } from "@/components/proprietary/auth/sign-in-with-github";
 import { SignInWithGoogle } from "@/components/proprietary/auth/sign-in-with-google";
@@ -47,8 +54,10 @@ import {
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { ssoSignInUrl } from "@/lib/oidc-sso";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
+import { generateServerSideHelper } from "@/utils/create-server-helpers";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
 
 const LoginSchema = z.object({
@@ -62,11 +71,42 @@ const _TwoFactorSchema = z.object({
 
 type LoginForm = z.infer<typeof LoginSchema>;
 
+const SSO_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
+	sso_cancelled: "Single sign-on was cancelled.",
+	sso_invalid_response:
+		"We couldn't verify the response from the identity provider. Please try again.",
+	sso_email_unverified:
+		"Your identity provider account has no verified email address. Ask your administrator to verify it.",
+	sso_access_denied:
+		"Your identity provider account doesn't have access to this Dokploy instance. Ask your administrator to add you to the access group.",
+	sso_unavailable:
+		"The identity provider is not available right now. Please try again in a few minutes.",
+	sso_clock_skew:
+		"The sign-in response from the identity provider has an invalid timestamp. Ask your administrator to check that the server clocks are synchronized.",
+};
+
+const isSsoError = (value: string): value is LoginErrorCode =>
+	(LOGIN_ERROR_CODES as readonly string[]).includes(value);
+
+const firstQueryValue = (value: string | string[] | undefined) =>
+	Array.isArray(value) ? value[0] : value;
+
 interface Props {
 	IS_CLOUD: boolean;
 	enforceSSO: boolean;
+	sso?: { mode: SsoMode; buttonLabel: string };
+	returnTo?: string | null;
+	emergency?: boolean;
+	signedOut?: boolean;
 }
-export default function Home({ IS_CLOUD, enforceSSO }: Props) {
+export default function Home({
+	IS_CLOUD,
+	enforceSSO,
+	sso = { mode: "disabled", buttonLabel: "" },
+	returnTo = null,
+	emergency = false,
+	signedOut = false,
+}: Props) {
 	const router = useRouter();
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const { data: showSignInWithSSO } = api.sso.showSignInWithSSO.useQuery();
@@ -94,16 +134,23 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 		const raw = Array.isArray(queryError) ? queryError[0] : queryError;
 		if (!raw) return;
 		const normalized = raw.replace(/[+_]/g, " ").toLowerCase();
+		const reference = firstQueryValue(router.query.ref);
 
 		setError(
-			normalized.includes("account not linked")
-				? "This account already exists but isn't linked to that sign-in provider yet. Contact your administrator to link it."
-				: normalized.includes("access denied")
-					? "Access was denied by the identity provider."
-					: "We couldn't complete sign-in. Please try again or contact your administrator.",
+			isSsoError(raw)
+				? `${SSO_ERROR_MESSAGES[raw]}${
+						reference && /^[0-9A-F]{12}$/.test(reference)
+							? ` (Reference: ${reference})`
+							: ""
+					}`
+				: normalized.includes("account not linked")
+					? "This account already exists but isn't linked to that sign-in provider yet. Contact your administrator to link it."
+					: normalized.includes("access denied")
+						? "Access was denied by the identity provider."
+						: "We couldn't complete sign-in. Please try again or contact your administrator.",
 		);
 
-		const { error: _removed, ...rest } = router.query;
+		const { error: _removed, ref: _ref, ...rest } = router.query;
 		router.replace({ pathname: router.pathname, query: rest }, undefined, {
 			shallow: true,
 		});
@@ -235,8 +282,23 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 		}
 	};
 
+	const isSsoOnly = sso.mode === "sso-only" && !emergency;
+
 	const loginContent = (
 		<>
+			{sso.mode === "button" && (
+				<div className="flex flex-col gap-4 mb-4">
+					<SignInWithSso
+						label={sso.buttonLabel}
+						returnTo={returnTo ?? undefined}
+					/>
+					<div className="flex items-center gap-2 text-xs text-muted-foreground">
+						<span className="h-px flex-1 bg-border" />
+						or
+						<span className="h-px flex-1 bg-border" />
+					</div>
+				</div>
+			)}
 			{IS_CLOUD && <SignInWithGithub />}
 			{IS_CLOUD && <SignInWithGoogle />}
 			<Form {...loginForm}>
@@ -319,10 +381,28 @@ export default function Home({ IS_CLOUD, enforceSSO }: Props) {
 					<span>{error}</span>
 				</AlertBlock>
 			)}
+			{signedOut && (
+				<AlertBlock type="info" className="my-2">
+					<span>You have been signed out.</span>
+				</AlertBlock>
+			)}
+			{emergency && sso.mode === "sso-only" && (
+				<AlertBlock type="warning" className="my-2">
+					<span>
+						Emergency access — only the instance owner can sign in here. Every
+						attempt is recorded.
+					</span>
+				</AlertBlock>
+			)}
 			<CardContent className="p-0">
 				{!isTwoFactor ? (
 					<>
-						{enforceSSO ? (
+						{isSsoOnly ? (
+							<SignInWithSso
+								label={sso.buttonLabel}
+								returnTo={returnTo ?? undefined}
+							/>
+						) : enforceSSO ? (
 							<SignInWithSSO enforce />
 						) : showSignInWithSSO ? (
 							<SignInWithSSO>{loginContent}</SignInWithSSO>
@@ -499,6 +579,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// render correctly on the server (no flash of default branding).
 	await helpers.whitelabeling.getPublic.prefetch();
 	await helpers.sso.showSignInWithSSO.prefetch();
+	await helpers.oidcSso.publicConfig.prefetch();
 
 	if (IS_CLOUD) {
 		try {
@@ -544,12 +625,36 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	}
 
 	const webServerSettings = await getWebServerSettings();
+	const sso = await getPublicConfig(getOidcSsoServices());
+	const requestedReturnTo = firstQueryValue(context.query.returnTo);
+	const returnTo = requestedReturnTo
+		? sanitizeReturnTo(requestedReturnTo)
+		: null;
+	const emergency = firstQueryValue(context.query.emergency) === "1";
+	const hasError = !!firstQueryValue(context.query.error);
+	const signedOut = firstQueryValue(context.query.signed_out) === "1";
+
+	// SSO-only skips the local form entirely (FR-004), except to show a login
+	// error (FR-016, no redirect loop), after signing out from a provider
+	// without end-session support (FR-025) or on the emergency route (FR-012).
+	if (sso.mode === "sso-only" && !emergency && !hasError && !signedOut) {
+		return {
+			redirect: {
+				permanent: false,
+				destination: ssoSignInUrl(returnTo ?? undefined),
+			},
+		};
+	}
 
 	return {
 		props: {
 			trpcState: helpers.dehydrate(),
 			hasAdmin,
 			enforceSSO: webServerSettings?.enforceSSO ?? false,
+			sso,
+			returnTo,
+			emergency,
+			signedOut,
 		},
 	};
 }
