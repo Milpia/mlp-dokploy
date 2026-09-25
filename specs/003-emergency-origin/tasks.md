@@ -124,7 +124,7 @@ usuarios quedan registrados.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T012 [P] [US2] Add failing integration tests to `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts` (US2 scenarios 1–3, FR-004, FR-006, SC-002, SC-003):
+- [X] T012 [P] [US2] Add failing integration tests to `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts` (US2 scenarios 1–3, FR-004, FR-006, SC-002, SC-003):
   - A non-owner sign-in from the emergency origin → 403, and one `emergency_login` / `denied` / `not_owner` event with `emergencyOrigin: true`.
   - From the emergency origin, 403 `INVALID_ORIGIN` on:
     - `/sign-up/email`;
@@ -136,7 +136,7 @@ usuarios quedan registrados.
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Record the `not_owner` denial in `packages/server/src/oidc-sso/plugin/emergency-origin.ts` when `decideEmergencyOrigin` returns `recordDenied`. Record email, IP (`getIp`) and `emergencyOrigin: true`, and leave the request untouched so better-auth rejects it. If recording fails, log the error and keep the request untouched. Pass T012 (FR-006, FR-007).
+- [X] T013 [US2] Record the `not_owner` denial in `packages/server/src/oidc-sso/plugin/emergency-origin.ts` when `decideEmergencyOrigin` returns `recordDenied`. Record email, IP (`getIp`) and `emergencyOrigin: true`, and leave the request untouched so better-auth rejects it. If recording fails, log the error and keep the request untouched. Pass T012 (FR-006, FR-007).
 
 **Checkpoint**: US1 y US2 juntas cumplen las cuatro condiciones de infra.
 

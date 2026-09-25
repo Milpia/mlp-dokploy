@@ -222,6 +222,110 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 		});
 	});
 
+	describe("US2: the emergency origin opens nothing else", () => {
+		let ctx: Ctx;
+
+		beforeEach(async () => {
+			ctx = setup(TUNNEL);
+			await signUp(ctx, OWNER);
+			await signUp(ctx, "dev@example.com");
+			await enableSsoOnly(ctx);
+		});
+
+		const expectInvalidOrigin = async (response: Response) => {
+			expect(response.status).toBe(403);
+			expect(await response.json()).toMatchObject({ code: "INVALID_ORIGIN" });
+		};
+
+		it("FR-006/FR-007: a non-owner sign-in is rejected and recorded as coming from the tunnel", async () => {
+			const response = await post(ctx, "/sign-in/email", {
+				email: "Dev@Example.com",
+				password: PASSWORD,
+			});
+			await expectInvalidOrigin(response);
+			expect(ctx.recorded.at(-1)).toMatchObject({
+				type: "emergency_login",
+				outcome: "denied",
+				reason: "not_owner",
+				email: "dev@example.com",
+				emergencyOrigin: true,
+			});
+		});
+
+		it.each([
+			[
+				"/sign-up/email",
+				{ email: "new@example.com", password: PASSWORD, name: "N" },
+			],
+			["/request-password-reset", { email: OWNER }],
+		])("SC-002: %s from the tunnel origin is rejected", async (path, body) => {
+			await expectInvalidOrigin(await post(ctx, path, body));
+		});
+
+		it.each([
+			[
+				"/change-password",
+				{ currentPassword: PASSWORD, newPassword: "another long password" },
+			],
+			["/two-factor/disable", { password: PASSWORD }],
+		])(
+			"SC-002: %s with the owner's tunnel session is rejected",
+			async (path, body) => {
+				const signIn = await post(ctx, "/sign-in/email", {
+					email: OWNER,
+					password: PASSWORD,
+				});
+				const cookie = `${FOREIGN_COOKIE}; ${cookiesFrom(signIn)}`;
+				await expectInvalidOrigin(await post(ctx, path, body, { cookie }));
+			},
+		);
+
+		it.each(["button", "disabled"] as const)(
+			"SC-003: in %s mode the owner's sign-in from the tunnel is rejected",
+			async (mode) => {
+				await ctx.repository.save({ mode });
+				ctx.services.config.invalidate();
+				await expectInvalidOrigin(
+					await post(ctx, "/sign-in/email", {
+						email: OWNER,
+						password: PASSWORD,
+					}),
+				);
+			},
+		);
+
+		it("NFR-SEC-001: a client-supplied marker neither opens the tunnel nor flags events", async () => {
+			const forged = { "x-oidc-sso-emergency-origin": "1" };
+			const fromTunnel = await ctx.auth.handler(
+				new Request(`${BASE}/api/auth/request-password-reset`, {
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						origin: TUNNEL,
+						cookie: FOREIGN_COOKIE,
+						...forged,
+					},
+					body: JSON.stringify({ email: OWNER }),
+				}),
+			);
+			await expectInvalidOrigin(fromTunnel);
+
+			const fromPublic = await ctx.auth.handler(
+				new Request(`${BASE}/api/auth/sign-in/email`, {
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						origin: BASE,
+						...forged,
+					},
+					body: JSON.stringify({ email: OWNER, password: PASSWORD }),
+				}),
+			);
+			expect(fromPublic.status).toBe(200);
+			expect(ctx.recorded.at(-1)?.emergencyOrigin).toBeUndefined();
+		});
+	});
+
 	describe("US3: without the setting nothing changes", () => {
 		it("FR-003: the owner's sign-in from the tunnel origin is rejected as today", async () => {
 			const ctx = setup(null);
