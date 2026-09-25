@@ -12,11 +12,11 @@
 
 ### User Story 1 - El owner recupera el acceso por túnel con el proveedor de identidad caído (Priority: P1)
 
-El proveedor de identidad está caído y la instancia está en modo SSO-only. Nadie llega al panel por la dirección pública. El owner abre un túnel SSH hasta el contenedor, entra en `http://localhost:3000/?emergency=1` e inicia sesión con su email y contraseña local. Llega al panel y puede, por ejemplo, desactivar SSO-only.
+El proveedor de identidad está caído y la instancia está en modo SSO-only. Nadie llega al panel por la dirección pública. El owner abre un túnel SSH hasta el contenedor, entra en `http://localhost:3900/?emergency=1` e inicia sesión con su email y contraseña local. Llega al panel y puede, por ejemplo, desactivar SSO-only.
 
 **Why this priority**: es la vía de recuperación que exige el principio III de la constitución. Sin ella, la vía web de emergencia de la spec 001 no sirve en el despliegue real de Milpia.
 
-**Independent Test**: con SSO-only activo, la dirección pública configurada en `https://deploy.milpia.com` y el origen de emergencia configurado como `http://localhost:3000`, el owner inicia sesión desde `http://localhost:3000/?emergency=1` y llega al panel.
+**Independent Test**: con SSO-only activo, la dirección pública configurada en `https://deploy.milpia.com` y el origen de emergencia configurado como `http://localhost:3900`, el owner inicia sesión desde `http://localhost:3900/?emergency=1` y llega al panel.
 
 **Acceptance Scenarios**:
 
@@ -32,7 +32,7 @@ Desde el origen de emergencia, cualquier otra acción que dependa del control de
 
 **Why this priority**: el origen de emergencia debilita a propósito una protección contra falsificación de peticiones (CSRF). Debe hacerlo en el mínimo sitio posible.
 
-**Independent Test**: con el origen configurado, desde `http://localhost:3000` un usuario que no es el owner intenta iniciar sesión, y alguien intenta registrarse o pedir un restablecimiento de contraseña. Todo se rechaza. Con la instancia en modo botón, tampoco el owner puede iniciar sesión desde ese origen.
+**Independent Test**: con el origen configurado, desde `http://localhost:3900` un usuario que no es el owner intenta iniciar sesión, y alguien intenta registrarse o pedir un restablecimiento de contraseña. Todo se rechaza. Con la instancia en modo botón, tampoco el owner puede iniciar sesión desde ese origen.
 
 **Acceptance Scenarios**:
 
@@ -48,7 +48,7 @@ Mientras nadie defina el origen de emergencia, Dokploy se comporta exactamente c
 
 **Why this priority**: la funcionalidad está desactivada por defecto (principio II) y solo se activa en las instancias que la necesitan.
 
-**Independent Test**: sin la variable, el owner no puede iniciar sesión desde `http://localhost:3000` en modo SSO-only y recibe el mismo error de origen que hoy.
+**Independent Test**: sin la variable, el owner no puede iniciar sesión desde `http://localhost:3900` en modo SSO-only y recibe el mismo error de origen que hoy.
 
 **Acceptance Scenarios**:
 
@@ -101,7 +101,7 @@ Mientras nadie defina el origen de emergencia, Dokploy se comporta exactamente c
 ## Assumptions
 
 - La variable se llama `SSO_OIDC_EMERGENCY_ORIGIN`, en línea con el resto de variables del SSO.
-- Milpia la definirá como `http://localhost:3000` en lab y prod. El túnel llega por NetBird hasta `127.0.0.1:3000` del contenedor.
+- Milpia la definirá como `http://localhost:3900` en lab y prod. El túnel es `ssh -L 3900:127.0.0.1:3000` por NetBird: el puerto 3000 de la Mac lo ocupan las apps en desarrollo, y en el VPS Dokploy sigue en el 3000, solo en loopback. El input original decía `http://localhost:3000`; el cambio de puerto lo decidió el owner después.
 - Solo se contempla un origen: el caso de uso es un túnel. Una lista abre más superficie sin necesidad.
 - No hay ajuste en la interfaz a propósito: quien puede cambiar el entorno del contenedor ya tiene acceso al host, y un ajuste en la base de datos podría activarlo un admin con acceso al panel.
 - Las cookies de sesión de Dokploy en self-hosted no exigen HTTPS, así que la sesión funciona por `http://localhost`.
