@@ -11,7 +11,8 @@ export type DenyReason =
 	| "not_in_access_group"
 	| "provisioning_disabled"
 	| "user_banned"
-	| "no_owner";
+	| "no_owner"
+	| "identity_conflict";
 
 export const LOGIN_ERROR_CODES = [
 	"keycloak_cancelled",
