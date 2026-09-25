@@ -165,4 +165,5 @@ apps/dokploy/
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |---|---|---|
 | `apps/dokploy/proxy.ts` nuevo que actúa en todas las rutas `/dashboard/*` y añade `?returnTo=` a la redirección aunque el SSO esté desactivado (roza el principio II) | US2 escenario 3: volver a la página pedida tras el login. Las 46 páginas redirigen a `/` por su cuenta | Modificar las 46 páginas multiplica la divergencia. El proxy solo mira si existe la cookie (sin BD, microsegundos), y la página de login ignora `returnTo` en modo desactivado, así que el flujo visible es idéntico salvo el parámetro en la URL |
+| Trailer `Jira:` omitido temporalmente en los commits (principio V) | Las issues de Jira aún no existen: el usuario pidió no tocar Jira hasta revisar | Poner claves inventadas haría que Jira enlazara commits a issues equivocadas. Los trailers `Spec/Requirement/Task` y `traceability.yaml` (`jira: null`) permiten añadir la clave al sincronizar con `/sdd-sync` |
 | Dependencia nueva `openid-client` | Validación OIDC certificada (NFR-SEC-001/002) | Implementarla a mano con `jose` es código criptográfico propio y más superficie de fallo |
