@@ -1,0 +1,1454 @@
+# Trazabilidad LOCAL: todavía no sincronizada con Jira (sin master epic ni claves).
+# `jira: null` y `tasks: []` se rellenan con /sdd-sync. `local_tasks` y `commits`
+# se derivan de tasks.md y de los trailers Requirement:/Task: de los commits.
+# `status` refleja el avance local, no el estado de Jira, hasta la primera sincronización.
+# `synced_from_sha` es el commit desde el que se generó este archivo.
+schema: sdd-jira/v2
+feature:
+  id: 001-keycloak-sso
+  title: SSO con Keycloak para la edición free
+  spec: specs/001-keycloak-sso/spec.md
+  plan: specs/001-keycloak-sso/plan.md
+  tasks: specs/001-keycloak-sso/tasks.md
+  branch: 001-keycloak-sso
+  jira_site: null
+  jira_project: null
+  master_epic: null
+  story: null
+  issue_type: null
+  task_issue_type: Subtask
+  synced_at: null
+  synced_from_sha: 9d8009888df1c7ea8bcdbd33796394d08ab550a6
+  spec_digest: sha256:4040c1716bc7280196004e03eb75b71805fbaadf93428110bf299b4d2d0d4e83
+requirements:
+  FR-001:
+    text: El sistema MUST permitir registrar una conexión con un servidor Keycloak mediante OIDC, indicando
+      la URL del realm, el identificador del cliente y su secreto.
+    tasks: []
+    local_tasks:
+    - T004
+    - T005
+    - T025
+    - T029
+    - T030
+    - T034
+    - T051
+    commits:
+    - 9e1ebfd1b
+    - ae4dc804e
+    - f6991eef7
+    bugs: []
+    status: implemented
+  FR-002:
+    text: 'El sistema MUST ofrecer tres modos de SSO excluyentes: desactivado (por defecto), botón y SSO-only.'
+    tasks: []
+    local_tasks:
+    - T003
+    - T012
+    commits:
+    - 9d8009888
+    bugs: []
+    status: implemented
+  FR-003:
+    text: En modo botón, la pantalla de login MUST mostrar el formulario local y un botón «Iniciar sesión
+      con Keycloak», cuyo texto el owner puede personalizar.
+    tasks: []
+    local_tasks:
+    - T025
+    - T026
+    - T027
+    - T029
+    - T030
+    - T032
+    - T033
+    - T034
+    - T041
+    - T042
+    - T046
+    commits:
+    - 63bbb4546
+    - ae4dc804e
+    bugs: []
+    status: implemented
+  FR-004:
+    text: En modo SSO-only, cualquier visita sin sesión MUST redirigir automáticamente a Keycloak sin
+      mostrar el formulario de login local.
+    tasks: []
+    local_tasks:
+    - T026
+    - T027
+    - T032
+    - T033
+    - T034
+    - T035
+    - T036
+    - T037
+    - T038
+    - T040
+    - T041
+    - T042
+    - T044
+    - T046
+    commits:
+    - 415cd121b
+    - 63bbb4546
+    bugs: []
+    status: implemented
+  FR-005:
+    text: Tras un login correcto en Keycloak, el sistema MUST crear una sesión de Dokploy y llevar al
+      usuario a la página que pidió originalmente, o al panel si entró por la raíz.
+    tasks: []
+    local_tasks:
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T028
+    - T031
+    - T039
+    commits:
+    - 3f8c0bbd0
+    bugs: []
+    status: implemented
+  FR-006:
+    text: El sistema MUST vincular un login de Keycloak con la cuenta existente de Dokploy que tenga el
+      mismo email, solo si Keycloak marca ese email como verificado.
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 0935ed1d9
+    - 3f8c0bbd0
+    bugs: []
+    status: implemented
+  FR-007:
+    text: Cuando llega un usuario de Keycloak sin cuenta en Dokploy, el sistema MUST crearle la cuenta
+      automáticamente solo si pertenece al grupo de acceso configurado en Keycloak; si no pertenece, MUST
+      rechazar el login con un mensaje que indique que no tiene acceso a esta instancia.
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 0935ed1d9
+    - 3f8c0bbd0
+    bugs: []
+    status: implemented
+  FR-007a:
+    text: El owner MUST poder configurar el nombre del grupo de acceso de Keycloak. Sin grupo configurado,
+      el sistema MUST NOT crear cuentas nuevas por SSO (solo se vinculan cuentas existentes según FR-006).
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    commits:
+    - 0935ed1d9
+    bugs: []
+    status: implemented
+  FR-007b:
+    text: Cuando hay grupo de acceso configurado, el sistema MUST exigir pertenecer a él a todo usuario
+      que entre por SSO, sea nuevo o existente, salvo al owner.
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    commits:
+    - 0935ed1d9
+    - d7f99afab
+    bugs: []
+    status: implemented
+  FR-008:
+    text: 'Cuando hay grupo de administración configurado, el sistema MUST asignar el rol de Dokploy según
+      los grupos de Keycloak del usuario: los miembros del grupo de administración (p. ej. `dokploy-admins`,
+      que en la organización incluye a admins y leads) reciben el rol admin; el resto, el rol member.
+      Sin grupo de administración configurado, los usuarios nuevos reciben member y los existentes conservan
+      su rol.'
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    - T020
+    - T032
+    commits:
+    - 0935ed1d9
+    - d7f99afab
+    bugs: []
+    status: implemented
+  FR-008a:
+    text: El sistema MUST recalcular el rol en cada login por SSO, de modo que añadir o quitar a alguien
+      del grupo de administración en Keycloak se refleje en su siguiente login.
+    tasks: []
+    local_tasks:
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 3f8c0bbd0
+    bugs: []
+    status: implemented
+  FR-008b:
+    text: 'El rol owner MUST NOT asignarse ni retirarse por SSO: el owner conserva su rol aunque no esté
+      en el grupo de administración, y nadie obtiene el rol owner a través de Keycloak.'
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    commits:
+    - 0935ed1d9
+    bugs: []
+    status: implemented
+  FR-008c:
+    text: El owner MUST poder configurar el nombre del grupo de administración. Los cambios manuales de
+      rol en Dokploy sobre usuarios de SSO se sobrescriben en su siguiente login; la interfaz MUST advertirlo.
+    tasks: []
+    local_tasks:
+    - T026
+    - T027
+    - T032
+    - T033
+    - T034
+    - T041
+    - T042
+    - T046
+    commits:
+    - 63bbb4546
+    bugs: []
+    status: implemented
+  FR-009:
+    text: En modo SSO-only, el sistema MUST rechazar el login con email y contraseña, el registro de nuevas
+      cuentas (incluida la aceptación de invitaciones) y el restablecimiento de contraseña, salvo por
+      la ruta web de emergencia de FR-012.
+    tasks: []
+    local_tasks:
+    - T035
+    - T036
+    - T037
+    - T038
+    - T040
+    - T044
+    commits:
+    - 415cd121b
+    - d7f99afab
+    bugs: []
+    status: implemented
+  FR-010:
+    text: En modo SSO-only, cerrar sesión en Dokploy MUST cerrar también la sesión en Keycloak. En modo
+      botón, cerrar sesión solo cierra la sesión de Dokploy.
+    tasks: []
+    local_tasks:
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T026
+    - T027
+    - T031
+    - T032
+    - T033
+    - T034
+    - T036
+    - T039
+    - T041
+    - T042
+    - T046
+    commits:
+    - 3f8c0bbd0
+    - 63bbb4546
+    bugs: []
+    status: implemented
+  FR-011:
+    text: El sistema MUST impedir activar SSO-only hasta que el owner que lo activa haya completado al
+      menos un login correcto por Keycloak con su propia cuenta.
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    - T013
+    - T014
+    - T015
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T025
+    - T029
+    - T030
+    - T031
+    - T039
+    commits:
+    - 0935ed1d9
+    - 3f8c0bbd0
+    - a586a9c63
+    - ae4dc804e
+    bugs: []
+    status: implemented
+  FR-012:
+    text: El sistema MUST ofrecer una ruta web de emergencia, documentada, que permita solo al owner iniciar
+      sesión con su email y contraseña local cuando el modo SSO-only está activo. Cualquier otra cuenta
+      MUST ser rechazada en esa ruta.
+    tasks: []
+    local_tasks:
+    - T026
+    - T027
+    - T032
+    - T033
+    - T034
+    - T035
+    - T036
+    - T037
+    - T038
+    - T040
+    - T041
+    - T042
+    - T043
+    - T044
+    - T045
+    - T046
+    commits:
+    - 415cd121b
+    - 63bbb4546
+    bugs: []
+    status: implemented
+  FR-012a:
+    text: El sistema MUST ofrecer un comando que se ejecuta en el servidor de la instancia (requiere acceso
+      al host o al contenedor) y que desactiva el modo SSO-only, dejando la instancia en modo botón.
+    tasks: []
+    local_tasks:
+    - T043
+    - T045
+    commits:
+    - 8dbfb1608
+    bugs: []
+    status: implemented
+  FR-013:
+    text: El sistema MUST dejar registrados los logins por SSO fallidos y cada uso, correcto o rechazado,
+      de la vía de emergencia, con la hora y la identidad implicada.
+    tasks: []
+    local_tasks:
+    - T004
+    - T005
+    - T016
+    - T017
+    - T018
+    - T019
+    - T025
+    - T029
+    - T030
+    - T033
+    - T035
+    - T036
+    - T037
+    - T038
+    - T040
+    - T043
+    - T044
+    - T052
+    commits:
+    - 05a54f67a
+    - 415cd121b
+    - ae4dc804e
+    - f6991eef7
+    bugs: []
+    status: implemented
+  FR-014:
+    text: El owner MUST poder comprobar la conexión con Keycloak antes de guardarla y recibir un motivo
+      concreto cuando falla.
+    tasks: []
+    local_tasks:
+    - T016
+    - T017
+    - T018
+    - T019
+    - T025
+    - T029
+    - T030
+    - T032
+    commits:
+    - 05a54f67a
+    - ae4dc804e
+    bugs: []
+    status: implemented
+  FR-015:
+    text: El secreto del cliente MUST guardarse protegido, no mostrarse nunca completo tras guardarlo
+      y no aparecer en logs.
+    tasks: []
+    local_tasks:
+    - T004
+    - T005
+    - T013
+    - T014
+    - T015
+    - T025
+    - T029
+    - T030
+    - T032
+    commits:
+    - a586a9c63
+    - ae4dc804e
+    - f6991eef7
+    bugs: []
+    status: implemented
+  FR-016:
+    text: Cuando Keycloak no está disponible, el sistema MUST mostrar una página de error con un enlace
+      para reintentar y MUST NOT entrar en un bucle de redirecciones.
+    tasks: []
+    local_tasks:
+    - T021
+    - T026
+    - T027
+    - T032
+    - T033
+    - T034
+    - T041
+    - T042
+    - T046
+    commits:
+    - 63bbb4546
+    bugs: []
+    status: implemented
+  FR-017:
+    text: Esta funcionalidad MUST estar disponible sin licencia enterprise y MUST implementarse de forma
+      independiente del código bajo directorios `/proprietary` del repositorio.
+    tasks: []
+    local_tasks:
+    - T013
+    - T014
+    - T015
+    - T024
+    - T051
+    commits:
+    - a586a9c63
+    bugs: []
+    status: implemented
+  FR-018:
+    text: Los cambios de configuración de SSO hechos desde la interfaz MUST aplicarse sin reiniciar la
+      instancia.
+    tasks: []
+    local_tasks:
+    - T013
+    - T014
+    - T015
+    - T025
+    - T029
+    - T030
+    commits:
+    - a586a9c63
+    - ae4dc804e
+    bugs: []
+    status: implemented
+  FR-019:
+    text: Cada valor de la configuración de SSO (URL del realm, cliente, secreto, grupos, modo y texto
+      del botón) MUST poder definirse también mediante variables de entorno. Un valor definido así MUST
+      prevalecer sobre el guardado desde la interfaz.
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    - T013
+    - T014
+    - T015
+    commits:
+    - 0935ed1d9
+    - a586a9c63
+    bugs: []
+    status: implemented
+  FR-020:
+    text: La interfaz MUST mostrar como bloqueados, e indicar su origen, los valores que vienen de variables
+      de entorno. Los demás valores MUST seguir siendo editables.
+    tasks: []
+    local_tasks:
+    - T013
+    - T014
+    - T015
+    - T025
+    - T026
+    - T027
+    - T029
+    - T030
+    - T032
+    - T033
+    - T034
+    - T041
+    - T042
+    - T046
+    commits:
+    - 63bbb4546
+    - a586a9c63
+    - ae4dc804e
+    bugs: []
+    status: implemented
+  FR-021:
+    text: El comando de emergencia de FR-012a MUST advertir si el modo SSO-only viene de una variable
+      de entorno, porque en ese caso solo se desactiva cambiando la variable y reiniciando.
+    tasks: []
+    local_tasks:
+    - T043
+    - T045
+    commits:
+    - 8dbfb1608
+    bugs: []
+    status: implemented
+  NFR-SEC-001:
+    text: 'El flujo de login MUST seguir las buenas prácticas vigentes de seguridad para OAuth 2.0 y OpenID
+      Connect (OAuth 2.0 Security Best Current Practice, RFC 9700): flujo de código de autorización con
+      PKCE, y parámetros `state` y `nonce` de un solo uso ligados a la sesión del navegador que inició
+      el login.'
+    tasks: []
+    local_tasks:
+    - T001
+    - T002
+    - T003
+    - T016
+    - T017
+    - T018
+    - T019
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 05a54f67a
+    - 3f8c0bbd0
+    - 56d65d02b
+    bugs: []
+    status: implemented
+  NFR-SEC-002:
+    text: 'Toda respuesta de identidad de Keycloak MUST validarse antes de conceder acceso: firma, emisor,
+      destinatario, caducidad, fecha de emisión y `nonce`. Si falla cualquiera de estas validaciones,
+      se deniega el acceso.'
+    tasks: []
+    local_tasks:
+    - T016
+    - T017
+    - T018
+    - T019
+    commits:
+    - 05a54f67a
+    bugs: []
+    status: implemented
+  NFR-SEC-003:
+    text: La redirección posterior al login (FR-005) MUST aceptar solo rutas internas de la propia instancia;
+      cualquier otro destino MUST sustituirse por el panel, para impedir redirecciones abiertas.
+    tasks: []
+    local_tasks:
+    - T006
+    - T007
+    - T008
+    - T009
+    - T010
+    - T011
+    - T012
+    commits:
+    - 0935ed1d9
+    bugs: []
+    status: implemented
+  NFR-SEC-004:
+    text: Toda comunicación con Keycloak MUST hacerse por HTTPS con verificación de certificado. Solo
+      se permite HTTP sin cifrar si el owner lo activa de forma explícita para entornos de desarrollo,
+      y la interfaz MUST mostrar una advertencia visible mientras esté activo.
+    tasks: []
+    local_tasks:
+    - T016
+    - T017
+    - T018
+    - T019
+    commits:
+    - 05a54f67a
+    bugs: []
+    status: implemented
+  NFR-SEC-005:
+    text: Tras un login por SSO, el sistema MUST emitir una sesión nueva (sin reutilizar identificadores
+      de sesión previos) cuya cookie siga exactamente la política de cookies de sesión de Dokploy (`HttpOnly`,
+      `SameSite=Lax`; `Secure` según la configuración existente de la instancia). La cookie temporal del
+      login MUST ser `HttpOnly`, `SameSite=Lax`, firmada, de 10 minutos como máximo, y `Secure` cuando
+      la petición llega por HTTPS.
+    tasks: []
+    local_tasks:
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 3f8c0bbd0
+    - d7f99afab
+    bugs: []
+    status: implemented
+  NFR-SEC-006:
+    text: La ruta web de emergencia y los endpoints de retorno del login MUST limitar los intentos repetidos
+      por origen, y los mensajes de error MUST NOT revelar si una cuenta existe.
+    tasks: []
+    local_tasks:
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 3f8c0bbd0
+    bugs: []
+    status: implemented
+  NFR-SEC-007:
+    text: Los tokens de Keycloak MUST NOT guardarse en el navegador ni en logs. Solo se conserva lo imprescindible
+      para cerrar la sesión en Keycloak (FR-010).
+    tasks: []
+    local_tasks:
+    - T020
+    - T021
+    - T022
+    - T023
+    - T024
+    - T031
+    - T039
+    commits:
+    - 3f8c0bbd0
+    bugs: []
+    status: implemented
+  NFR-SEC-008:
+    text: Los controles de seguridad de la funcionalidad MUST cumplir los requisitos de autenticación
+      y gestión de sesión de OWASP ASVS nivel 2 que le apliquen, y el plan MUST incluir su lista de comprobación.
+    tasks: []
+    local_tasks:
+    - T051
+    commits:
+    - 9e1ebfd1b
+    bugs: []
+    status: implemented
+  NFR-SEC-009:
+    text: Antes del merge, la funcionalidad MUST pasar un análisis de dependencias sin vulnerabilidades
+      altas o críticas conocidas y una revisión de seguridad del código.
+    tasks: []
+    local_tasks:
+    - T050
+    commits: []
+    bugs: []
+    status: implemented
+  NFR-PERF-001:
+    text: Con el modo desactivado, la funcionalidad MUST NOT añadir más de 5 ms (p95) al tiempo de respuesta
+      de ninguna página ni llamada al servidor, ni ninguna petición de red a Keycloak.
+    tasks: []
+    local_tasks:
+    - T047
+    commits:
+    - 17f8a6305
+    bugs: []
+    status: implemented
+  NFR-PERF-002:
+    text: El trabajo que hace Dokploy en un login por SSO, excluido el tiempo propio de Keycloak y del
+      usuario, MUST completarse en menos de 300 ms (p95).
+    tasks: []
+    local_tasks:
+    - T047
+    commits:
+    - 17f8a6305
+    bugs: []
+    status: implemented
+  NFR-PERF-003:
+    text: Los metadatos del proveedor y sus claves de firma MUST reutilizarse entre logins y refrescarse
+      solo cuando caduquen o cuando llegue una firma con una clave desconocida, en lugar de descargarse
+      en cada login.
+    tasks: []
+    local_tasks:
+    - T016
+    - T017
+    - T018
+    - T019
+    commits:
+    - 05a54f67a
+    bugs: []
+    status: implemented
+  NFR-PERF-004:
+    text: Toda llamada a Keycloak MUST tener un tiempo máximo de espera de 5 segundos. Al superarlo, se
+      aplica FR-016 en lugar de dejar al usuario esperando.
+    tasks: []
+    local_tasks:
+    - T016
+    - T017
+    - T018
+    - T019
+    commits:
+    - 05a54f67a
+    bugs: []
+    status: implemented
+  NFR-PERF-005:
+    text: La configuración de SSO MUST leerse sin consultar la base de datos en cada petición, y los cambios
+      hechos desde la interfaz MUST aplicarse en un máximo de 5 segundos (FR-018).
+    tasks: []
+    local_tasks:
+    - T013
+    - T014
+    - T015
+    commits:
+    - a586a9c63
+    bugs: []
+    status: implemented
+  NFR-PERF-006:
+    text: El sistema MUST soportar 50 logins por SSO simultáneos sin errores y sin superar el objetivo
+      de NFR-PERF-002.
+    tasks: []
+    local_tasks:
+    - T047
+    - T048
+    commits:
+    - 17f8a6305
+    bugs: []
+    status: implemented
+  NFR-QA-001:
+    text: La lógica nueva de la funcionalidad MUST tener al menos un 90 % de cobertura de líneas y un
+      85 % de cobertura de ramas en pruebas automáticas, y el 100 % de las decisiones de acceso (conceder,
+      denegar, vincular, asignar rol) MUST estar cubiertas.
+    tasks: []
+    local_tasks:
+    - T001
+    - T002
+    - T003
+    - T050
+    commits:
+    - 56d65d02b
+    - 5c75c1428
+    bugs: []
+    status: implemented
+  NFR-QA-002:
+    text: Cada escenario de aceptación de las user stories MUST tener una prueba automática de extremo
+      a extremo contra una instancia de Keycloak efímera.
+    tasks: []
+    local_tasks:
+    - T048
+    commits:
+    - a7fbc210e
+    bugs: []
+    status: implemented
+  NFR-QA-003:
+    text: El código MUST pasar lint, formato y comprobación de tipos del repositorio sin errores ni supresiones
+      nuevas.
+    tasks: []
+    local_tasks:
+    - T050
+    commits: []
+    bugs: []
+    status: implemented
+  NFR-QA-004:
+    text: Los mensajes al usuario MUST ser comprensibles y accionables, y los errores técnicos MUST registrarse
+      con un identificador de correlación que el usuario pueda aportar a soporte.
+    tasks: []
+    local_tasks:
+    - T016
+    - T017
+    - T018
+    - T019
+    - T023
+    - T026
+    - T027
+    - T032
+    - T033
+    - T034
+    - T041
+    - T042
+    - T046
+    commits:
+    - 05a54f67a
+    - 63bbb4546
+    bugs: []
+    status: implemented
+  NFR-QA-005:
+    text: La funcionalidad MUST documentar la configuración de Keycloak (cliente, URL de retorno, grupos),
+      las variables de entorno y los dos procedimientos de emergencia.
+    tasks: []
+    local_tasks:
+    - T049
+    commits:
+    - a51cfb704
+    bugs: []
+    status: implemented
+success_criteria:
+  SC-001:
+    text: Un usuario con sesión ya activa en Keycloak llega al panel de Dokploy en modo SSO-only en menos
+      de 5 segundos desde que abre la URL, sin escribir credenciales.
+    verified_by: []
+    local_tasks:
+    - T048
+  SC-002:
+    text: Un owner configura la conexión con Keycloak y deja funcionando el modo botón en menos de 10
+      minutos, usando solo la interfaz y la documentación.
+    verified_by: []
+    local_tasks: []
+  SC-003:
+    text: El 100 % de los usuarios existentes con email verificado conservan sus permisos en su primer
+      login por Keycloak, sin cuentas duplicadas.
+    verified_by: []
+    local_tasks: []
+  SC-004:
+    text: Con Keycloak apagado, el owner recupera el acceso a una instancia en modo SSO-only en menos
+      de 5 minutos usando la vía de emergencia documentada.
+    verified_by: []
+    local_tasks: []
+  SC-005:
+    text: Con SSO-only activo, ningún intento de login con contraseña local fuera de la vía de emergencia
+      tiene éxito.
+    verified_by: []
+    local_tasks:
+    - T035
+    - T036
+    - T037
+    - T038
+    - T040
+    - T044
+  SC-006:
+    text: Con el modo desactivado, la pantalla y el flujo de login son idénticos a los de la versión anterior
+      a esta funcionalidad.
+    verified_by: []
+    local_tasks: []
+  SC-007:
+    text: Una revisión de seguridad independiente no encuentra hallazgos de severidad alta o crítica,
+      y las pruebas de ataques conocidos (reutilización de respuestas, `state` manipulado, token de otro
+      cliente, redirección a dominio externo) son rechazadas en el 100 % de los casos.
+    verified_by: []
+    local_tasks:
+    - T051
+  SC-008:
+    text: En una prueba de carga con 50 logins simultáneos, el 95 % de los usuarios llega al panel sin
+      errores y sin que el tiempo atribuible a Dokploy supere los 300 ms.
+    verified_by: []
+    local_tasks:
+    - T047
+    - T048
+  SC-009:
+    text: Con el modo desactivado, las mediciones de rendimiento del login y del panel no empeoran más
+      de un 2 % respecto a la versión anterior.
+    verified_by: []
+    local_tasks:
+    - T047
+user_stories:
+- local_id: US1
+  title: Iniciar sesión con el botón de Keycloak
+  priority: P1
+  requirements:
+  - FR-003
+  - FR-005
+  - FR-006
+  - FR-007
+  - FR-008
+  - FR-008a
+  - FR-016
+  - FR-017
+  - NFR-QA-004
+  - NFR-SEC-001
+  - NFR-SEC-006
+  success_criteria: []
+  tasks:
+  - local_id: T020
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/provisioning.test.ts` [FR-006,
+      FR-007, FR-008]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/provisioning.test.ts
+    requirements:
+    - FR-006
+    - FR-007
+    - FR-008
+  - local_id: T021
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/endpoints.test.ts` with fake `OidcClient`
+      and fake provisioning [FR-005, FR-016]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/endpoints.test.ts
+    requirements:
+    - FR-005
+    - FR-016
+  - local_id: T022
+    title: 'Implement `provisionIdentity()` in `packages/server/src/keycloak-sso/identity/provisioning.ts`
+      to pass T020: a Drizzle transaction over `use'
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/identity/provisioning.ts
+    requirements:
+    - FR-006
+    - FR-007
+    - FR-008a
+  - local_id: T023
+    title: Implement the `sign-in` and `callback` endpoints in `packages/server/src/keycloak-sso/plugin/endpoints.ts`
+      using `createAuthEndpoint`, signe
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/plugin/endpoints.ts
+    requirements:
+    - FR-005
+    - NFR-QA-004
+    - NFR-SEC-001
+  - local_id: T024
+    title: Implement `keycloakSso()` in `packages/server/src/keycloak-sso/plugin/index.ts` (endpoints
+      plus `rateLimit` rule for `/keycloak/*` of 20 per
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/plugin/index.ts
+    - packages/server/src/lib/auth.ts
+    requirements:
+    - FR-005
+    - FR-017
+    - NFR-SEC-006
+  - local_id: T025
+    title: Implement `keycloakSso.publicConfig` in `apps/dokploy/server/api/routers/keycloak-sso.ts` and
+      register the router in `apps/dokploy/server/ap
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/root.ts
+    - apps/dokploy/server/api/routers/keycloak-sso.ts
+    requirements:
+    - FR-003
+  - local_id: T026
+    title: 'Create `apps/dokploy/components/auth/sign-in-with-keycloak.tsx`: an outline button with the
+      configured label linking to `/api/auth/keycloak/'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/components/auth/sign-in-with-keycloak.tsx
+    requirements:
+    - FR-003
+  - local_id: T027
+    title: 'Update `apps/dokploy/pages/index.tsx` [FR-003, FR-016]:'
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/pages/index.tsx
+    requirements:
+    - FR-003
+    - FR-016
+  - local_id: T028
+    title: Run the US1 unit tests and `pnpm typecheck` for `packages/server` and `apps/dokploy`, and fix
+      any failures [FR-005]
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy
+    - packages/server
+    requirements:
+    - FR-005
+- local_id: US2
+  title: Acceso directo al panel en modo SSO-only
+  priority: P2
+  requirements:
+  - FR-004
+  - FR-009
+  - FR-010
+  - FR-012
+  - FR-016
+  success_criteria: []
+  tasks:
+  - local_id: T035
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts` [FR-009,
+      FR-012]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts
+    requirements:
+    - FR-009
+    - FR-012
+  - local_id: T036
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/sign-out.test.ts` [FR-010]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/sign-out.test.ts
+    requirements:
+    - FR-010
+  - local_id: T037
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/proxy.test.ts`: `/dashboard/*`
+      without a session cookie redirects to `/?returnTo='
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/proxy.test.ts
+    requirements:
+    - FR-004
+  - local_id: T038
+    title: Implement the SSO-only guard (`hooks.before`) in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts`
+      and wire it in the plugin (FR-0
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/plugin/sso-only-guard.ts
+    requirements:
+    - FR-009
+    - FR-012
+  - local_id: T039
+    title: Implement the `sign-out` endpoint in `packages/server/src/keycloak-sso/plugin/endpoints.ts`
+      (FR-010)
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/plugin/endpoints.ts
+    requirements:
+    - FR-010
+  - local_id: T040
+    title: Create `apps/dokploy/proxy.ts` with matcher `/dashboard/:path*` using `getSessionCookie` from
+      `better-auth/cookies` (research R10) [FR-004]
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/proxy.ts
+    requirements:
+    - FR-004
+  - local_id: T041
+    title: 'Update `getServerSideProps` in `apps/dokploy/pages/index.tsx`: in `sso-only` without session,
+      `error` or `emergency`, redirect to `/api/auth'
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/pages/index.tsx
+    requirements:
+    - FR-004
+    - FR-016
+  - local_id: T042
+    title: 'Update logout in `apps/dokploy/components/layouts/user-nav.tsx`: when `publicConfig.mode ===
+      "sso-only"`, navigate to `/api/auth/keycloak/si'
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/components/layouts/user-nav.tsx
+    requirements:
+    - FR-010
+- local_id: US3
+  title: Configurar la conexión con Keycloak y elegir el modo
+  priority: P1
+  requirements:
+  - FR-001
+  - FR-008
+  - FR-011
+  - FR-013
+  - FR-014
+  - FR-015
+  - FR-018
+  - FR-020
+  success_criteria: []
+  tasks:
+  - local_id: T029
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/router.test.ts` [FR-011, FR-015,
+      FR-020]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/router.test.ts
+    requirements:
+    - FR-011
+    - FR-015
+    - FR-020
+  - local_id: T030
+    title: 'Implement the `get`, `update`, `testConnection` and `listEvents` owner-only procedures in
+      `apps/dokploy/server/api/routers/keycloak-sso.ts` '
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/routers/keycloak-sso.ts
+    requirements:
+    - FR-001
+    - FR-014
+    - FR-015
+    - FR-018
+    - FR-020
+  - local_id: T031
+    title: Record the owner's successful Keycloak login as verification (`verifiedIssuer`, `verifiedAt`)
+      inside the callback flow in `packages/server/s
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/plugin/endpoints.ts
+    requirements:
+    - FR-011
+  - local_id: T032
+    title: 'Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx`
+      [FR-008, FR-014, FR-015, FR-020]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx
+    requirements:
+    - FR-008
+    - FR-014
+    - FR-015
+    - FR-020
+  - local_id: T033
+    title: Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx` listing
+      the last 50 events [FR-013]
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx
+    requirements:
+    - FR-013
+  - local_id: T034
+    title: 'Create the page `apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx` (owner only, not
+      cloud, same `getServerSideProps` guard pattern as '
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/components/layouts/side.tsx
+    - apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx
+    requirements:
+    - FR-001
+- local_id: US4
+  title: Recuperar el acceso si Keycloak no está disponible
+  priority: P2
+  requirements:
+  - FR-012
+  - FR-012a
+  - FR-013
+  - FR-021
+  success_criteria: []
+  tasks:
+  - local_id: T043
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/emergency.test.ts` [FR-012, FR-013,
+      FR-021]:'
+    jira: null
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/keycloak-sso/emergency.test.ts
+    requirements:
+    - FR-012
+    - FR-013
+    - FR-021
+  - local_id: T044
+    title: Add `hooks.after` on `/sign-in/email` in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts`
+      to record owner emergency logins (FR-01
+    jira: null
+    parallel: false
+    paths:
+    - packages/server/src/keycloak-sso/plugin/sso-only-guard.ts
+    requirements:
+    - FR-013
+  - local_id: T045
+    title: Implement `disableSsoOnlyMode()` in `packages/server/src/keycloak-sso/config/provider.ts` and
+      the CLI in `apps/dokploy/scripts/keycloak-sso-
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/esbuild.config.ts
+    - apps/dokploy/package.json
+    - apps/dokploy/scripts/keycloak-sso-disable-sso-only.ts
+    - packages/server/src/keycloak-sso/config/provider.ts
+    requirements:
+    - FR-012
+    - FR-012a
+    - FR-021
+  - local_id: T046
+    title: Show the emergency banner ("Emergency access — only the instance owner can sign in here") on
+      `/?emergency=1` in `apps/dokploy/pages/index.ts
+    jira: null
+    parallel: false
+    paths:
+    - apps/dokploy/pages/index.tsx
+    requirements:
+    - FR-012
+phase_tasks:
+- name: Setup
+  tasks:
+  - local_id: T001
+    title: Add `openid-client` ^6 to `packages/server/package.json` and `apps/dokploy/package.json` dependencies
+      and update `pnpm-lock.yaml` with `pnpm
+    jira: null
+    parallel: false
+    requirements: []
+  - local_id: T002
+    title: Add `@vitest/coverage-v8` (same major as vitest 4) to `apps/dokploy/package.json` devDependencies
+      and a `coverage` block in `apps/dokploy/__
+    jira: null
+    parallel: true
+    requirements:
+    - NFR-QA-001
+  - local_id: T003
+    title: 'Create the module skeleton `packages/server/src/keycloak-sso/index.ts` and domain types in
+      `packages/server/src/keycloak-sso/types.ts`: `Sso'
+    jira: null
+    parallel: true
+    requirements:
+    - FR-002
+- name: Foundational
+  tasks:
+  - local_id: T004
+    title: 'Create Drizzle tables in `packages/server/src/db/schema/keycloak-sso.ts`:'
+    jira: null
+    parallel: false
+    requirements: []
+  - local_id: T005
+    title: Generate the additive migration with `pnpm --filter=dokploy run migration:generate` into `apps/dokploy/drizzle/`
+      and verify it only contains
+    jira: null
+    parallel: false
+    requirements: []
+  - local_id: T006
+    title: 'Write failing tests for env parsing in `apps/dokploy/__test__/keycloak-sso/config-env.test.ts`:
+      every `KEYCLOAK_SSO_*` variable, `_FILE` sec'
+    jira: null
+    parallel: true
+    requirements:
+    - FR-019
+  - local_id: T007
+    title: Implement `readEnvOverrides()` in `packages/server/src/keycloak-sso/config/env.ts` to pass
+      T006 [FR-019]
+    jira: null
+    parallel: true
+    requirements:
+    - FR-019
+  - local_id: T008
+    title: Write failing tests for pure domain rules in `apps/dokploy/__test__/keycloak-sso/access-policy.test.ts`
+      (all R7 rules, incl. owner exemption
+    jira: null
+    parallel: true
+    requirements: []
+  - local_id: T009
+    title: Implement `decideAccess` in `packages/server/src/keycloak-sso/domain/access-policy.ts` (FR-006,
+      FR-007, FR-007a, FR-008, FR-008b)
+    jira: null
+    parallel: true
+    requirements:
+    - FR-006
+    - FR-007
+    - FR-007a
+    - FR-008
+    - FR-008b
+  - local_id: T010
+    title: Implement `extractIdentity` and `isInGroup` in `packages/server/src/keycloak-sso/domain/claims.ts`
+      (research R6)
+    jira: null
+    parallel: true
+    requirements: []
+  - local_id: T011
+    title: Implement `sanitizeReturnTo` in `packages/server/src/keycloak-sso/domain/return-to.ts` (NFR-SEC-003)
+    jira: null
+    parallel: true
+    requirements:
+    - NFR-SEC-003
+  - local_id: T012
+    title: Implement `canTransitionMode` in `packages/server/src/keycloak-sso/domain/mode-transition.ts`
+      (FR-002, FR-011, data-model transitions)
+    jira: null
+    parallel: true
+    requirements:
+    - FR-002
+    - FR-011
+  - local_id: T013
+    title: 'Implement `ConfigRepository` in `packages/server/src/keycloak-sso/config/repository.ts`: single-row
+      get/upsert, secret encrypted with `encry'
+    jira: null
+    parallel: false
+    requirements:
+    - FR-015
+  - local_id: T014
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/config-provider.test.ts` [FR-017,
+      FR-018, FR-019, FR-020]:'
+    jira: null
+    parallel: false
+    requirements:
+    - FR-017
+    - FR-018
+    - FR-019
+    - FR-020
+  - local_id: T015
+    title: Implement `KeycloakConfigProvider` in `packages/server/src/keycloak-sso/config/provider.ts`
+      to pass T014
+    jira: null
+    parallel: false
+    requirements: []
+  - local_id: T016
+    title: 'Write failing tests in `apps/dokploy/__test__/keycloak-sso/oidc-client.test.ts`:'
+    jira: null
+    parallel: true
+    requirements: []
+  - local_id: T017
+    title: 'Implement `OidcClient` port and `openid-client` adapter in `packages/server/src/keycloak-sso/oidc/client.ts`.
+      It covers:'
+    jira: null
+    parallel: false
+    requirements: []
+  - local_id: T018
+    title: 'Implement `AuthEventRecorder` in `packages/server/src/keycloak-sso/events/auth-events.ts`:
+      `record()` never throws (logs on failure), `listR'
+    jira: null
+    parallel: true
+    requirements:
+    - FR-013
+  - local_id: T019
+    title: Export the module's public API from `packages/server/src/keycloak-sso/index.ts` and `packages/server/src/index.ts`
+    jira: null
+    parallel: false
+    requirements: []
+- name: Polish
+  tasks:
+  - local_id: T047
+    title: Add a benchmark in `apps/dokploy/__test__/keycloak-sso/performance.bench.ts` for the guard
+      hook with the SSO disabled (target ≤ 5 ms p95, NF
+    jira: null
+    parallel: true
+    requirements:
+    - NFR-PERF-001
+    - NFR-PERF-002
+    - SC-009
+  - local_id: T048
+    title: Add the e2e realm `apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json` and the
+      opt-in e2e suite `apps/dokploy/__test__/keycloak-
+    jira: null
+    parallel: true
+    requirements:
+    - NFR-PERF-006
+    - NFR-QA-002
+    - SC-001
+    - SC-008
+  - local_id: T049
+    title: 'Write the operator guide in `specs/001-keycloak-sso/operations.md`: Keycloak client, redirect
+      URI, Group Membership mapper, env vars, emerge'
+    jira: null
+    parallel: true
+    requirements:
+    - NFR-QA-005
+  - local_id: T050
+    title: Run `pnpm format-and-lint`, `pnpm typecheck`, the full `pnpm test`, coverage for the module
+      and `pnpm audit --prod` for high/critical adviso
+    jira: null
+    parallel: false
+    requirements:
+    - NFR-QA-001
+    - NFR-QA-003
+    - NFR-SEC-009
+  - local_id: T051
+    title: Run a security review of the branch diff (`/security-review` equivalent) against research R16
+      and fix findings (NFR-SEC-008/009, SC-007) [FR
+    jira: null
+    parallel: false
+    requirements:
+    - FR-017
+    - NFR-SEC-008
+    - SC-007
+  - local_id: T052
+    title: 'Update `specs/001-keycloak-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping
+      (local only, `jira: null` until `/sdd-sync`'
+    jira: null
+    parallel: false
+    requirements:
+    - FR-013
+bugs: []
+orphans:
+  requirements_without_issue:
+  - FR-001
+  - FR-002
+  - FR-003
+  - FR-004
+  - FR-005
+  - FR-006
+  - FR-007
+  - FR-007a
+  - FR-007b
+  - FR-008
+  - FR-008a
+  - FR-008b
+  - FR-008c
+  - FR-009
+  - FR-010
+  - FR-011
+  - FR-012
+  - FR-012a
+  - FR-013
+  - FR-014
+  - FR-015
+  - FR-016
+  - FR-017
+  - FR-018
+  - FR-019
+  - FR-020
+  - FR-021
+  - NFR-PERF-001
+  - NFR-PERF-002
+  - NFR-PERF-003
+  - NFR-PERF-004
+  - NFR-PERF-005
+  - NFR-PERF-006
+  - NFR-QA-001
+  - NFR-QA-002
+  - NFR-QA-003
+  - NFR-QA-004
+  - NFR-QA-005
+  - NFR-SEC-001
+  - NFR-SEC-002
+  - NFR-SEC-003
+  - NFR-SEC-004
+  - NFR-SEC-005
+  - NFR-SEC-006
+  - NFR-SEC-007
+  - NFR-SEC-008
+  - NFR-SEC-009
+  tasks_without_requirement: []
+  issues_without_local_id: []

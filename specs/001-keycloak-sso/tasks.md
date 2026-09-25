@@ -45,15 +45,15 @@ comparten todas las stories.
   - `keycloak_auth_event`: `type`, `outcome`, `reason`, `email`, `userId` (no FK), `ip`, `correlationId`, `createdAt`, with an index on `createdAt`.
   - Export it from `packages/server/src/db/schema/index.ts`.
 - [X] T005 Generate the additive migration with `pnpm --filter=dokploy run migration:generate` into `apps/dokploy/drizzle/` and verify it only contains `CREATE TABLE`/`CREATE INDEX` statements
-- [X] T006 [P] Write failing tests for env parsing in `apps/dokploy/__test__/keycloak-sso/config-env.test.ts`: every `KEYCLOAK_SSO_*` variable, `_FILE` secret, empty values treated as unset, invalid mode ignored (contracts/cli-and-env.md)
-- [X] T007 [P] Implement `readEnvOverrides()` in `packages/server/src/keycloak-sso/config/env.ts` to pass T006
+- [X] T006 [P] Write failing tests for env parsing in `apps/dokploy/__test__/keycloak-sso/config-env.test.ts`: every `KEYCLOAK_SSO_*` variable, `_FILE` secret, empty values treated as unset, invalid mode ignored (contracts/cli-and-env.md) [FR-019]
+- [X] T007 [P] Implement `readEnvOverrides()` in `packages/server/src/keycloak-sso/config/env.ts` to pass T006 [FR-019]
 - [X] T008 [P] Write failing tests for pure domain rules in `apps/dokploy/__test__/keycloak-sso/access-policy.test.ts` (all R7 rules, incl. owner exemption, banned, no access group → provisioning disabled, admin group absent → role unchanged), `claims.test.ts` (group normalisation `/a/b` vs `b`, missing email, `email_verified` not true), `return-to.test.ts` (reject `//evil`, `/\\evil`, `https://`, `javascript:`, encoded variants, non-string; default `/dashboard/home`), `mode-transition.test.ts` (data-model transitions)
 - [X] T009 [P] Implement `decideAccess` in `packages/server/src/keycloak-sso/domain/access-policy.ts` (FR-006, FR-007, FR-007a, FR-008, FR-008b)
 - [X] T010 [P] Implement `extractIdentity` and `isInGroup` in `packages/server/src/keycloak-sso/domain/claims.ts` (research R6)
 - [X] T011 [P] Implement `sanitizeReturnTo` in `packages/server/src/keycloak-sso/domain/return-to.ts` (NFR-SEC-003)
 - [X] T012 [P] Implement `canTransitionMode` in `packages/server/src/keycloak-sso/domain/mode-transition.ts` (FR-002, FR-011, data-model transitions)
 - [X] T013 Implement `ConfigRepository` in `packages/server/src/keycloak-sso/config/repository.ts`: single-row get/upsert, secret encrypted with `encryptValue`/`decryptValue` from `packages/server/src/lib/encryption.ts`, never returning the plaintext outside the module (FR-015)
-- [X] T014 Write failing tests in `apps/dokploy/__test__/keycloak-sso/config-provider.test.ts`:
+- [X] T014 Write failing tests in `apps/dokploy/__test__/keycloak-sso/config-provider.test.ts` [FR-017, FR-018, FR-019, FR-020]:
   - env precedence and `sources` map (FR-019/020);
   - `active` false for incomplete, cloud or enterprise (R14);
   - env `sso-only` without verification degrades to `button`;
@@ -89,7 +89,7 @@ quickstart §2, pasos 5–8.
 
 ### Tests for User Story 1 ⚠️ (escribir primero, deben fallar)
 
-- [X] T020 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/provisioning.test.ts`:
+- [X] T020 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/provisioning.test.ts` [FR-006, FR-007, FR-008]:
   - link by `sub`;
   - link by verified email when not yet linked;
   - existing non-owner outside the access group denied (FR-007b);
@@ -98,7 +98,7 @@ quickstart §2, pasos 5–8.
   - role recalculated per login;
   - owner row never modified;
   - no owner → `no_owner`.
-- [X] T021 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/endpoints.test.ts` with fake `OidcClient` and fake provisioning:
+- [X] T021 [P] [US1] Write failing tests in `apps/dokploy/__test__/keycloak-sso/endpoints.test.ts` with fake `OidcClient` and fake provisioning [FR-005, FR-016]:
   - `sign-in` sets the signed tx cookie (HttpOnly, SameSite=Lax, 600 s) and redirects to the authorization URL;
   - `callback` maps every error to `/?error=<code>&ref=<id>`;
   - `callback` clears the tx cookie always;
@@ -108,15 +108,15 @@ quickstart §2, pasos 5–8.
 ### Implementation for User Story 1
 
 - [X] T022 [US1] Implement `provisionIdentity()` in `packages/server/src/keycloak-sso/identity/provisioning.ts` to pass T020: a Drizzle transaction over `user`, `account` (`providerId = "keycloak"`, `accountId = sub`, `idToken` only) and `member` in the owner's organization (research R8, R9, FR-006, FR-007, FR-008a)
-- [X] T023 [US1] Implement the `sign-in` and `callback` endpoints in `packages/server/src/keycloak-sso/plugin/endpoints.ts` using `createAuthEndpoint`, signed cookie `keycloak_sso_tx`, `internalAdapter.createSession` and `setSessionCookie`; record `sso_login` events with `correlationId` (contracts/http-endpoints.md, NFR-SEC-001/002/005/007, NFR-QA-004)
-- [X] T024 [US1] Implement `keycloakSso()` in `packages/server/src/keycloak-sso/plugin/index.ts` (endpoints plus `rateLimit` rule for `/keycloak/*` of 20 per 60 s) and register it in `packages/server/src/lib/auth.ts` plugins (NFR-SEC-006)
-- [X] T025 [US1] Implement `keycloakSso.publicConfig` in `apps/dokploy/server/api/routers/keycloak-sso.ts` and register the router in `apps/dokploy/server/api/root.ts` (contracts/trpc-keycloak-sso.md)
+- [X] T023 [US1] Implement the `sign-in` and `callback` endpoints in `packages/server/src/keycloak-sso/plugin/endpoints.ts` using `createAuthEndpoint`, signed cookie `keycloak_sso_tx`, `internalAdapter.createSession` and `setSessionCookie`; record `sso_login` events with `correlationId` (contracts/http-endpoints.md, NFR-SEC-001/002/005/007, NFR-QA-004) [FR-005]
+- [X] T024 [US1] Implement `keycloakSso()` in `packages/server/src/keycloak-sso/plugin/index.ts` (endpoints plus `rateLimit` rule for `/keycloak/*` of 20 per 60 s) and register it in `packages/server/src/lib/auth.ts` plugins (NFR-SEC-006) [FR-005, FR-017]
+- [X] T025 [US1] Implement `keycloakSso.publicConfig` in `apps/dokploy/server/api/routers/keycloak-sso.ts` and register the router in `apps/dokploy/server/api/root.ts` (contracts/trpc-keycloak-sso.md) [FR-003]
 - [X] T026 [P] [US1] Create `apps/dokploy/components/auth/sign-in-with-keycloak.tsx`: an outline button with the configured label linking to `/api/auth/keycloak/sign-in` (with `returnTo` when present) (FR-003)
-- [X] T027 [US1] Update `apps/dokploy/pages/index.tsx`:
+- [X] T027 [US1] Update `apps/dokploy/pages/index.tsx` [FR-003, FR-016]:
   - prefetch `keycloakSso.publicConfig`;
   - render `SignInWithKeycloak` above the local form in `button` mode;
   - map `keycloak_*` error codes to clear messages that show the `ref` (acceptance US1-5, NFR-QA-004).
-- [X] T028 [US1] Run the US1 unit tests and `pnpm typecheck` for `packages/server` and `apps/dokploy`, and fix any failures
+- [X] T028 [US1] Run the US1 unit tests and `pnpm typecheck` for `packages/server` and `apps/dokploy`, and fix any failures [FR-005]
 
 **Checkpoint**: US1 funciona con la configuración por variables de entorno.
 
@@ -131,7 +131,7 @@ los valores que vienen del entorno aparecen bloqueados.
 
 ### Tests for User Story 3 ⚠️
 
-- [X] T029 [P] [US3] Write failing tests in `apps/dokploy/__test__/keycloak-sso/router.test.ts`:
+- [X] T029 [P] [US3] Write failing tests in `apps/dokploy/__test__/keycloak-sso/router.test.ts` [FR-011, FR-015, FR-020]:
   - non-owner gets `FORBIDDEN`;
   - `get` never returns the secret, only `hasClientSecret`;
   - `update` rejects env-sourced fields, `http:` without the flag, incomplete configuration for `button`/`sso-only`, `sso-only` without verification, and an `issuerUrl` change while in `sso-only`;
@@ -142,7 +142,7 @@ los valores que vienen del entorno aparecen bloqueados.
 
 - [X] T030 [US3] Implement the `get`, `update`, `testConnection` and `listEvents` owner-only procedures in `apps/dokploy/server/api/routers/keycloak-sso.ts` using a shared `ownerProcedure` guard (`ctx.user.role === "owner"`) and `IS_CLOUD` → `NOT_FOUND` (FR-001, FR-014, FR-015, FR-018, FR-020)
 - [X] T031 [US3] Record the owner's successful Keycloak login as verification (`verifiedIssuer`, `verifiedAt`) inside the callback flow in `packages/server/src/keycloak-sso/plugin/endpoints.ts` (FR-011)
-- [X] T032 [P] [US3] Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx`:
+- [X] T032 [P] [US3] Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-sso-settings.tsx` [FR-008, FR-014, FR-015, FR-020]:
   - form built with react-hook-form and zod;
   - a secret field that is write-only;
   - the callback URL with a copy button;
@@ -151,8 +151,8 @@ los valores que vienen del entorno aparecen bloqueados.
   - env-sourced fields disabled with a "from environment" badge;
   - a role-overwrite warning (FR-008c);
   - a "Test connection" action.
-- [X] T033 [P] [US3] Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx` listing the last 50 events
-- [X] T034 [US3] Create the page `apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx` (owner only, not cloud, same `getServerSideProps` guard pattern as other settings pages) and add the sidebar entry in `apps/dokploy/components/layouts/side.tsx`
+- [X] T033 [P] [US3] Create `apps/dokploy/components/dashboard/settings/keycloak-sso/keycloak-auth-events.tsx` listing the last 50 events [FR-013]
+- [X] T034 [US3] Create the page `apps/dokploy/pages/dashboard/settings/keycloak-sso.tsx` (owner only, not cloud, same `getServerSideProps` guard pattern as other settings pages) and add the sidebar entry in `apps/dokploy/components/layouts/side.tsx` [FR-001]
 
 **Checkpoint**: US1 + US3 = MVP completo y configurable.
 
@@ -167,23 +167,23 @@ local queda cerrado; el logout cierra también la sesión de Keycloak.
 
 ### Tests for User Story 2 ⚠️
 
-- [X] T035 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts`:
+- [X] T035 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sso-only-guard.test.ts` [FR-009, FR-012]:
   - in `sso-only`, block sign-up (including invitation acceptance), social, passkey and password-reset paths with 403;
   - allow `/sign-in/email` only for the owner's email (case-insensitive);
   - in `button`/`disabled`, never interfere (FR-009).
-- [X] T036 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sign-out.test.ts`:
+- [X] T036 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/sign-out.test.ts` [FR-010]:
   - `sso-only` redirects to the end-session URL with `id_token_hint`, `client_id` and `post_logout_redirect_uri`;
   - `button` redirects to `/`;
   - the local session is always deleted (FR-010).
-- [X] T037 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/proxy.test.ts`: `/dashboard/*` without a session cookie redirects to `/?returnTo=<path+query>`; with a cookie it passes through; other paths pass through.
+- [X] T037 [P] [US2] Write failing tests in `apps/dokploy/__test__/keycloak-sso/proxy.test.ts`: `/dashboard/*` without a session cookie redirects to `/?returnTo=<path+query>`; with a cookie it passes through; other paths pass through. [FR-004]
 
 ### Implementation for User Story 2
 
 - [X] T038 [US2] Implement the SSO-only guard (`hooks.before`) in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts` and wire it in the plugin (FR-009, FR-012)
 - [X] T039 [US2] Implement the `sign-out` endpoint in `packages/server/src/keycloak-sso/plugin/endpoints.ts` (FR-010)
-- [X] T040 [US2] Create `apps/dokploy/proxy.ts` with matcher `/dashboard/:path*` using `getSessionCookie` from `better-auth/cookies` (research R10)
+- [X] T040 [US2] Create `apps/dokploy/proxy.ts` with matcher `/dashboard/:path*` using `getSessionCookie` from `better-auth/cookies` (research R10) [FR-004]
 - [X] T041 [US2] Update `getServerSideProps` in `apps/dokploy/pages/index.tsx`: in `sso-only` without session, `error` or `emergency`, redirect to `/api/auth/keycloak/sign-in?returnTo=<sanitised>`; when `error` is present, render the error with a "Retry" link instead of redirecting (FR-004, FR-016)
-- [X] T042 [US2] Update logout in `apps/dokploy/components/layouts/user-nav.tsx`: when `publicConfig.mode === "sso-only"`, navigate to `/api/auth/keycloak/sign-out` instead of `authClient.signOut()`
+- [X] T042 [US2] Update logout in `apps/dokploy/components/layouts/user-nav.tsx`: when `publicConfig.mode === "sso-only"`, navigate to `/api/auth/keycloak/sign-out` instead of `authClient.signOut()` [FR-010]
 
 **Checkpoint**: US2 funciona sin romper US1 y US3.
 
@@ -198,14 +198,14 @@ registrados.
 
 ### Tests for User Story 4 ⚠️
 
-- [X] T043 [P] [US4] Write failing tests in `apps/dokploy/__test__/keycloak-sso/emergency.test.ts`:
+- [X] T043 [P] [US4] Write failing tests in `apps/dokploy/__test__/keycloak-sso/emergency.test.ts` [FR-012, FR-013, FR-021]:
   - `emergency_login` events for accepted and rejected attempts (`hooks.after` outcome);
   - the disable command switches `sso-only` → `button`, reports "nothing to do", and exits 2 with a warning when `KEYCLOAK_SSO_MODE=sso-only` (contracts/cli-and-env.md, FR-012a, FR-021).
 
 ### Implementation for User Story 4
 
 - [X] T044 [US4] Add `hooks.after` on `/sign-in/email` in `packages/server/src/keycloak-sso/plugin/sso-only-guard.ts` to record owner emergency logins (FR-013)
-- [X] T045 [US4] Implement `disableSsoOnlyMode()` in `packages/server/src/keycloak-sso/config/provider.ts` and the CLI in `apps/dokploy/scripts/keycloak-sso-disable-sso-only.ts`; add the esbuild entry in `apps/dokploy/esbuild.config.ts` and the `keycloak:disable-sso-only` script in `apps/dokploy/package.json` (FR-012a)
+- [X] T045 [US4] Implement `disableSsoOnlyMode()` in `packages/server/src/keycloak-sso/config/provider.ts` and the CLI in `apps/dokploy/scripts/keycloak-sso-disable-sso-only.ts`; add the esbuild entry in `apps/dokploy/esbuild.config.ts` and the `keycloak:disable-sso-only` script in `apps/dokploy/package.json` (FR-012a) [FR-012, FR-021]
 - [X] T046 [US4] Show the emergency banner ("Emergency access — only the instance owner can sign in here") on `/?emergency=1` in `apps/dokploy/pages/index.tsx` (FR-012)
 
 **Checkpoint**: todas las stories funcionan.
@@ -218,8 +218,8 @@ registrados.
 - [X] T048 [P] Add the e2e realm `apps/dokploy/__test__/keycloak-sso/e2e/realm-dokploy-test.json` and the opt-in e2e suite `apps/dokploy/__test__/keycloak-sso/e2e/keycloak.e2e.test.ts`, gated by `KEYCLOAK_E2E=1`, covering the acceptance scenarios, time-to-dashboard with an existing Keycloak session under 5 s (SC-001) and 50 concurrent logins (NFR-QA-002, NFR-PERF-006, SC-008)
 - [X] T049 [P] Write the operator guide in `specs/001-keycloak-sso/operations.md`: Keycloak client, redirect URI, Group Membership mapper, env vars, emergency procedures (NFR-QA-005)
 - [X] T050 Run `pnpm format-and-lint`, `pnpm typecheck`, the full `pnpm test`, coverage for the module and `pnpm audit --prod` for high/critical advisories on new or changed dependencies, and fix issues (NFR-QA-001, NFR-QA-003, NFR-SEC-009)
-- [X] T051 Run a security review of the branch diff (`/security-review` equivalent) against research R16 and fix findings (NFR-SEC-008/009, SC-007)
-- [X] T052 Update `specs/001-keycloak-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping (local only, `jira: null` until `/sdd-sync`)
+- [X] T051 Run a security review of the branch diff (`/security-review` equivalent) against research R16 and fix findings (NFR-SEC-008/009, SC-007) [FR-017]
+- [X] T052 Update `specs/001-keycloak-sso/traceability.yaml` with the FR/NFR → task → test → commit mapping (local only, `jira: null` until `/sdd-sync`) [FR-013]
 
 ---
 
