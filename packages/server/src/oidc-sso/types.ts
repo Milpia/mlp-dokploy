@@ -39,6 +39,7 @@ export type ConfigField =
 	| "clientSecret"
 	| "accessGroup"
 	| "adminGroup"
+	| "groupsClaim"
 	| "buttonLabel"
 	| "allowInsecureHttp";
 
@@ -51,6 +52,7 @@ export interface StoredConfig {
 	clientSecret: string | null;
 	accessGroup: string | null;
 	adminGroup: string | null;
+	groupsClaim: string;
 	buttonLabel: string;
 	allowInsecureHttp: boolean;
 	verifiedIssuer: string | null;

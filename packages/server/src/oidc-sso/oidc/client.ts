@@ -23,6 +23,8 @@ export interface CodeExchangeInput {
 	state: string;
 	nonce: string;
 	codeVerifier: string;
+	/** Claim holding groups or roles; defaults to "groups". */
+	groupsClaim?: string;
 }
 
 export interface CodeExchangeResult {
@@ -258,13 +260,16 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 
 			// Some providers only expose groups through userinfo (e.g. Keycloak
 			// with the mapper's "Add to ID token" switch off).
-			if (claims.groups === undefined && tokens.access_token) {
+			const groupsClaim = input.groupsClaim ?? "groups";
+			if (claims[groupsClaim] === undefined && tokens.access_token) {
 				const userInfo = await lib.fetchUserInfo(
 					config,
 					tokens.access_token,
 					idTokenClaims.sub,
 				);
-				if (Array.isArray(userInfo.groups)) claims.groups = userInfo.groups;
+				if (userInfo[groupsClaim] !== undefined) {
+					claims[groupsClaim] = userInfo[groupsClaim];
+				}
 			}
 			return { claims, idToken: tokens.id_token };
 		},

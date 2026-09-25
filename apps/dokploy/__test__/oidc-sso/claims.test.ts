@@ -39,7 +39,7 @@ describe("extractIdentity", () => {
 			sub: "s",
 			email: 42,
 			given_name: ["x"],
-			groups: "not-a-list",
+			groups: 7,
 		});
 		expect(identity.email).toBeUndefined();
 		expect(identity.givenName).toBeUndefined();
@@ -54,6 +54,48 @@ describe("extractIdentity", () => {
 
 	it("rejects a missing subject", () => {
 		expect(() => extractIdentity({ email: "a@b.c" })).toThrow();
+	});
+});
+
+describe("extractIdentity with a configurable groups claim (FR-023)", () => {
+	it("reads a list from a custom claim name (e.g. Okta, Authentik, Authelia)", () => {
+		expect(
+			extractIdentity({ sub: "s", roles: ["ops", "dev"] }, "roles").groups,
+		).toEqual(["ops", "dev"]);
+	});
+
+	it("reads the keys of a Zitadel role object", () => {
+		const claim = "urn:zitadel:iam:org:project:roles";
+		expect(
+			extractIdentity(
+				{
+					sub: "s",
+					[claim]: {
+						"dokploy-users": { "123": "org.example.com" },
+						"dokploy-admins": { "123": "org.example.com" },
+					},
+				},
+				claim,
+			).groups,
+		).toEqual(["dokploy-users", "dokploy-admins"]);
+	});
+
+	it("accepts a single string value", () => {
+		expect(
+			extractIdentity({ sub: "s", groups: "dokploy-users" }).groups,
+		).toEqual(["dokploy-users"]);
+	});
+
+	it("ignores the default claim when another one is configured", () => {
+		expect(
+			extractIdentity({ sub: "s", groups: ["dokploy-users"] }, "roles").groups,
+		).toEqual([]);
+	});
+
+	it("treats null, numbers and nested arrays as no groups", () => {
+		for (const value of [null, 42, true]) {
+			expect(extractIdentity({ sub: "s", groups: value }).groups).toEqual([]);
+		}
 	});
 });
 

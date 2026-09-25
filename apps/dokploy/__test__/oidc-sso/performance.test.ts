@@ -15,17 +15,6 @@ const p95 = (samples: number[]) => {
 	);
 };
 
-const measure = async (runs: number, fn: () => Promise<unknown>) => {
-	for (let i = 0; i < 20; i++) await fn();
-	const samples: number[] = [];
-	for (let i = 0; i < runs; i++) {
-		const start = performance.now();
-		await fn();
-		samples.push(performance.now() - start);
-	}
-	return samples;
-};
-
 const memory = () => ({
 	user: [
 		{
@@ -71,12 +60,24 @@ describe("performance (NFR-PERF, SC-008, SC-009)", () => {
 				body: JSON.stringify({ provider: "github" }),
 			});
 
-		const baseline = p95(
-			await measure(200, () => withoutPlugin.handler(request())),
-		);
-		const current = p95(
-			await measure(200, () => withPlugin.handler(request())),
-		);
+		// Interleaved so both variants see the same CPU load when the whole
+		// suite runs in parallel.
+		const without: number[] = [];
+		const withIt: number[] = [];
+		for (let i = 0; i < 20; i++) {
+			await withoutPlugin.handler(request());
+			await withPlugin.handler(request());
+		}
+		for (let i = 0; i < 300; i++) {
+			let t0 = performance.now();
+			await withoutPlugin.handler(request());
+			without.push(performance.now() - t0);
+			t0 = performance.now();
+			await withPlugin.handler(request());
+			withIt.push(performance.now() - t0);
+		}
+		const baseline = p95(without);
+		const current = p95(withIt);
 
 		console.info(
 			`[perf] guarded auth request p95: without plugin ${baseline.toFixed(2)} ms, with plugin (disabled) ${current.toFixed(2)} ms`,

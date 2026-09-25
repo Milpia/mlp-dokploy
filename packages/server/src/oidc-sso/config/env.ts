@@ -8,6 +8,7 @@ export interface EnvOverrideValues {
 	clientSecret?: string;
 	accessGroup?: string;
 	adminGroup?: string;
+	groupsClaim?: string;
 	buttonLabel?: string;
 	allowInsecureHttp?: boolean;
 }
@@ -97,6 +98,9 @@ export const readEnvOverrides = (
 
 	const adminGroup = read(env, "SSO_OIDC_ADMIN_GROUP");
 	if (adminGroup) values.adminGroup = adminGroup;
+
+	const groupsClaim = read(env, "SSO_OIDC_GROUPS_CLAIM");
+	if (groupsClaim) values.groupsClaim = groupsClaim;
 
 	const buttonLabel = read(env, "SSO_OIDC_BUTTON_LABEL");
 	if (buttonLabel) {
