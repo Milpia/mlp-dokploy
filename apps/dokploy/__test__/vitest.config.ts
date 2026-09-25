@@ -10,6 +10,8 @@ export default defineConfig({
 		setupFiles: [path.resolve(__dirname, "setup.ts")],
 		coverage: {
 			provider: "v8",
+			// Text only: an HTML report inside apps/dokploy is picked up by tsc.
+			reporter: ["text"],
 			allowExternal: true,
 			include: [
 				path.resolve(__dirname, "../../../packages/server/src/keycloak-sso/**"),
