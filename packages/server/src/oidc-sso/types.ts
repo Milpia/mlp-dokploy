@@ -40,6 +40,7 @@ export type ConfigField =
 	| "accessGroup"
 	| "adminGroup"
 	| "groupsClaim"
+	| "extraScopes"
 	| "buttonLabel"
 	| "allowInsecureHttp";
 
@@ -53,6 +54,8 @@ export interface StoredConfig {
 	accessGroup: string | null;
 	adminGroup: string | null;
 	groupsClaim: string;
+	/** Space-separated, appended to "openid email profile". */
+	extraScopes: string;
 	buttonLabel: string;
 	allowInsecureHttp: boolean;
 	verifiedIssuer: string | null;

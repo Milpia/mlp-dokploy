@@ -2,6 +2,7 @@ import { normalizeIssuerUrl } from "../config/env";
 import type { ConfigPatch } from "../config/repository";
 import { DEFAULT_GROUPS_CLAIM } from "../domain/claims";
 import { canTransitionMode } from "../domain/mode-transition";
+import { parseScopes } from "../domain/scopes";
 import { newCorrelationId } from "../events/auth-events";
 import type { TestResult } from "../oidc/client";
 import type { OidcSsoServices } from "../services";
@@ -16,6 +17,7 @@ import type {
 export type ConfigUpdateErrorCode =
 	| "env_locked"
 	| "invalid_issuer"
+	| "invalid_scope"
 	| "insecure_http"
 	| "incomplete"
 	| "unverified"
@@ -40,6 +42,7 @@ export interface ConfigUpdateInput {
 	accessGroup?: string | null;
 	adminGroup?: string | null;
 	groupsClaim?: string;
+	extraScopes?: string;
 	buttonLabel?: string;
 	allowInsecureHttp?: boolean;
 }
@@ -54,6 +57,7 @@ export interface ConfigView {
 	accessGroup: string | null;
 	adminGroup: string | null;
 	groupsClaim: string;
+	extraScopes: string;
 	buttonLabel: string;
 	allowInsecureHttp: boolean;
 	verified: boolean;
@@ -85,6 +89,7 @@ const toView = (
 	accessGroup: effective.accessGroup,
 	adminGroup: effective.adminGroup,
 	groupsClaim: effective.groupsClaim,
+	extraScopes: effective.extraScopes,
 	buttonLabel: effective.buttonLabel,
 	allowInsecureHttp: effective.allowInsecureHttp,
 	verified: effective.verified,
@@ -151,6 +156,9 @@ export const updateSsoConfig = async (
 		...(input.groupsClaim !== undefined
 			? { groupsClaim: input.groupsClaim.trim() || DEFAULT_GROUPS_CLAIM }
 			: {}),
+		...(input.extraScopes !== undefined
+			? { extraScopes: input.extraScopes }
+			: {}),
 		...(input.buttonLabel !== undefined
 			? { buttonLabel: input.buttonLabel.trim() }
 			: {}),
@@ -173,6 +181,17 @@ export const updateSsoConfig = async (
 			);
 		}
 		delete requested[field];
+	}
+
+	if (typeof requested.extraScopes === "string") {
+		const scopes = parseScopes(requested.extraScopes);
+		if (!scopes) {
+			throw new ConfigUpdateError(
+				"invalid_scope",
+				"Extra scopes may only contain characters allowed in OAuth scopes, separated by spaces.",
+			);
+		}
+		requested.extraScopes = scopes.join(" ");
 	}
 
 	if (typeof requested.issuerUrl === "string") {

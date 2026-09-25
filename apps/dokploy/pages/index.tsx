@@ -3,17 +3,14 @@ import {
 	IS_CLOUD,
 	isAdminPresent,
 } from "@dokploy/server";
-import {
-	getOidcSsoServices,
-	sanitizeReturnTo,
-} from "@dokploy/server/oidc-sso";
+import { validateRequest } from "@dokploy/server/lib/auth";
+import { getOidcSsoServices, sanitizeReturnTo } from "@dokploy/server/oidc-sso";
 import { getPublicConfig } from "@dokploy/server/oidc-sso/admin/config-admin";
 import {
 	LOGIN_ERROR_CODES,
 	type LoginErrorCode,
 	type SsoMode,
 } from "@dokploy/server/oidc-sso/types";
-import { validateRequest } from "@dokploy/server/lib/auth";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Fingerprint } from "lucide-react";
@@ -100,6 +97,7 @@ interface Props {
 	sso?: { mode: SsoMode; buttonLabel: string };
 	returnTo?: string | null;
 	emergency?: boolean;
+	signedOut?: boolean;
 }
 export default function Home({
 	IS_CLOUD,
@@ -107,6 +105,7 @@ export default function Home({
 	sso = { mode: "disabled", buttonLabel: "" },
 	returnTo = null,
 	emergency = false,
+	signedOut = false,
 }: Props) {
 	const router = useRouter();
 	const { config: whitelabeling } = useWhitelabelingPublic();
@@ -382,6 +381,11 @@ export default function Home({
 					<span>{error}</span>
 				</AlertBlock>
 			)}
+			{signedOut && (
+				<AlertBlock type="info" className="my-2">
+					<span>You have been signed out.</span>
+				</AlertBlock>
+			)}
 			{emergency && sso.mode === "sso-only" && (
 				<AlertBlock type="warning" className="my-2">
 					<span>
@@ -628,10 +632,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 		: null;
 	const emergency = firstQueryValue(context.query.emergency) === "1";
 	const hasError = !!firstQueryValue(context.query.error);
+	const signedOut = firstQueryValue(context.query.signed_out) === "1";
 
 	// SSO-only skips the local form entirely (FR-004), except to show a login
-	// error (FR-016, no redirect loop) or on the emergency route (FR-012).
-	if (sso.mode === "sso-only" && !emergency && !hasError) {
+	// error (FR-016, no redirect loop), after signing out from a provider
+	// without end-session support (FR-025) or on the emergency route (FR-012).
+	if (sso.mode === "sso-only" && !emergency && !hasError && !signedOut) {
 		return {
 			redirect: {
 				permanent: false,
@@ -648,6 +654,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 			sso,
 			returnTo,
 			emergency,
+			signedOut,
 		},
 	};
 }

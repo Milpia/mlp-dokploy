@@ -35,6 +35,18 @@ describe("startLogin", () => {
 		});
 	});
 
+	it("FR-023a: requests the configured extra scopes", async () => {
+		const { deps, oidc } = makeDeps({
+			config: { ...activeConfig, extraScopes: "groups" },
+		});
+		await startLogin(deps, { returnTo: "/", redirectUri });
+		expect(oidc.createAuthorizationRequest).toHaveBeenCalledWith(
+			expect.anything(),
+			redirectUri,
+			["groups"],
+		);
+	});
+
 	it("FR-016: maps an unreachable provider to sso_unavailable and records it", async () => {
 		const oidc = fakeOidc({
 			createAuthorizationRequest: vi.fn(async () => {
@@ -280,7 +292,7 @@ describe("resolveSignOutTarget (FR-010)", () => {
 		});
 	});
 
-	it("falls back to / when the provider has no end-session URL", async () => {
+	it("FR-025: without an end-session URL it lands on the signed-out screen (e.g. Authelia)", async () => {
 		const oidc = fakeOidc({ buildEndSessionUrl: vi.fn(async () => null) });
 		const { deps } = makeDeps({
 			oidc,
@@ -288,7 +300,7 @@ describe("resolveSignOutTarget (FR-010)", () => {
 		});
 		await expect(
 			resolveSignOutTarget(deps, { origin: "https://d.example.com" }),
-		).resolves.toBe("/");
+		).resolves.toBe("/?signed_out=1");
 	});
 
 	it("an inactive configuration never calls the provider", async () => {

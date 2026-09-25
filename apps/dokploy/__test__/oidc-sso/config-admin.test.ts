@@ -89,6 +89,22 @@ describe("updateSsoConfig", () => {
 		expect((await getConfigView(services)).groupsClaim).toBe("groups");
 	});
 
+	it("FR-023a: normalises extra scopes and rejects invalid ones", async () => {
+		const { services, repository } = makeServices();
+		await updateSsoConfig(
+			services,
+			{ extraScopes: " groups  groups\turn:zitadel:iam:org:projects:roles " },
+			actor,
+		);
+		expect(repository.save).toHaveBeenLastCalledWith({
+			extraScopes: "groups urn:zitadel:iam:org:projects:roles",
+		});
+		await expectError(
+			updateSsoConfig(services, { extraScopes: "bad\\scope" }, actor),
+			"invalid_scope",
+		);
+	});
+
 	it("FR-015: an empty secret keeps the stored one", async () => {
 		const { services, repository } = makeServices();
 		await updateSsoConfig(

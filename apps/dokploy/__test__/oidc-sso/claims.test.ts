@@ -125,6 +125,13 @@ describe("group matching", () => {
 		expect(isInGroup(["/dokploy-users-old"], "dokploy-users")).toBe(false);
 	});
 
+	it("FR-007c: a comma-separated setting matches any of the listed groups", () => {
+		expect(isInGroup(["leads"], "admins, leads")).toBe(true);
+		expect(isInGroup(["/admins"], "admins,leads")).toBe(true);
+		expect(isInGroup(["developers"], "admins,leads")).toBe(false);
+		expect(isInGroup(["qa"], " , ")).toBe(false);
+	});
+
 	it("never matches an empty configured group", () => {
 		expect(isInGroup(["/", ""], "")).toBe(false);
 		expect(isInGroup(["/"], "/")).toBe(false);

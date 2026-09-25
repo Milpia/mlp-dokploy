@@ -133,6 +133,7 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - **FR-007**: Cuando llega un usuario de Keycloak sin cuenta en Dokploy, el sistema MUST crearle la cuenta automáticamente solo si pertenece al grupo de acceso configurado en Keycloak; si no pertenece, MUST rechazar el login con un mensaje que indique que no tiene acceso a esta instancia.
 - **FR-007a**: El owner MUST poder configurar el nombre del grupo de acceso de Keycloak. Sin grupo configurado, el sistema MUST NOT crear cuentas nuevas por SSO (solo se vinculan cuentas existentes según FR-006).
 - **FR-007b**: Cuando hay grupo de acceso configurado, el sistema MUST exigir pertenecer a él a todo usuario que entre por SSO, sea nuevo o existente, salvo al owner.
+- **FR-007c**: El grupo de acceso y el grupo de administración MUST admitir una lista separada por comas (p. ej. `admins,leads`); basta con pertenecer a uno de ellos.
 - **FR-008**: Cuando hay grupo de administración configurado, el sistema MUST asignar el rol de Dokploy según los grupos de Keycloak del usuario: los miembros del grupo de administración (p. ej. `dokploy-admins`, que en la organización incluye a admins y leads) reciben el rol admin; el resto, el rol member. Sin grupo de administración configurado, los usuarios nuevos reciben member y los existentes conservan su rol.
 - **FR-008a**: El sistema MUST recalcular el rol en cada login por SSO, de modo que añadir o quitar a alguien del grupo de administración en Keycloak se refleje en su siguiente login.
 - **FR-008b**: El rol owner MUST NOT asignarse ni retirarse por SSO: el owner conserva su rol aunque no esté en el grupo de administración, y nadie obtiene el rol owner a través de Keycloak.
@@ -153,6 +154,7 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 - **FR-021**: El comando de emergencia de FR-012a MUST advertir si el modo SSO-only viene de una variable de entorno, porque en ese caso solo se desactiva cambiando la variable y reiniciando.
 - **FR-022**: El sistema MUST funcionar con cualquier proveedor OpenID Connect que publique un documento de discovery y emita ID tokens firmados, y MUST verificarse al menos con Keycloak, Okta, Authentik, Zitadel y Authelia.
 - **FR-023**: El nombre del claim que contiene los grupos o roles MUST ser configurable (por defecto `groups`). El sistema MUST aceptar ese claim como lista de textos, como texto único o como objeto cuyas claves son los nombres (formato de roles de Zitadel, `urn:zitadel:iam:org:project:roles`).
+- **FR-023a**: Los scopes adicionales que se piden al proveedor, además de `openid email profile`, MUST ser configurables (por defecto ninguno), porque algunos proveedores solo envían los grupos si se pide un scope concreto (`groups` en Authelia y Okta, `urn:zitadel:iam:org:projects:roles` en Zitadel). Cada scope MUST validarse con la sintaxis de RFC 6749 §3.3.
 - **FR-024**: La configuración MUST ofrecer presets para Keycloak, Okta, Authentik, Zitadel, Authelia y «Otro (OIDC genérico)», que rellenan el claim de grupos y muestran el formato de la URL del issuer de cada proveedor. Los presets solo ayudan a rellenar: no limitan la configuración.
 - **FR-025**: En modo SSO-only, si el proveedor no ofrece cierre de sesión (`end_session_endpoint`, p. ej. Authelia), cerrar sesión MUST llevar a una pantalla de «sesión cerrada» que no redirige automáticamente al proveedor, para que el usuario no vuelva a entrar sin querer.
 
@@ -189,7 +191,7 @@ Keycloak se cae o su configuración se rompe mientras la instancia está en modo
 
 ### Key Entities *(include if feature involves data)*
 
-- **Configuración de Keycloak**: una por instancia. Contiene la URL del realm, el identificador del cliente, el secreto (protegido), el grupo de acceso, el grupo de administración, el nombre del claim de grupos, el modo (desactivado, botón o SSO-only), el texto del botón y la marca de «login de prueba completado».
+- **Configuración de Keycloak**: una por instancia. Contiene la URL del realm, el identificador del cliente, el secreto (protegido), el grupo de acceso, el grupo de administración, el nombre del claim de grupos, los scopes adicionales, el modo (desactivado, botón o SSO-only), el texto del botón y la marca de «login de prueba completado».
 - **Vínculo de identidad**: relaciona una cuenta de Dokploy con su identidad en Keycloak (identificador estable del usuario en el realm), para reconocerlo aunque cambie de email en Keycloak.
 - **Evento de autenticación**: el registro de un login por SSO fallido o de un uso de la vía de emergencia, con la hora, el usuario y el resultado.
 

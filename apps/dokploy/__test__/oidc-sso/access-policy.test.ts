@@ -163,6 +163,26 @@ describe("decideAccess — roles", () => {
 		).toEqual({ allow: true, action: "login", role: "member" });
 	});
 
+	it("FR-007c: access and admin groups accept lists (e.g. admins,leads)", () => {
+		expect(
+			decideAccess(
+				input({
+					identity: identity({ groups: ["leads"] }),
+					accessGroup: "admins,leads",
+					adminGroup: "admins",
+				}),
+			),
+		).toEqual({ allow: true, action: "create", role: "member" });
+		expect(
+			decideAccess(
+				input({
+					identity: identity({ groups: ["developers"] }),
+					accessGroup: "admins,leads",
+				}),
+			),
+		).toEqual({ allow: false, reason: "not_in_access_group" });
+	});
+
 	it("the admin group alone does not grant access", () => {
 		expect(
 			decideAccess(

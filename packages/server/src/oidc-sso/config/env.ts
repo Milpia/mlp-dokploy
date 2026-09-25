@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { parseScopes } from "../domain/scopes";
 import { SSO_MODES, type SsoMode } from "../types";
 
 export interface EnvOverrideValues {
@@ -9,6 +10,7 @@ export interface EnvOverrideValues {
 	accessGroup?: string;
 	adminGroup?: string;
 	groupsClaim?: string;
+	extraScopes?: string;
 	buttonLabel?: string;
 	allowInsecureHttp?: boolean;
 }
@@ -101,6 +103,18 @@ export const readEnvOverrides = (
 
 	const groupsClaim = read(env, "SSO_OIDC_GROUPS_CLAIM");
 	if (groupsClaim) values.groupsClaim = groupsClaim;
+
+	const extraScopes = read(env, "SSO_OIDC_EXTRA_SCOPES");
+	if (extraScopes) {
+		const scopes = parseScopes(extraScopes);
+		if (scopes) {
+			values.extraScopes = scopes.join(" ");
+		} else {
+			errors.push(
+				"SSO_OIDC_EXTRA_SCOPES contains characters not allowed in OAuth scopes; ignoring it.",
+			);
+		}
+	}
 
 	const buttonLabel = read(env, "SSO_OIDC_BUTTON_LABEL");
 	if (buttonLabel) {

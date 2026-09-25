@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import * as openid from "openid-client";
+import { authorizationScopes } from "../domain/scopes";
 import { type LoginErrorCode, SsoLoginError } from "../types";
 
 export interface OidcSettings {
@@ -49,6 +50,7 @@ export interface OidcClient {
 	createAuthorizationRequest(
 		settings: OidcSettings,
 		redirectUri: string,
+		extraScopes?: string[],
 	): Promise<AuthorizationRequest>;
 	exchangeCode(
 		settings: OidcSettings,
@@ -219,7 +221,7 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 	};
 
 	return {
-		async createAuthorizationRequest(settings, redirectUri) {
+		async createAuthorizationRequest(settings, redirectUri, extraScopes = []) {
 			const config = await discover(settings);
 			const codeVerifier = lib.randomPKCECodeVerifier();
 			const state = lib.randomState();
@@ -227,7 +229,7 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 			const url = lib.buildAuthorizationUrl(config, {
 				redirect_uri: redirectUri,
 				response_type: "code",
-				scope: "openid email profile",
+				scope: authorizationScopes(extraScopes),
 				code_challenge: await lib.calculatePKCECodeChallenge(codeVerifier),
 				code_challenge_method: "S256",
 				state,

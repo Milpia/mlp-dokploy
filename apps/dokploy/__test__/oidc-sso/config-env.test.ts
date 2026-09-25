@@ -24,6 +24,7 @@ describe("readEnvOverrides", () => {
 				SSO_OIDC_BUTTON_LABEL: "Entrar con Milpia",
 				SSO_OIDC_ALLOW_INSECURE_HTTP: "false",
 				SSO_OIDC_GROUPS_CLAIM: "urn:zitadel:iam:org:project:roles",
+				SSO_OIDC_EXTRA_SCOPES: "groups  offline_access",
 			},
 			noFile,
 		);
@@ -38,6 +39,7 @@ describe("readEnvOverrides", () => {
 			buttonLabel: "Entrar con Milpia",
 			allowInsecureHttp: false,
 			groupsClaim: "urn:zitadel:iam:org:project:roles",
+			extraScopes: "groups offline_access",
 		});
 	});
 
@@ -112,6 +114,15 @@ describe("readEnvOverrides", () => {
 		expect(result.values.issuerUrl).toBe(
 			"https://kc.example.com/realms/milpia",
 		);
+	});
+
+	it("FR-023a: rejects extra scopes with characters outside RFC 6749", () => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_EXTRA_SCOPES: 'groups "quoted"' },
+			noFile,
+		);
+		expect(result.values.extraScopes).toBeUndefined();
+		expect(result.errors[0]).toContain("SSO_OIDC_EXTRA_SCOPES");
 	});
 
 	it("rejects a non-boolean SSO_OIDC_ALLOW_INSECURE_HTTP", () => {

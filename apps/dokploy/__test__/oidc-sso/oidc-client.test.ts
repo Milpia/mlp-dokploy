@@ -157,6 +157,19 @@ describe("createOpenIdClient", () => {
 		);
 	});
 
+	it("FR-023a: appends extra scopes to openid email profile without duplicates", async () => {
+		const lib = fakeLib();
+		const client = createOpenIdClient(lib as never);
+		const request = await client.createAuthorizationRequest(
+			settings,
+			"https://x/cb",
+			["groups", "email", "urn:zitadel:iam:org:projects:roles"],
+		);
+		expect(new URL(request.url).searchParams.get("scope")).toBe(
+			"openid email profile groups urn:zitadel:iam:org:projects:roles",
+		);
+	});
+
 	it("NFR-PERF-003/004: discovers once per configuration with a 5 s timeout", async () => {
 		const lib = fakeLib();
 		const client = createOpenIdClient(lib as never);
