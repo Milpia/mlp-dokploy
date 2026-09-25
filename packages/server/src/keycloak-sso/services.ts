@@ -18,7 +18,7 @@ export interface KeycloakSsoServices {
  * Read from upstream columns on the owner's user row rather than from the
  * proprietary license service, which this module must not import.
  */
-const ownerHasEnterpriseLicense = async (): Promise<boolean> => {
+export const ownerHasEnterpriseLicense = async (): Promise<boolean> => {
 	const owner = await db.query.member.findFirst({
 		where: eq(member.role, "owner"),
 		with: { user: true },
