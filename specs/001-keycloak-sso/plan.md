@@ -71,7 +71,6 @@ una migración de Drizzle aditiva.
 |---|---|---|
 | `packages/server/src/lib/auth.ts` | añadir `keycloakSso()` a `plugins` | único punto de registro de plugins |
 | `packages/server/src/db/schema/index.ts` | `export * from "./keycloak-sso"` | Drizzle y el adaptador de better-auth leen el esquema desde aquí |
-| `packages/server/src/index.ts` | exportar el módulo | patrón de exports del paquete |
 | `packages/server/package.json` | dependencia `openid-client` | R2 |
 | `apps/dokploy/server/api/root.ts` | registrar `keycloakSso` | registro de routers |
 | `apps/dokploy/pages/index.tsx` | botón, redirección SSO-only, aviso de emergencia y mensajes de error | pantalla de login única |
@@ -79,6 +78,12 @@ una migración de Drizzle aditiva.
 | `apps/dokploy/components/layouts/side.tsx` | entrada de menú «Keycloak SSO» (solo owner, no cloud) | navegación a la configuración |
 | `apps/dokploy/esbuild.config.ts`, `apps/dokploy/package.json` | entrada y script del comando de emergencia | patrón de `reset-password` |
 | `apps/dokploy/drizzle/*` | migración generada | obligatorio para las tablas nuevas |
+| `apps/dokploy/package.json` (dev) | `@vitest/coverage-v8`, `@electric-sql/pglite` | cobertura (NFR-QA-001) y pruebas de los adaptadores con Postgres real |
+| `apps/dokploy/__test__/vitest.config.ts` | bloque `coverage` limitado al módulo | umbrales de cobertura del principio IV |
+
+> Implementación: el barrel `packages/server/src/index.ts` no se tocó. Los consumidores importan
+> `@dokploy/server/keycloak-sso/...` por subruta, lo que evita colisiones de nombres en el barrel
+> y reduce la divergencia.
 
 ## Project Structure
 
