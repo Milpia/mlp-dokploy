@@ -143,3 +143,48 @@ describe("readEnvOverrides", () => {
 		expect(result.errors).toHaveLength(1);
 	});
 });
+
+describe("SSO_OIDC_EMERGENCY_ORIGIN (spec 003)", () => {
+	const ERROR =
+		"SSO_OIDC_EMERGENCY_ORIGIN must be an exact http(s) origin without path or wildcards; ignoring it.";
+
+	it.each([
+		"http://localhost:3900",
+		"https://recovery.example.com",
+		"http://127.0.0.1:3000",
+	])("FR-002: accepts the exact origin %s", (origin) => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_EMERGENCY_ORIGIN: origin },
+			noFile,
+		);
+		expect(result.emergencyOrigin).toBe(origin);
+		expect(result.errors).toEqual([]);
+		expect(result.values).toEqual({});
+	});
+
+	it.each([
+		"http://localhost:3900/",
+		"http://localhost:3900/x",
+		"http://localhost:3900?a=1",
+		"http://*.example.com",
+		"ftp://host",
+		"http://user:pass@host",
+		"localhost:3900",
+	])("FR-002: rejects %s and reports it", (origin) => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_EMERGENCY_ORIGIN: origin },
+			noFile,
+		);
+		expect(result.emergencyOrigin).toBeUndefined();
+		expect(result.errors).toEqual([ERROR]);
+	});
+
+	it("FR-003: an empty value counts as undefined without an error", () => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_EMERGENCY_ORIGIN: "   " },
+			noFile,
+		);
+		expect(result.emergencyOrigin).toBeUndefined();
+		expect(result.errors).toEqual([]);
+	});
+});

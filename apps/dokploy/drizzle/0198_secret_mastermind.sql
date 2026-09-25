@@ -1,0 +1,1 @@
+ALTER TABLE "oidc_sso_auth_event" ADD COLUMN "emergency_origin" boolean DEFAULT false NOT NULL;
