@@ -437,6 +437,14 @@ const MENU: Menu = {
 		},
 		{
 			isSingle: true,
+			title: "Keycloak SSO",
+			url: "/dashboard/settings/keycloak-sso",
+			icon: KeyRound,
+			// Free self-hosted integration, owner only (specs/001-keycloak-sso)
+			isEnabled: ({ auth, isCloud }) => !!(auth?.role === "owner" && !isCloud),
+		},
+		{
+			isSingle: true,
 			title: "Whitelabeling",
 			url: "/dashboard/settings/whitelabeling",
 			icon: Palette,
