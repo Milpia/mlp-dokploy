@@ -16,7 +16,7 @@ export * from "./git-provider";
 export * from "./gitea";
 export * from "./github";
 export * from "./gitlab";
-export * from "./keycloak-sso";
+export * from "./oidc-sso";
 export * from "./libsql";
 export * from "./mariadb";
 export * from "./mongo";

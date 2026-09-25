@@ -20,7 +20,7 @@ import { gitProviderRouter } from "./routers/git-provider";
 import { giteaRouter } from "./routers/gitea";
 import { githubRouter } from "./routers/github";
 import { gitlabRouter } from "./routers/gitlab";
-import { keycloakSsoRouter } from "./routers/keycloak-sso";
+import { oidcSsoRouter } from "./routers/oidc-sso";
 import { libsqlRouter } from "./routers/libsql";
 import { mariadbRouter } from "./routers/mariadb";
 import { mongoRouter } from "./routers/mongo";
@@ -109,7 +109,7 @@ export const appRouter = createTRPCRouter({
 	organization: organizationRouter,
 	licenseKey: licenseKeyRouter,
 	sso: ssoRouter,
-	keycloakSso: keycloakSsoRouter,
+	oidcSso: oidcSsoRouter,
 	scim: scimRouter,
 	forwardAuth: forwardAuthRouter,
 	whitelabeling: whitelabelingRouter,
