@@ -32,4 +32,4 @@
 ## Notes
 
 - The environment variable name and the example origin appear because they are the operator-facing contract agreed with infra (spec 014), in the same style as spec 001.
-- FR-005 (second factor) is an addition to infra's condition 1: without it, an owner with 2FA could not finish the emergency login. `/speckit-clarify` should confirm it.
+- FR-005 (second factor) extends infra's condition 1. The owner confirmed it in `/speckit-clarify` (TOTP and backup code), and infra agreed.
