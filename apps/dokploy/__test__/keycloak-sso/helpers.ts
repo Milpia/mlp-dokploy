@@ -125,6 +125,7 @@ export const makeDeps = (
 	options: Parameters<typeof makeServices>[0] & {
 		store?: ProvisioningStore;
 		idToken?: string | null;
+		ownerEmail?: string | null;
 	} = {},
 ) => {
 	const built = makeServices(options);
@@ -132,6 +133,11 @@ export const makeDeps = (
 		services: built.services,
 		provisioningStore: options.store ?? fakeProvisioningStore(),
 		findIdToken: vi.fn(async () => options.idToken ?? null),
+		findOwnerEmail: vi.fn(async () =>
+			options.ownerEmail === undefined
+				? "owner@example.com"
+				: options.ownerEmail,
+		),
 	};
 	return { ...built, deps };
 };

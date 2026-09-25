@@ -22,6 +22,7 @@ const TX_MAX_AGE_SECONDS = 600;
 
 export interface KeycloakEndpointDeps extends LoginFlowDeps {
 	findIdToken(userId: string): Promise<string | null>;
+	findOwnerEmail(): Promise<string | null>;
 }
 
 const hidden = { scope: "server" as const };
