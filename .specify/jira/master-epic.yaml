@@ -1,0 +1,7 @@
+schema: sdd-jira/master-epic/v1
+jira_site: "pabelandino.atlassian.net"
+jira_project: "MIL"
+epic: "MIL-393"
+title: "Dokploy Milpia SSO Module"
+scope: "Las funcionalidades de Milpia sobre su fork de Dokploy, empezando por el módulo de SSO por OpenID Connect"
+created_at: "2026-09-25T00:00:00Z"
