@@ -72,7 +72,7 @@ type OpenIdLib = Pick<
 	| "authorizationCodeGrant"
 	| "buildEndSessionUrl"
 	| "fetchUserInfo"
-	| "clientCredentialsGrant"
+	| "genericGrantRequest"
 	| "randomPKCECodeVerifier"
 	| "calculatePKCECodeChallenge"
 	| "randomState"
@@ -82,6 +82,9 @@ type OpenIdLib = Pick<
 >;
 
 const REQUEST_TIMEOUT_SECONDS = 5;
+const CONNECTION_TEST_CODE = "dokploy-connection-test";
+const CONNECTION_TEST_REDIRECT_URI =
+	"https://dokploy.invalid/api/auth/oidc/callback";
 const CLOCK_TOLERANCE_SECONDS = 30;
 
 const errorChain = (error: unknown): unknown[] => {
@@ -348,11 +351,24 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 				};
 			}
 
+			// A made-up authorization code: RFC 6749 §4.1.3 has the server
+			// authenticate the client before looking at the code, so bad
+			// credentials fail as invalid_client (Keycloak: unauthorized_client,
+			// 401) while good ones reach invalid_grant. client_credentials cannot
+			// tell them apart when service accounts are disabled.
 			try {
-				await lib.clientCredentialsGrant(config);
+				await lib.genericGrantRequest(config, "authorization_code", {
+					code: CONNECTION_TEST_CODE,
+					redirect_uri: CONNECTION_TEST_REDIRECT_URI,
+				});
 			} catch (error) {
 				const oauthError = (error as { error?: string }).error;
-				if (oauthError === "invalid_client") {
+				const status = (error as { status?: number }).status;
+				if (
+					oauthError === "invalid_client" ||
+					oauthError === "unauthorized_client" ||
+					status === 401
+				) {
 					return {
 						ok: false,
 						code: "invalid_client",
@@ -368,8 +384,8 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 							"The identity provider stopped answering while checking the client.",
 					};
 				}
-				// Other refusals (e.g. unauthorized_client because service
-				// accounts are disabled) still prove the credentials are valid.
+				// invalid_grant and similar refusals come after client
+				// authentication, so the credentials are valid.
 			}
 			return { ok: true, issuer: config.serverMetadata().issuer };
 		},
