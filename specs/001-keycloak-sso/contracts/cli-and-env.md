@@ -15,6 +15,7 @@
 | `SSO_OIDC_EXTRA_SCOPES` | scopes separados por espacios | se añaden a `openid email profile` (p. ej. `groups`) |
 | `SSO_OIDC_BUTTON_LABEL` | texto | |
 | `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` \| `false` | solo en desarrollo |
+| `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto `http(s)://host[:puerto]`, sin barra final | origen extra aceptado solo para el login de emergencia del owner, su segundo factor y el cierre de sesión con SSO-only activo (spec 003, `specs/003-emergency-origin/contracts/emergency-origin.md`). Un valor inválido se ignora y se registra en el log |
 
 - Un valor no válido (p. ej. un modo desconocido) se ignora: se registra un error al arrancar y
   se usa el valor guardado.

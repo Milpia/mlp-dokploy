@@ -1,9 +1,10 @@
 import { DEFAULT_STORED_CONFIG } from "@dokploy/server/oidc-sso/config/repository";
+import { createEmergencyOriginHandler } from "@dokploy/server/oidc-sso/plugin/emergency-origin";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
-import { describe, expect, it } from "vitest";
-import { makeDeps } from "./helpers";
+import { describe, expect, it, vi } from "vitest";
+import { ISSUER, makeDeps } from "./helpers";
 
 const BASE = "http://localhost:3000";
 const SECRET = "test-secret-that-is-long-enough-for-better-auth";
@@ -129,5 +130,58 @@ describe("performance (NFR-PERF, SC-008, SC-009)", () => {
 			`[perf] 50 concurrent callbacks p95: ${p95(durations).toFixed(2)} ms`,
 		);
 		expect(p95(durations)).toBeLessThan(300);
+	}, 60_000);
+
+	it("spec 003 NFR-PERF-001/002: the emergency origin check costs nothing outside the tunnel", async () => {
+		const TUNNEL = "http://localhost:3900";
+		const context = { baseURL: `${BASE}/api/auth`, options: {} };
+		const request = (origin: string, path = "/sign-in/email") =>
+			new Request(`${BASE}/api/auth${path}`, {
+				method: "POST",
+				headers: { "content-type": "application/json", origin },
+				body: JSON.stringify({ email: "dev@example.com" }),
+			});
+		const measure = async (
+			handler: ReturnType<typeof createEmergencyOriginHandler>,
+			make: () => Request,
+		) => {
+			const samples: number[] = [];
+			for (let i = 0; i < 500; i++) {
+				const req = make();
+				const t0 = performance.now();
+				await handler(req, context);
+				samples.push(performance.now() - t0);
+			}
+			return p95(samples);
+		};
+
+		const off = makeDeps({ emergencyOrigin: null });
+		const on = makeDeps({ emergencyOrigin: TUNNEL });
+		await on.repository.save({ mode: "sso-only", verifiedIssuer: ISSUER });
+		const offReads = vi.spyOn(off.services.config, "getEffective");
+		const onReads = vi.spyOn(on.services.config, "getEffective");
+
+		const disabled = await measure(
+			createEmergencyOriginHandler(() => off.deps),
+			() => request(TUNNEL),
+		);
+		const otherOrigin = await measure(
+			createEmergencyOriginHandler(() => on.deps),
+			() => request(BASE),
+		);
+		expect(offReads).not.toHaveBeenCalled();
+		expect(onReads).not.toHaveBeenCalled();
+		expect(off.deps.findOwnerEmail).not.toHaveBeenCalled();
+
+		const emergencyPath = await measure(
+			createEmergencyOriginHandler(() => on.deps),
+			() => request(TUNNEL, "/sign-out"),
+		);
+		console.info(
+			`[perf] emergency origin onRequest p95: disabled ${disabled.toFixed(3)} ms, other origin ${otherOrigin.toFixed(3)} ms, tunnel sign-out ${emergencyPath.toFixed(3)} ms`,
+		);
+		expect(disabled).toBeLessThan(1);
+		expect(otherOrigin).toBeLessThan(1);
+		expect(emergencyPath).toBeLessThan(5);
 	}, 60_000);
 });
