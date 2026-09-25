@@ -62,7 +62,7 @@ una migración de Drizzle aditiva.
 | II. Divergencia mínima | El modo por defecto es `disabled`. Tablas nuevas, sin tocar las de upstream. Los archivos de upstream que se tocan están listados y justificados abajo | ✅ (ver Complexity Tracking por `proxy.ts`) |
 | III. Seguridad | Lista ASVS L2 / RFC 9700 en research R16. Secreto cifrado. Fallo cerrado (R7). Dos vías de recuperación (R11). Eventos registrados (R12). Rate limit (R13). Se ejecutará `/security-review` | ✅ |
 | IV. Calidad y pruebas | Pruebas primero en los caminos de denegación. Cobertura ≥ 90 % líneas / 85 % ramas del módulo. Un test por escenario de aceptación (unitario más e2e opcional) | ✅ |
-| V. Trazabilidad | Spec Kit completo. Commits con trailers `Spec/Requirement/Task/Jira`. `traceability.yaml` local (Jira sin sincronizar: se usan claves `LOCAL-*` hasta `/sdd-sync`) | ✅ |
+| V. Trazabilidad | Spec Kit completo. Commits con trailers `Spec/Requirement/Task/Jira`. `traceability.yaml` local con `jira: null`; el trailer `Jira:` se añade tras `/sdd-sync` (excepción temporal, ver tasks.md › Notes) | ✅ |
 | VI. Rendimiento | Objetivos NFR-PERF cuantificados. Caché de configuración y de cliente OIDC. Timeouts. Benchmarks con `vitest bench` | ✅ |
 
 ### Archivos de upstream que se tocan (principio II)
