@@ -18,6 +18,8 @@ export interface OidcSsoServices {
 	 * is not enough: any admin can create one and own it.
 	 */
 	instanceOwnerId(): Promise<string | null>;
+	/** Validated `SSO_OIDC_EMERGENCY_ORIGIN`, or null (spec 003). */
+	emergencyOrigin: string | null;
 }
 
 /**
@@ -50,6 +52,7 @@ const createServices = (): OidcSsoServices => {
 		oidc: createOpenIdClient(),
 		instanceOwnerId: async () =>
 			(await drizzleProvisioningStore.findOwner())?.userId ?? null,
+		emergencyOrigin: env.emergencyOrigin ?? null,
 	};
 };
 

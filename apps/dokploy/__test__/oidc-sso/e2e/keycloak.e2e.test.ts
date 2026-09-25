@@ -141,6 +141,7 @@ const setup = () => {
 			events: events.recorder,
 			oidc: createOpenIdClient(),
 			instanceOwnerId: async () => "owner-id",
+			emergencyOrigin: null,
 		},
 		provisioningStore: provisioning,
 		findIdToken: async () => null,

@@ -34,14 +34,26 @@ const keep: EmergencyOriginDecision = { rewrite: false, recordDenied: false };
 const normalizeEmail = (value: string | null) =>
 	value?.trim().toLowerCase() || null;
 
+/**
+ * The conditions that need no I/O. Adapters check them first so that every
+ * other request pays nothing (NFR-PERF-001/002).
+ */
+export const isEmergencyCandidate = (
+	input: Pick<
+		EmergencyOriginInput,
+		"configuredOrigin" | "method" | "requestOrigin" | "path"
+	>,
+): boolean =>
+	!!input.configuredOrigin &&
+	input.method === "POST" &&
+	input.requestOrigin === input.configuredOrigin &&
+	EMERGENCY_ORIGIN_PATHS.has(input.path);
+
 /** Pure policy: every condition must hold, anything else keeps the request as is. */
 export const decideEmergencyOrigin = (
 	input: EmergencyOriginInput,
 ): EmergencyOriginDecision => {
-	if (!input.configuredOrigin) return keep;
-	if (input.method !== "POST") return keep;
-	if (input.requestOrigin !== input.configuredOrigin) return keep;
-	if (!EMERGENCY_ORIGIN_PATHS.has(input.path)) return keep;
+	if (!isEmergencyCandidate(input)) return keep;
 	if (!input.ssoOnlyActive) return keep;
 	if (input.path !== EMERGENCY_SIGN_IN_PATH) return { rewrite: true };
 

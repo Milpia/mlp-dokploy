@@ -85,10 +85,12 @@ export const makeServices = ({
 	config = activeConfig,
 	oidc = fakeOidc(),
 	env = { values: {}, errors: [] },
+	emergencyOrigin = null,
 }: {
 	config?: StoredConfig;
 	oidc?: ReturnType<typeof fakeOidc>;
 	env?: ConstructorParameters<typeof SsoConfigProvider>[0]["env"];
+	emergencyOrigin?: string | null;
 } = {}) => {
 	const repository = memoryRepository(config);
 	const events = fakeEvents();
@@ -102,6 +104,7 @@ export const makeServices = ({
 		events: events.recorder,
 		oidc,
 		instanceOwnerId: async () => "owner-id",
+		emergencyOrigin,
 	};
 	return { services, repository, oidc, recorded: events.recorded };
 };

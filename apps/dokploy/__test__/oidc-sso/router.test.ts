@@ -137,6 +137,22 @@ describe("oidcSso router", () => {
 		);
 	});
 
+	it("spec 003 FR-007: listEvents keeps the emergency origin flag", async () => {
+		vi.spyOn(built.services.events, "listRecent").mockResolvedValue([
+			{
+				id: "e1",
+				createdAt: new Date("2026-09-25T10:00:00Z"),
+				type: "emergency_login",
+				outcome: "success",
+				correlationId: "ABC",
+				emergencyOrigin: true,
+			},
+		]);
+		await expect(caller("owner").listEvents({})).resolves.toMatchObject([
+			{ correlationId: "ABC", emergencyOrigin: true },
+		]);
+	});
+
 	it("FR-014: testConnection delegates to the OIDC client", async () => {
 		await expect(caller("owner").testConnection({})).resolves.toEqual({
 			ok: true,

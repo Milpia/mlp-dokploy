@@ -81,7 +81,7 @@ de sesión. El mismo POST sin la funcionalidad responde 403 `INVALID_ORIGIN`.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T007 [P] [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-request.test.ts` for the `onRequest` adapter, using real `Request` objects (FR-004, FR-005, FR-007, FR-009, NFR-SEC-001, NFR-SEC-002):
+- [X] T007 [P] [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-request.test.ts` for the `onRequest` adapter, using real `Request` objects (FR-004, FR-005, FR-007, FR-009, NFR-SEC-001, NFR-SEC-002):
   - When rewriting:
     - `Origin` becomes the public origin of `baseURL`;
     - `Referer` is removed;
@@ -91,7 +91,7 @@ de sesión. El mismo POST sin la funcionalidad responde 403 `INVALID_ORIGIN`.
   - An incoming `x-oidc-sso-emergency-origin` header is always stripped, including when there is no rewrite.
   - If the config, the owner lookup or the body parse throws, the original request is returned untouched.
   - With the variable undefined, it returns `undefined` without calling any dependency.
-- [ ] T008 [P] [US1] Write failing integration tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts`. Build a real `betterAuth` like `endpoints.test.ts`: `memoryAdapter`, `emailAndPassword`, the `twoFactor` plugin, `baseURL: https://deploy.example.test`, `oidcSso()` in `sso-only`, and a `trustedOrigins` function that does not include localhost. Cover US1 scenarios 1, 2 and 4 (SC-001):
+- [X] T008 [P] [US1] Write failing integration tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts`. Build a real `betterAuth` like `endpoints.test.ts`: `memoryAdapter`, `emailAndPassword`, the `twoFactor` plugin, `baseURL: https://deploy.example.test`, `oidcSso()` in `sso-only`, and a `trustedOrigins` function that does not include localhost. Cover US1 scenarios 1, 2 and 4 (SC-001):
   - The owner signs in from `Origin: http://localhost:3900` while also sending an unrelated `Cookie`. This proves the router-level check of research R1 passes, not only the endpoint-level one.
   - An owner with TOTP completes `/two-factor/verify-totp`, and separately `/two-factor/verify-backup-code`, from that origin.
   - `/sign-out` from that origin ends the session.
@@ -99,14 +99,14 @@ de sesión. El mismo POST sin la funcionalidad responde 403 `INVALID_ORIGIN`.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement the `onRequest` adapter in `packages/server/src/oidc-sso/plugin/emergency-origin.ts` (research R2–R3) and register it as `onRequest` in `packages/server/src/oidc-sso/plugin/index.ts`. It:
+- [X] T009 [US1] Implement the `onRequest` adapter in `packages/server/src/oidc-sso/plugin/emergency-origin.ts` (research R2–R3) and register it as `onRequest` in `packages/server/src/oidc-sso/plugin/index.ts`. It:
   - reads `emergencyOrigin` from the env overrides held by `getOidcSsoServices()`;
   - reads the email from a `request.clone()` body, only for `/sign-in/email` when the origin already matches;
   - calls `decideEmergencyOrigin`;
   - returns `{ request }` with the rewritten copy, or nothing.
   It must pass T007 and T008 (FR-004, FR-005, FR-009, NFR-SEC-001).
-- [ ] T010 [US1] Mark successful and failed owner emergency logins with `emergencyOrigin: true` in the `after` hook of `packages/server/src/oidc-sso/plugin/sso-only-guard.ts` when the internal header is present. Add tests in `apps/dokploy/__test__/oidc-sso/sso-only-guard.test.ts` (FR-007, US1 scenario 3).
-- [ ] T011 [US1] Show «via emergency origin» for events with `emergencyOrigin` in `apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx`, and return the field from `listEvents` in `apps/dokploy/server/api/routers/oidc-sso.ts`, with a router test in `apps/dokploy/__test__/oidc-sso/router.test.ts` (FR-007, US1 scenario 3).
+- [X] T010 [US1] Mark successful and failed owner emergency logins with `emergencyOrigin: true` in the `after` hook of `packages/server/src/oidc-sso/plugin/sso-only-guard.ts` when the internal header is present. Add tests in `apps/dokploy/__test__/oidc-sso/sso-only-guard.test.ts` (FR-007, US1 scenario 3).
+- [X] T011 [US1] Show «via emergency origin» for events with `emergencyOrigin` in `apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx`, and return the field from `listEvents` in `apps/dokploy/server/api/routers/oidc-sso.ts`, with a router test in `apps/dokploy/__test__/oidc-sso/router.test.ts` (FR-007, US1 scenario 3).
 
 **Checkpoint**: US1 es entregable por sí sola y desbloquea la prueba L5 de infra.
 
