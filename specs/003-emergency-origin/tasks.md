@@ -28,7 +28,7 @@ escriben antes que la implementación y deben fallar primero.
 
 **Purpose**: Esquema.
 
-- [ ] T001 Add `emergency_origin` to `oidc_sso_auth_event` in `packages/server/src/db/schema/oidc-sso.ts` ("boolean, no nula, por defecto `false`", data-model.md) and generate an additive migration in `apps/dokploy/drizzle/` with `pnpm --filter=dokploy run migration:generate` (FR-007). If `canary` already has a migration after `0197_lying_hitman.sql` (for example, spec 002's), rebase first and regenerate so this one comes last (MIL-433).
+- [X] T001 Add `emergency_origin` to `oidc_sso_auth_event` in `packages/server/src/db/schema/oidc-sso.ts` ("boolean, no nula, por defecto `false`", data-model.md) and generate an additive migration in `apps/dokploy/drizzle/` with `pnpm --filter=dokploy run migration:generate` (FR-007). If `canary` already has a migration after `0197_lying_hitman.sql` (for example, spec 002's), rebase first and regenerate so this one comes last (MIL-433).
 
 ---
 
@@ -38,7 +38,7 @@ escriben antes que la implementación y deben fallar primero.
 
 **⚠️ CRITICAL**: ninguna user story puede empezar hasta terminar esta fase.
 
-- [ ] T002 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/config-env.test.ts` for `SSO_OIDC_EMERGENCY_ORIGIN` (FR-001, FR-002, research R5):
+- [X] T002 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/config-env.test.ts` for `SSO_OIDC_EMERGENCY_ORIGIN` (FR-001, FR-002, research R5):
   - Accepted: `http://localhost:3900`, `https://recovery.example.com`, `http://127.0.0.1:3000`.
   - Rejected, each leaving the value undefined and adding the error `OIDC SSO: SSO_OIDC_EMERGENCY_ORIGIN must be an exact http(s) origin without path or wildcards` to `env.errors`:
     - `http://localhost:3900/` (trailing slash);
@@ -49,8 +49,8 @@ escriben antes que la implementación y deben fallar primero.
     - `http://user:pass@host`;
     - `localhost:3900`.
   - An empty or whitespace-only value counts as undefined, with no error.
-- [ ] T003 Implement `emergencyOrigin` in `packages/server/src/oidc-sso/config/env.ts` (`EnvOverrideValues` and `readEnvOverrides`) to pass T002. Accept it only when `new URL(v)` parses, the protocol is `http:` or `https:`, `url.origin === v`, and there is no `*` (FR-002).
-- [ ] T004 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-policy.test.ts` for the pure `decideEmergencyOrigin(input)`, covering every condition in research R3 (FR-003, FR-004, FR-005, FR-006, FR-009, NFR-SEC-002):
+- [X] T003 Implement `emergencyOrigin` in `packages/server/src/oidc-sso/config/env.ts` (`EnvOverrideValues` and `readEnvOverrides`) to pass T002. Accept it only when `new URL(v)` parses, the protocol is `http:` or `https:`, `url.origin === v`, and there is no `*` (FR-002).
+- [X] T004 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-policy.test.ts` for the pure `decideEmergencyOrigin(input)`, covering every condition in research R3 (FR-003, FR-004, FR-005, FR-006, FR-009, NFR-SEC-002):
   - no configured origin → no rewrite;
   - method `GET` → no rewrite;
   - `Origin` differs by scheme, host or port → no rewrite;
@@ -63,8 +63,8 @@ escriben antes que la implementación y deben fallar primero.
   - `/sign-in/email` with `ownerEmail: null` → no rewrite;
   - `/two-factor/verify-totp`, `/two-factor/verify-backup-code` and `/sign-out` → rewrite;
   - other `/two-factor/*` paths (`/two-factor/enable`, `/two-factor/disable`, `/two-factor/generate-backup-codes`) → no rewrite.
-- [ ] T005 Implement `decideEmergencyOrigin` and `EMERGENCY_ORIGIN_PATHS` in `packages/server/src/oidc-sso/domain/emergency-origin.ts` to pass T004, with the input and decision types of data-model.md (FR-004, FR-005, FR-009).
-- [ ] T006 [P] Add optional `emergencyOrigin` to `AuthEventInput`, to the store and to the `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts`, with tests in `apps/dokploy/__test__/oidc-sso/auth-events.test.ts` and `db-adapters.test.ts`: it persists `true` and defaults to `false` (FR-007).
+- [X] T005 Implement `decideEmergencyOrigin` and `EMERGENCY_ORIGIN_PATHS` in `packages/server/src/oidc-sso/domain/emergency-origin.ts` to pass T004, with the input and decision types of data-model.md (FR-004, FR-005, FR-009).
+- [X] T006 [P] Add optional `emergencyOrigin` to `AuthEventInput`, to the store and to the `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts`, with tests in `apps/dokploy/__test__/oidc-sso/auth-events.test.ts` and `db-adapters.test.ts`: it persists `true` and defaults to `false` (FR-007).
 
 **Checkpoint**: la política y la configuración están probadas sin tocar better-auth.
 
