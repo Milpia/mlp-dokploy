@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { signOutWithKeycloak } from "@/lib/keycloak-sso";
 import { getFallbackAvatarInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { ModeToggle } from "../ui/modeToggle";
@@ -23,6 +24,7 @@ export const UserNav = () => {
 	const { data } = api.user.get.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
+	const { data: keycloakSso } = api.keycloakSso.publicConfig.useQuery();
 
 	// const { mutateAsync } = api.auth.logout.useMutation();
 
@@ -145,6 +147,10 @@ export const UserNav = () => {
 				<DropdownMenuItem
 					className="cursor-pointer"
 					onClick={async () => {
+						if (keycloakSso?.mode === "sso-only") {
+							window.location.assign(await signOutWithKeycloak());
+							return;
+						}
 						await authClient.signOut().then(() => {
 							router.push("/");
 						});
