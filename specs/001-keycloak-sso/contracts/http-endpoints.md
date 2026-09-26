@@ -48,6 +48,7 @@ Es la URL de retorno que se registra en el proveedor: `<baseURL>/api/auth/oidc/c
 | `sso_invalid_response` | falta la cookie o ha caducado, `state` no coincide, el ID token no es válido |
 | `sso_email_unverified` | falta el email o no está verificado |
 | `sso_access_denied` | fuera del grupo de acceso, provisioning desactivado, usuario baneado o instancia sin owner |
+| `sso_identity_mismatch` | el email ya está enlazado a otra identidad del proveedor (`identity_conflict`, p. ej. tras recrear el realm). El mensaje no revela que la cuenta exista (NFR-SEC-006); la referencia lleva al evento (MIL-508) |
 | `sso_unavailable` | timeout o error de red o del proveedor |
 | `sso_clock_skew` | el ID token llega caducado o con fecha futura por diferencia de reloj |
 

@@ -19,6 +19,7 @@ export const LOGIN_ERROR_CODES = [
 	"sso_invalid_response",
 	"sso_email_unverified",
 	"sso_access_denied",
+	"sso_identity_mismatch",
 	"sso_unavailable",
 	"sso_clock_skew",
 ] as const;

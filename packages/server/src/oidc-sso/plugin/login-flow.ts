@@ -38,10 +38,14 @@ export const toOidcSettings = (config: EffectiveConfig): OidcSettings => ({
 	allowInsecureHttp: config.allowInsecureHttp,
 });
 
-const denialCode = (reason: DenyReason): LoginErrorCode =>
-	reason === "email_missing" || reason === "email_unverified"
-		? "sso_email_unverified"
-		: "sso_access_denied";
+const denialCode = (reason: DenyReason): LoginErrorCode => {
+	if (reason === "email_missing" || reason === "email_unverified") {
+		return "sso_email_unverified";
+	}
+	// The fix is the account link, not the groups (MIL-508).
+	if (reason === "identity_conflict") return "sso_identity_mismatch";
+	return "sso_access_denied";
+};
 
 const logFailure = (correlationId: string, stage: string, error: unknown) => {
 	// Only the error class and message: tokens and codes must never reach logs.

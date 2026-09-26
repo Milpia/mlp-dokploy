@@ -217,6 +217,35 @@ describe("completeLogin", () => {
 		});
 	});
 
+	it("NFR-QA-004/MIL-508: an email linked to another identity gets its own code, not access denied", async () => {
+		const oidc = fakeOidc({
+			exchangeCode: vi.fn(async () => ({
+				claims: {
+					sub: "new-sub-after-realm-rebuild",
+					email: "dev@example.com",
+					email_verified: true,
+					groups: ["/dokploy-users"],
+				},
+				idToken: "t",
+			})),
+		});
+		const store = fakeProvisioningStore({
+			findUserByEmail: vi.fn(async () => ({
+				id: "dev-id",
+				banned: false,
+				linkedSub: "old-sub",
+			})),
+		});
+		const { deps, recorded } = makeDeps({ oidc, store });
+		await expect(
+			completeLogin(deps, { tx, callbackUrl: callback(), redirectUri }),
+		).resolves.toMatchObject({ code: "sso_identity_mismatch" });
+		expect(recorded.at(-1)).toMatchObject({
+			outcome: "denied",
+			reason: "identity_conflict",
+		});
+	});
+
 	it("maps a provisioning crash to sso_unavailable", async () => {
 		const store = fakeProvisioningStore({
 			transaction: vi.fn(async () => {
