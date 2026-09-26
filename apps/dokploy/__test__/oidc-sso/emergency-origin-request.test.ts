@@ -182,4 +182,45 @@ describe("emergency origin onRequest adapter (spec 003)", () => {
 			await handler(request("/sign-in/email"), { baseURL: "", options: {} }),
 		).toBeUndefined();
 	});
+
+	it("NFR-SEC-002: an opaque or malformed Origin is never trusted", async () => {
+		const { handler } = await setup();
+		expect(
+			await handler(
+				request("/sign-in/email", { origin: "null", referer: "::bad::" }),
+				context,
+			),
+		).toBeUndefined();
+	});
+
+	it("NFR-SEC-002: an unparsable base URL leaves the request alone", async () => {
+		const { handler } = await setup();
+		expect(
+			await handler(request("/sign-in/email"), {
+				baseURL: "not a url",
+				options: {},
+			}),
+		).toBeUndefined();
+	});
+
+	it("FR-007: a sign-in without an email is recorded as a denied emergency attempt", async () => {
+		const { handler, recorded } = await setup();
+		const withoutIpTracking = {
+			...context,
+			options: { advanced: { ipAddress: { disableIpTracking: true } } },
+		};
+		expect(
+			await handler(request("/sign-in/email", { body: {} }), withoutIpTracking),
+		).toBeUndefined();
+		expect(recorded.at(-1)).toEqual(
+			expect.objectContaining({
+				type: "emergency_login",
+				outcome: "denied",
+				reason: "not_owner",
+				emergencyOrigin: true,
+			}),
+		);
+		expect(recorded.at(-1)).not.toHaveProperty("email");
+		expect(recorded.at(-1)).not.toHaveProperty("ip");
+	});
 });

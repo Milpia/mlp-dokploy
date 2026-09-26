@@ -168,7 +168,7 @@ ve la configuración efectiva.
 - [X] T017 [P] Document `SSO_OIDC_EMERGENCY_ORIGIN` and the tunnel procedure (FR-001, FR-002, SC-001):
   - In `specs/001-keycloak-sso/operations.md`: `ssh -L 3900:127.0.0.1:3000`, open `http://localhost:3900/?emergency=1`, owner login with second factor, disable SSO-only if needed, sign out, close the tunnel. Also cover what is still rejected from that origin.
   - In `specs/001-keycloak-sso/contracts/cli-and-env.md`: the variable.
-- [ ] T018 Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint` (FR-008, principle IV):
+- [X] T018 Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint` (FR-008, principle IV):
   - Coverage of `packages/server/src/oidc-sso/**` must stay ≥ 90 % lines, with 100 % branches of `domain/emergency-origin.ts` and `plugin/emergency-origin.ts`.
   - Confirm with `grep` that no new file imports anything under `/proprietary`.
 - [ ] T019 Run `/security-review` on the branch, focused on the `Origin` rewrite (plan.md Complexity Tracking), and resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).

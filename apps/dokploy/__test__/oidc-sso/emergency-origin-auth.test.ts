@@ -44,7 +44,7 @@ const totp = (secret: string, now = Date.now()): string => {
 const cookiesFrom = (response: Response): string =>
 	response.headers
 		.getSetCookie()
-		.map((cookie) => cookie.split(";")[0])
+		.map((cookie) => cookie.split(";")[0] ?? "")
 		.filter((pair) => !pair.endsWith("="))
 		.join("; ");
 

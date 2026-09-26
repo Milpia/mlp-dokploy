@@ -170,6 +170,7 @@ describe("SSO_OIDC_EMERGENCY_ORIGIN (spec 003)", () => {
 		"ftp://host",
 		"http://user:pass@host",
 		"localhost:3900",
+		"not a url",
 	])("FR-002: rejects %s and reports it", (origin) => {
 		const result = readEnvOverrides(
 			{ SSO_OIDC_EMERGENCY_ORIGIN: origin },
