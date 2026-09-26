@@ -32,6 +32,9 @@ const { drizzleLoginStateStore } = await import(
 const { ownerHasEnterpriseLicense, getOidcSsoServices } = await import(
 	"@dokploy/server/oidc-sso/services"
 );
+const { drizzleResolveTarget, defaultUserManagementGuardDeps } = await import(
+	"@dokploy/server/oidc-sso/user-management/guard"
+);
 
 type Db = import("drizzle-orm/pglite").PgliteDatabase<typeof schema>;
 let db: Db;
@@ -433,5 +436,51 @@ describe("drizzleLoginStateStore (spec 002, FR-008)", () => {
 
 		await db.delete(schema.user).where(eq(schema.user.id, "lead-1"));
 		expect(await rowsOf()).toHaveLength(0);
+	});
+});
+
+describe("drizzleResolveTarget (spec 002, FR-012)", () => {
+	const ownerMemberId = async () => {
+		const { eq } = await import("drizzle-orm");
+		const [row] = await db
+			.select()
+			.from(schema.member)
+			.where(eq(schema.member.userId, OWNER_ID));
+		return row?.id as string;
+	};
+
+	it("returns a user id as given, without a query", async () => {
+		await expect(drizzleResolveTarget({ userId: "u-1" })).resolves.toBe("u-1");
+	});
+
+	it("resolves a member id, from memberId or memberIdOrEmail", async () => {
+		const memberId = await ownerMemberId();
+		await expect(drizzleResolveTarget({ memberId })).resolves.toBe(OWNER_ID);
+		await expect(
+			drizzleResolveTarget({ memberIdOrEmail: memberId }),
+		).resolves.toBe(OWNER_ID);
+	});
+
+	it("resolves an email", async () => {
+		await expect(
+			drizzleResolveTarget({ memberIdOrEmail: "Owner@Example.com" }),
+		).resolves.toBe(OWNER_ID);
+	});
+
+	it("returns null when nothing matches", async () => {
+		await expect(
+			drizzleResolveTarget({ memberIdOrEmail: "nobody@example.com" }),
+		).resolves.toBeNull();
+		await expect(
+			drizzleResolveTarget({ memberId: "missing" }),
+		).resolves.toBeNull();
+		await expect(drizzleResolveTarget({})).resolves.toBeNull();
+	});
+
+	it("wires the default guard dependencies to the Drizzle adapters", () => {
+		const deps = defaultUserManagementGuardDeps();
+		expect(deps.services).toBe(getOidcSsoServices());
+		expect(deps.loginState).toBe(drizzleLoginStateStore);
+		expect(deps.resolveTarget).toBe(drizzleResolveTarget);
 	});
 });

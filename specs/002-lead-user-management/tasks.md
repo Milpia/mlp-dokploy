@@ -195,7 +195,7 @@ campo aparece bloqueado en la pantalla de SSO (quickstart §2, filas 9–10).
 
 - [X] T026 [P] Add benchmarks to `apps/dokploy/__test__/oidc-sso/performance.test.ts` for the three cases in quickstart §3 (NFR-PERF-001, NFR-PERF-002), and assert p95 ≤ 1 ms added and ≤ 20 ms added. Attach the results to the PR.
 - [X] T027 [P] Document `SSO_OIDC_USER_MANAGEMENT_GROUP`, the 8-hour re-login rule and the new event reasons in `specs/001-keycloak-sso/operations.md` (env table, Milpia example, diagnostics) and in `specs/001-keycloak-sso/contracts/cli-and-env.md` (FR-001, FR-012, FR-015).
-- [ ] T028 Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint` (FR-013, principle IV):
+- [X] T028 Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint` (FR-013, principle IV):
   - Coverage of `packages/server/src/oidc-sso/**` must stay ≥ 90 % lines, with 100 % branches of `domain/user-management.ts` and `user-management/guard.ts`.
   - Confirm with `grep` that nothing under `/proprietary` or `audit(` is imported by the new files.
 - [ ] T029 Run `/security-review` on the branch and resolve HIGH/MEDIUM findings before opening the PR (principle III, NFR-SEC-001).

@@ -32,7 +32,8 @@ const targetFrom = async (
 			memberId?: unknown;
 		} | null;
 		if (typeof input?.userId === "string") return { userId: input.userId };
-		if (typeof input?.memberId === "string") return { memberId: input.memberId };
+		if (typeof input?.memberId === "string")
+			return { memberId: input.memberId };
 	} catch {
 		// Without a readable input the denial is still recorded, just without a target.
 	}
@@ -44,7 +45,9 @@ const targetFrom = async (
  * path returns straight to next() without reading config or the database.
  */
 export const createUserManagementGuard =
-	(resolveDeps: () => UserManagementGuardDeps = defaultUserManagementGuardDeps) =>
+	(
+		resolveDeps: () => UserManagementGuardDeps = defaultUserManagementGuardDeps,
+	) =>
 	async <TResult>({
 		ctx,
 		path,

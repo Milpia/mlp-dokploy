@@ -272,3 +272,32 @@ describe("getUserManagementStatus (spec 002, FR-007)", () => {
 		});
 	});
 });
+
+describe("user-management guard defaults", () => {
+	it("uses the real clock and logs failures to the console when not injected", async () => {
+		const { deps } = await setup({
+			loginState: { groups: ["admins"], lastSsoLoginAt: new Date() },
+		});
+		const { now: _now, logError: _logError, ...defaults } = deps;
+		await expect(
+			checkUserManagement(defaults, { userId: "admin-1", action: "invite" }),
+		).resolves.toEqual({ allow: true });
+
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => {});
+		defaults.loginState = {
+			find: vi.fn(async () => {
+				throw new Error("db down");
+			}),
+		};
+		await expect(
+			checkUserManagement(defaults, { userId: "lead-1", action: "invite" }),
+		).resolves.toMatchObject({ reason: "check_failed" });
+		await expect(
+			getUserManagementStatus(defaults, "lead-1"),
+		).resolves.toMatchObject({ reason: "check_failed" });
+		expect(consoleError).toHaveBeenCalledTimes(2);
+		consoleError.mockRestore();
+	});
+});
