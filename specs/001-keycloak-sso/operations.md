@@ -249,7 +249,8 @@ la tabla de eventos de la pantalla de settings o en los logs (`OIDC SSO [<refere
 
 | Código (`?error=`) | Causa habitual |
 |---|---|
-| `sso_access_denied` | Fuera del grupo de acceso, usuario baneado, email vinculado a otra identidad, o el claim o scope de grupos está mal configurado |
+| `sso_access_denied` | Fuera del grupo de acceso, usuario baneado, o el claim o scope de grupos está mal configurado |
+| `sso_identity_mismatch` | El email ya está enlazado a otra identidad del proveedor: el realm se recreó, o el usuario se borró y se volvió a crear. Ver «Desenlazar una cuenta» |
 | `sso_email_unverified` | El proveedor no envía email o no lo marca como verificado |
 | `sso_invalid_response` | La cookie de login caducó (más de 10 minutos), `state` no coincide o el ID token no es válido |
 | `sso_unavailable` | El proveedor no responde en 5 s, error de red o TLS, o secreto incorrecto |
@@ -260,6 +261,20 @@ Si un usuario del grupo recibe `sso_access_denied`, revisa que el token lleve el
 el error más frecuente con Okta, Authelia y Zitadel.
 
 Los eventos se conservan 90 días.
+
+### Desenlazar una cuenta (`sso_identity_mismatch`)
+
+Dokploy guarda el identificador estable del usuario en el proveedor (`sub`). Si cambia (realm recreado, o usuario borrado y creado de nuevo con el mismo email), el login se rechaza para que otra identidad no pueda apoderarse de la cuenta. El evento del SSO con la referencia del usuario muestra el motivo `identity_conflict`.
+
+Tras comprobar que la nueva identidad es la misma persona, borra su enlace y pídele que vuelva a entrar; se enlazará por su email verificado:
+
+```sql
+DELETE FROM account
+WHERE provider_id = 'oidc'
+  AND user_id = (SELECT id FROM "user" WHERE email = 'persona@ejemplo.com');
+```
+
+Si se recreó el realm entero, puedes borrar todos los enlaces (`DELETE FROM account WHERE provider_id = 'oidc';`): cada usuario se vuelve a enlazar en su siguiente login.
 
 ### Gestión de usuarios denegada (spec 002)
 

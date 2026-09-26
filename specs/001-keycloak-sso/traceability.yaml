@@ -1097,7 +1097,7 @@ requirements:
     - 7def99db9
     bugs:
     - MIL-508
-    status: at_risk
+    status: implemented
   NFR-QA-005:
     text: La funcionalidad MUST documentar la configuración de Keycloak (cliente, URL de retorno, grupos),
       las variables de entorno y los dos procedimientos de emergencia.
@@ -1770,7 +1770,9 @@ bugs:
   - NFR-QA-004
   breaks: []
   detected_in: null
-  regression_test: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/login-flow.test.ts::NFR-QA-004/MIL-508: an email linked to
+    another identity gets its own code, not access denied'
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
