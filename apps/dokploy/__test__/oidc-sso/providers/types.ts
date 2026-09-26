@@ -75,6 +75,8 @@ export interface ProviderDriver {
 	version: string;
 	/** SaaS: variables without which the provider is skipped. */
 	requiredEnv: string[];
+	/** Self-hosted: polled by the runner until it answers, before seeding. */
+	readyUrl?: string;
 	moduleConfig(): ModuleConfig | Promise<ModuleConfig>;
 	users: Record<TestUserRole, TestUser>;
 	/** For "role-change": put the user in exactly this group at the provider. */

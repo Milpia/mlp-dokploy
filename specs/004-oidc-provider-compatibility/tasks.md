@@ -51,19 +51,19 @@ description: "Task list for 004-oidc-provider-compatibility"
   - every value of the SaaS variables in `contracts/runner-and-env.md` is redacted from `failures[].message` before writing;
   - the file lands at `specs/004-oidc-provider-compatibility/results/<id>.json`.
 - [X] T005 Implement `apps/dokploy/__test__/oidc-sso/providers/results.ts` (`buildResult`, `redact`, `writeResult`) to pass T004 (FR-008, FR-014).
-- [ ] T006 Create `apps/dokploy/__test__/oidc-sso/providers/harness.ts`. Extract the in-memory Dokploy setup from `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` (memory repository, provisioning store, events, `betterAuth` with `oidcSso()`) and add a `playwright-core` Chromium browser whose `page.route("http://localhost:3000/**")` answers through `auth.handler`, so Dokploy needs no server (research R3). Helpers (FR-004):
+- [X] T006 Create `apps/dokploy/__test__/oidc-sso/providers/harness.ts`. Extract the in-memory Dokploy setup from `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` (memory repository, provisioning store, events, `betterAuth` with `oidcSso()`) and add a `playwright-core` Chromium browser whose `page.route("http://localhost:3000/**")` answers through `auth.handler`, so Dokploy needs no server (research R3). Helpers (FR-004):
   - `configure(driver.moduleConfig(), mode)`;
   - `signIn(user)`, which calls `driver.login(page, user)` and returns the landing URL and the role;
   - `signOut()`;
   - `testConnection(secret)`.
-- [ ] T007 Create `apps/dokploy/__test__/oidc-sso/providers/battery.e2e.test.ts`. It loads the driver for `OIDC_E2E_PROVIDER`, runs the eight scenarios of data-model.md with `harness.ts`, and records each outcome with `results.ts` (FR-004, FR-011):
+- [X] T007 Create `apps/dokploy/__test__/oidc-sso/providers/battery.e2e.test.ts`. It loads the driver for `OIDC_E2E_PROVIDER`, runs the eight scenarios of data-model.md with `harness.ts`, and records each outcome with `results.ts` (FR-004, FR-011):
   - `login-provisioning`, `admin-role`, `access-denied` and `role-change` (through `driver.moveUser`);
   - `sign-out`, which accepts the «sesión cerrada» screen when discovery has no `end_session_endpoint`;
   - `connection-test-ok` and `connection-test-bad`, where `connection-test-bad` must never report success;
-  - `user-management-group`, recorded as `"pending"` until spec 002 exists.
+  - `user-management-group`, recorded as `"pending"` until spec 002 exists. *(Spec 002 is in canary since 2026-09-26, so the battery runs it for real: `manager` can manage users and `admin` gets `not_in_group`.)*
   
   It is skipped unless `OIDC_E2E_PROVIDER` is set, so `pnpm test` never runs it (NFR-QA-002). `connection-test-bad` is the check behind SC-004.
-- [ ] T008 Implement the runner `apps/dokploy/scripts/oidc-providers.ts` following `contracts/runner-and-env.md` (FR-008, FR-009, NFR-QA-001):
+- [X] T008 Implement the runner `apps/dokploy/scripts/oidc-providers.ts` following `contracts/runner-and-env.md` (FR-008, FR-009, NFR-QA-001):
   - `<id>|all`;
   - for self-hosted providers:
     - `docker compose -f providers/<id>/compose.yml up -d`;
@@ -75,7 +75,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - one output line per provider;
   - exit code 0/1/2;
   - elapsed time printed per provider.
-- [ ] T009 [P] Add runner unit tests in `apps/dokploy/__test__/oidc-sso/providers/runner.test.ts` (SC-005). With `docker` and Vitest replaced by fakes:
+- [X] T009 [P] Add runner unit tests in `apps/dokploy/__test__/oidc-sso/providers/runner.test.ts` (SC-005). With `docker` and Vitest replaced by fakes:
   - `down -v` runs even when the battery throws;
   - SaaS without credentials yields `skipped` and exit 0;
   - one failed provider yields exit 1;
