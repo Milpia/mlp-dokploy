@@ -62,7 +62,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - `connection-test-ok` and `connection-test-bad`, where `connection-test-bad` must never report success;
   - `user-management-group`, recorded as `"pending"` until spec 002 exists.
   
-  It is skipped unless `OIDC_E2E_PROVIDER` is set, so `pnpm test` never runs it (NFR-QA-002).
+  It is skipped unless `OIDC_E2E_PROVIDER` is set, so `pnpm test` never runs it (NFR-QA-002). `connection-test-bad` is the check behind SC-004.
 - [ ] T008 Implement the runner `apps/dokploy/scripts/oidc-providers.ts` following `contracts/runner-and-env.md` (FR-008, FR-009, NFR-QA-001):
   - `<id>|all`;
   - for self-hosted providers:
@@ -148,7 +148,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - a matrix over `keycloak`, `authentik`, `zitadel`, `fusionauth` and `authelia`, with no SaaS providers;
   - each job: `pnpm install --frozen-lockfile`, then `pnpm --filter=dokploy exec playwright-core install --with-deps chromium`, then `pnpm --filter=dokploy run e2e:oidc <id>`, then upload `results/<id>.json` as an artifact;
   - it runs only in `Milpia/mlp-dokploy`.
-- [ ] T019 [US2] Run `pnpm --filter=dokploy run e2e:oidc:matrix` and commit `specs/004-oidc-provider-compatibility/compatibility.md`. Link it from `specs/001-keycloak-sso/operations.md`, and make FR-022 in `specs/001-keycloak-sso/spec.md` point to spec 004 for the verified list (FR-010, FR-012).
+- [ ] T019 [US2] Run `pnpm --filter=dokploy run e2e:oidc:matrix` and commit `specs/004-oidc-provider-compatibility/compatibility.md`. Link it from `specs/001-keycloak-sso/operations.md`, and make FR-022 and FR-024 in `specs/001-keycloak-sso/spec.md` point to spec 004 for the verified providers and the Auth0/FusionAuth presets (FR-010, FR-012).
 
 **Checkpoint**: US1 y US2 juntas dan una matriz real y repetible.
 
@@ -168,10 +168,16 @@ description: "Task list for 004-oidc-provider-compatibility"
   - userinfo is not called when the ID token already has the groups claim, `email` and `email_verified`;
   - a userinfo `sub` different from the ID token's rejects the login with `sso_invalid_response`;
   - a userinfo timeout surfaces as a provider failure, never as «sin grupos».
+- [ ] T032 [P] [US3] Write tests for FR-006 (US3 escenario 1), which must run in the default suite whatever the SaaS credentials are:
+  - in `apps/dokploy/__test__/oidc-sso/claims.test.ts`, `extractIdentity` reads groups from a claim named `https://dokploy/groups` and from one named `urn:example:groups.v1`, literally and without treating the name as a path;
+  - in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts`, the userinfo fallback fills that same URL-named claim;
+  - in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`, `SSO_OIDC_GROUPS_CLAIM=https://dokploy/groups` is accepted unchanged.
+  
+  The code is expected to already comply. Any failure is fixed in `domain/claims.ts` or `config/env.ts`.
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Extend `exchangeCode` in `packages/server/src/oidc-sso/oidc/client.ts` to pass T020. Fetch userinfo once when any of the groups claim, `email` or `email_verified` is missing from the ID token, and fill only the missing ones. Map `openid-client`'s subject-mismatch error to `SsoLoginError("sso_invalid_response", ...)` (FR-005, NFR-SEC).
+- [ ] T021 [US3] Extend `exchangeCode` in `packages/server/src/oidc-sso/oidc/client.ts` to pass T020. Fetch userinfo once when any of the groups claim, `email` or `email_verified` is missing from the ID token, and fill only the missing ones. Map `openid-client`'s subject-mismatch error to `SsoLoginError("sso_invalid_response", ...)` (FR-005).
 - [ ] T022 [P] [US3] Add Auth0 and FusionAuth to `apps/dokploy/components/dashboard/settings/oidc-sso/provider-presets.ts` (FR-003, research R2):
   - Auth0: issuer `https://<tenant>.auth0.com/`, groups claim `https://dokploy/groups`, no extra scopes, and a hint about the Post-Login Action;
   - FusionAuth: issuer `https://<host>`, groups claim `roles`, extra scope `email`, and a hint about application roles granted through groups.
@@ -233,6 +239,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - time one operator following a guide on a clean instance;
   - trigger the CI workflow once by hand;
   - attach the matrix and timings to the PR;
+  - run `e2e:oidc okta` and `e2e:oidc auth0` at least once against the test tenants before closing the spec, or, if no tenant is available, record «no verificado: sin tenant de pruebas» for that provider in `limitations.md` (FR-001, US2 escenario 3);
   - tell the infra session that the verified provider list changed.
 
 ---
@@ -260,7 +267,7 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 - Fase 2: T003, T004 y T009.
 - US1: T010, T012 y T013, cada uno en su directorio.
-- US3: T022, T023, T024, T025 y T026, cada uno en su directorio o archivo.
+- US3: T022, T023, T024, T025, T026 y T032, cada uno en su directorio o archivo.
 - US2 (T016–T018) en paralelo con US1, una vez hecho T003.
 
 ---
