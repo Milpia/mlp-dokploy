@@ -80,6 +80,7 @@ type OpenIdLib = Pick<
 	| "randomNonce"
 	| "allowInsecureRequests"
 	| "ClientSecretPost"
+	| "ClientSecretBasic"
 >;
 
 /**
@@ -221,30 +222,65 @@ const assertTransportAllowed = (settings: OidcSettings): URL => {
 export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 	const configurations = new Map<string, Promise<openid.Configuration>>();
 
+	const discoverWith = (
+		settings: OidcSettings,
+		clientAuth: openid.ClientAuth,
+	): Promise<openid.Configuration> => {
+		const issuer = assertTransportAllowed(settings);
+		return lib.discovery(issuer, settings.clientId, undefined, clientAuth, {
+			timeout: REQUEST_TIMEOUT_SECONDS,
+			...(settings.allowInsecureHttp && issuer.protocol === "http:"
+				? { execute: [lib.allowInsecureRequests] }
+				: {}),
+		});
+	};
+
+	/**
+	 * Revokes a made-up token (RFC 7009 §2.1): client authentication is
+	 * required and nothing changes. Some servers accept only Basic there
+	 * (Authelia by default), and RFC 6749 §2.3.1 makes Basic the method every
+	 * server supports, so a refusal with POST is retried with Basic.
+	 */
+	const checkByRevocation = async (
+		config: openid.Configuration,
+		settings: OidcSettings,
+	): Promise<TestResult | null> => {
+		let failure: TestResult | null = null;
+		try {
+			await lib.tokenRevocation(config, CONNECTION_TEST_CODE);
+			return null;
+		} catch (error) {
+			failure = credentialFailure(error);
+			if (!failure) return null;
+			if (failure.ok === false && failure.code !== "invalid_client") {
+				return failure;
+			}
+		}
+		try {
+			const basic = await discoverWith(
+				settings,
+				lib.ClientSecretBasic(settings.clientSecret),
+			);
+			await lib.tokenRevocation(basic, CONNECTION_TEST_CODE);
+			return null;
+		} catch (error) {
+			return credentialFailure(error) ?? null;
+		}
+	};
+
 	const discover = (settings: OidcSettings): Promise<openid.Configuration> => {
 		const key = fingerprint(settings);
 		const cached = configurations.get(key);
 		if (cached) return cached;
 
-		const issuer = assertTransportAllowed(settings);
-		const pending = lib
-			.discovery(
-				issuer,
-				settings.clientId,
-				undefined,
-				lib.ClientSecretPost(settings.clientSecret),
-				{
-					timeout: REQUEST_TIMEOUT_SECONDS,
-					...(settings.allowInsecureHttp && issuer.protocol === "http:"
-						? { execute: [lib.allowInsecureRequests] }
-						: {}),
-				},
-			)
-			.then((config) => {
-				(config as unknown as Record<symbol, number>)[openid.clockTolerance] =
-					CLOCK_TOLERANCE_SECONDS;
-				return config;
-			});
+		const pending = discoverWith(
+			settings,
+			lib.ClientSecretPost(settings.clientSecret),
+		).then((config) => {
+			(config as unknown as Record<symbol, number>)[openid.clockTolerance] =
+				CLOCK_TOLERANCE_SECONDS;
+			return config;
+		});
 		// Only one configuration is ever live; old fingerprints are dropped so
 		// a rotated secret does not linger in memory.
 		configurations.clear();
@@ -404,13 +440,8 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 			// code before the client and pass a wrong secret, and others reject
 			// its unregistered redirect URI as invalid_client (spec 004 FR-011).
 			if (config.serverMetadata().revocation_endpoint) {
-				try {
-					await lib.tokenRevocation(config, CONNECTION_TEST_CODE);
-				} catch (error) {
-					const failure = credentialFailure(error);
-					if (failure) return failure;
-				}
-				return { ok: true, issuer: config.serverMetadata().issuer };
+				const failure = await checkByRevocation(config, settings);
+				return failure ?? { ok: true, issuer: config.serverMetadata().issuer };
 			}
 			// A made-up authorization code: RFC 6749 §4.1.3 has the server
 			// authenticate the client before looking at the code, so bad

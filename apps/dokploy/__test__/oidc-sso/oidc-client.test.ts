@@ -60,6 +60,7 @@ const fakeLib = (overrides: Record<string, unknown> = {}) => {
 		randomNonce: vi.fn(() => "nonce"),
 		allowInsecureRequests: vi.fn(),
 		ClientSecretPost: vi.fn(() => "client-auth"),
+		ClientSecretBasic: vi.fn(() => "client-auth-basic"),
 		...overrides,
 	};
 	return lib;
@@ -673,6 +674,43 @@ describe("testConnection (FR-014)", () => {
 				ok: false,
 				code: "timeout",
 			});
+		});
+
+		it("a revocation refused with the POST method is retried with Basic, which every server must accept (Authelia)", async () => {
+			const lib = withRevocation({
+				tokenRevocation: vi
+					.fn()
+					.mockRejectedValueOnce(
+						Object.assign(new Error("x"), {
+							error: "invalid_client",
+							status: 401,
+						}),
+					)
+					.mockResolvedValueOnce(undefined),
+			});
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: true,
+			});
+			expect(lib.ClientSecretBasic).toHaveBeenCalledWith("secret");
+			expect(lib.tokenRevocation).toHaveBeenCalledTimes(2);
+		});
+
+		it("a wrong secret refused with both methods is invalid_client", async () => {
+			const refused = () =>
+				Promise.reject(
+					Object.assign(new Error("x"), {
+						error: "invalid_client",
+						status: 401,
+					}),
+				);
+			const lib = withRevocation({ tokenRevocation: vi.fn(refused) });
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: false,
+				code: "invalid_client",
+			});
+			expect(lib.tokenRevocation).toHaveBeenCalledTimes(2);
 		});
 
 		it("without a revocation endpoint only the code test runs", async () => {
