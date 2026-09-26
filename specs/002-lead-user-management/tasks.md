@@ -67,14 +67,14 @@ Lo usan todas las stories.
   - The env value wins over the stored one, and `sources.userManagementGroup` is `"env"`.
   - The repository round-trips the value.
 - [X] T006 Add `userManagementGroup` to `packages/server/src/oidc-sso/config/env.ts`, `config/repository.ts` and `config/provider.ts`, following `adminGroup` exactly, to pass T005 (FR-001, FR-002).
-- [ ] T007 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/login-state.test.ts` (PGlite) and `provisioning.test.ts` (FR-008, FR-014, data-model.md):
+- [X] T007 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/login-state.test.ts` (PGlite) and `provisioning.test.ts` (FR-008, FR-014, data-model.md):
   - A successful non-owner SSO login upserts `oidc_sso_login_state` inside the provisioning transaction, with sorted groups and the login time.
   - The owner's login writes nothing.
   - A denied login writes nothing.
   - Groups are capped at "como máximo 100 elementos de 256 caracteres". Longer entries are dropped, and after sorting only the first 100 are kept.
   - Deleting the user cascades.
-- [ ] T008 Implement `LoginStateStore` (`find(userId)`, `upsert(tx, {userId, groups, at})`) in `packages/server/src/oidc-sso/identity/login-state.ts`. Add `recordLoginState` to `ProvisioningTx` in `packages/server/src/oidc-sso/identity/provisioning.ts`, called only when `!isOwner`. Pass T007 (FR-008).
-- [ ] T009 [P] Extend `AuthEventInput`, the store and `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts` with optional `action` and `targetUserId`, with tests in `apps/dokploy/__test__/oidc-sso/auth-events.test.ts` (FR-012).
+- [X] T008 Implement `LoginStateStore` (`find(userId)`, `upsert(tx, {userId, groups, at})`) in `packages/server/src/oidc-sso/identity/login-state.ts`. Add `recordLoginState` to `ProvisioningTx` in `packages/server/src/oidc-sso/identity/provisioning.ts`, called only when `!isOwner`. Pass T007 (FR-008).
+- [X] T009 [P] Extend `AuthEventInput`, the store and `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts` with optional `action` and `targetUserId`, with tests in `apps/dokploy/__test__/oidc-sso/auth-events.test.ts` (FR-012).
 - [ ] T010 Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-guard.test.ts` for `checkUserManagement({userId, action, targetUserId?, ip?})` (FR-006, FR-012, NFR-SEC-001, contracts/user-management-guard.md):
   - It denies with the contract message for each reason.
   - It records one `user_management` / `denied` event with `action` and `target_user_id`.

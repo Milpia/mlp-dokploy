@@ -81,6 +81,7 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 			if (roles.get(userId) === "owner") return;
 			roles.set(userId, role ?? roles.get(userId) ?? "member");
 		},
+		async recordLoginState() {},
 	};
 	const provisioning: ProvisioningStore = {
 		findOwner: async () => ({ userId: "owner-id", organizationId: "org" }),

@@ -4,6 +4,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { decideAccess } from "../domain/access-policy";
 import type { SsoIdentity } from "../domain/claims";
 import { type DenyReason, SSO_PROVIDER_ID, type SsoRole } from "../types";
+import { drizzleLoginStateStore, normalizeLoginGroups } from "./login-state";
 
 export interface UserRecord {
 	id: string;
@@ -27,6 +28,12 @@ export interface ProvisioningTx {
 		organizationId: string;
 		role: SsoRole | null;
 	}): Promise<void>;
+	/** Groups seen at this login, for the user-management check (spec 002). */
+	recordLoginState(input: {
+		userId: string;
+		groups: string[];
+		at: Date;
+	}): Promise<void>;
 }
 
 export interface ProvisioningStore {
@@ -44,6 +51,7 @@ export interface ProvisionInput {
 	idToken: string;
 	accessGroup: string | null;
 	adminGroup: string | null;
+	now?: () => Date;
 }
 
 export type ProvisionResult =
@@ -61,6 +69,7 @@ export const provisionIdentity = async ({
 	idToken,
 	accessGroup,
 	adminGroup,
+	now = () => new Date(),
 }: ProvisionInput): Promise<ProvisionResult> => {
 	const owner = await store.findOwner();
 
@@ -105,6 +114,11 @@ export const provisionIdentity = async ({
 				userId: id,
 				organizationId: owner.organizationId,
 				role: decision.role === "unchanged" ? null : decision.role,
+			});
+			await tx.recordLoginState({
+				userId: id,
+				groups: normalizeLoginGroups(identity.groups),
+				at: now(),
 			});
 		}
 		return id;
@@ -182,6 +196,10 @@ const drizzleTx = (tx: Tx): ProvisioningTx => ({
 		if (role && current.role !== "owner" && current.role !== role) {
 			await tx.update(member).set({ role }).where(eq(member.id, current.id));
 		}
+	},
+
+	recordLoginState(input) {
+		return drizzleLoginStateStore.upsert(tx, input);
 	},
 });
 

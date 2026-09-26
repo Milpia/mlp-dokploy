@@ -121,6 +121,7 @@ export const fakeProvisioningStore = (
 			createUser: vi.fn(async () => "new-user-id"),
 			upsertSsoAccount: vi.fn(async () => {}),
 			ensureMembership: vi.fn(async () => {}),
+			recordLoginState: vi.fn(async () => {}),
 		}),
 	),
 	...overrides,

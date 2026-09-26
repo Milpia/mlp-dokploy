@@ -26,6 +26,9 @@ const {
 	findOwnerEmail,
 	provisionIdentity,
 } = await import("@dokploy/server/oidc-sso/identity/provisioning");
+const { drizzleLoginStateStore } = await import(
+	"@dokploy/server/oidc-sso/identity/login-state"
+);
 const { ownerHasEnterpriseLicense, getOidcSsoServices } = await import(
 	"@dokploy/server/oidc-sso/services"
 );
@@ -367,5 +370,68 @@ describe("services wiring", () => {
 
 	it("shares one set of services per process", () => {
 		expect(getOidcSsoServices()).toBe(getOidcSsoServices());
+	});
+});
+
+describe("drizzleAuthEventStore user-management fields (spec 002, FR-012)", () => {
+	it("stores the action and the affected user of a denied attempt", async () => {
+		await drizzleAuthEventStore.insert({
+			type: "user_management",
+			outcome: "denied",
+			reason: "not_in_group",
+			correlationId: "UM-1",
+			userId: "lead-x",
+			action: "remove_user",
+			targetUserId: "dev-x",
+		});
+		const events = await drizzleAuthEventStore.listRecent(20);
+		expect(events.find((e) => e.correlationId === "UM-1")).toMatchObject({
+			type: "user_management",
+			action: "remove_user",
+			targetUserId: "dev-x",
+		});
+	});
+});
+
+describe("drizzleLoginStateStore (spec 002, FR-008)", () => {
+	it("upserts the last login and cascades when the user is deleted", async () => {
+		const now = new Date("2026-09-26T12:00:00Z");
+		await db.insert(schema.user).values({
+			id: "lead-1",
+			email: "lead@example.com",
+			emailVerified: true,
+			updatedAt: now,
+		});
+		expect(await drizzleLoginStateStore.find("lead-1")).toBeNull();
+
+		await db.transaction((tx) =>
+			drizzleLoginStateStore.upsert(tx, {
+				userId: "lead-1",
+				groups: ["leads"],
+				at: now,
+			}),
+		);
+		const later = new Date("2026-09-26T13:00:00Z");
+		await db.transaction((tx) =>
+			drizzleLoginStateStore.upsert(tx, {
+				userId: "lead-1",
+				groups: ["admins", "leads"],
+				at: later,
+			}),
+		);
+		await expect(drizzleLoginStateStore.find("lead-1")).resolves.toEqual({
+			groups: ["admins", "leads"],
+			lastSsoLoginAt: later,
+		});
+		const { eq } = await import("drizzle-orm");
+		const rowsOf = () =>
+			db
+				.select()
+				.from(schema.oidcSsoLoginState)
+				.where(eq(schema.oidcSsoLoginState.userId, "lead-1"));
+		expect(await rowsOf()).toHaveLength(1);
+
+		await db.delete(schema.user).where(eq(schema.user.id, "lead-1"));
+		expect(await rowsOf()).toHaveLength(0);
 	});
 });
