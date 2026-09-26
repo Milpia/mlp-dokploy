@@ -10,7 +10,7 @@ import type { SsoEndpointDeps } from "./endpoints";
 /** Set only by this plugin; any copy sent by a client is removed first. */
 export const EMERGENCY_ORIGIN_HEADER = "x-oidc-sso-emergency-origin";
 
-interface RequestContext {
+export interface RequestContext {
 	baseURL: string;
 	options: Parameters<typeof getIp>[1];
 }
