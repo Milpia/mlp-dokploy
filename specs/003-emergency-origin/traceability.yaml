@@ -35,7 +35,7 @@ requirements:
     - T015
     - T017
     bugs: []
-    status: planned
+    status: implemented
   FR-002:
     text: El valor MUST ser un origen exacto (esquema `http` o `https`, host y puerto opcional), sin ruta, consulta
       ni comodines. Un valor que no cumpla MUST ignorarse y registrarse como error de configuración.
@@ -47,7 +47,7 @@ requirements:
     - T003
     - T017
     bugs: []
-    status: planned
+    status: implemented
   FR-003:
     text: Sin origen de emergencia definido, la lista de orígenes de confianza MUST ser idéntica a la de upstream.
     tasks:
@@ -59,7 +59,7 @@ requirements:
     - T014
     - T015
     bugs: []
-    status: planned
+    status: implemented
   FR-004:
     text: 'El sistema MUST aceptar el origen de emergencia solo cuando se cumplen a la vez tres condiciones: el
       modo SSO-only está activo, la petición es el login con email y contraseña, y el email es el del owner. Salvo
@@ -78,7 +78,7 @@ requirements:
     - T012
     - T013
     bugs: []
-    status: planned
+    status: implemented
   FR-005:
     text: 'Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en la verificación
       del segundo factor que sigue a un login de emergencia del owner: el código TOTP y el código de respaldo. MUST
@@ -94,7 +94,7 @@ requirements:
     - T008
     - T009
     bugs: []
-    status: planned
+    status: implemented
   FR-006:
     text: Los usuarios que no son el owner MUST seguir siendo rechazados en la ruta de emergencia como hoy (spec
       001, FR-012), vengan del origen que vengan.
@@ -107,7 +107,7 @@ requirements:
     - T012
     - T013
     bugs: []
-    status: planned
+    status: implemented
   FR-007:
     text: El sistema MUST registrar cada intento de login de emergencia hecho desde el origen de emergencia, correcto
       o fallido, con el email, la IP, el resultado y una marca que indique que llegó por el origen de emergencia.
@@ -124,7 +124,7 @@ requirements:
     - T012
     - T013
     bugs: []
-    status: planned
+    status: implemented
   FR-008:
     text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
     tasks:
@@ -135,7 +135,7 @@ requirements:
     - T019
     - T020
     bugs: []
-    status: planned
+    status: in_progress
   FR-009:
     text: Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en el cierre de sesión,
       para que el owner termine la sesión de emergencia desde el mismo navegador.
@@ -150,7 +150,7 @@ requirements:
     - T008
     - T009
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-001:
     text: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna
       petición.
@@ -159,7 +159,7 @@ requirements:
     local_tasks:
     - T016
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-002:
     text: Con el origen definido, las peticiones que no sean de login MUST NOT tener ninguna consulta añadida.
     tasks:
@@ -167,7 +167,7 @@ requirements:
     local_tasks:
     - T016
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-001:
     text: El origen de emergencia MUST añadirse solo a la lista de orígenes de la petición en curso, sin modificar
       ninguna lista compartida entre peticiones.
@@ -179,7 +179,7 @@ requirements:
     - T009
     - T019
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-002:
     text: Ante cualquier error al comprobar las condiciones de FR-004 (configuración ilegible, owner no encontrado),
       el sistema MUST NOT añadir el origen.
@@ -194,7 +194,7 @@ requirements:
     - T009
     - T019
     bugs: []
-    status: planned
+    status: implemented
 success_criteria:
   SC-001:
     text: Con el proveedor de identidad caído, el owner recupera el acceso al panel por túnel en menos de 5 minutos
