@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
-import { ssoSignInUrl } from "@/lib/oidc-sso";
+import { SSO_ERROR_MESSAGES, ssoSignInUrl } from "@/lib/oidc-sso";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { generateServerSideHelper } from "@/utils/create-server-helpers";
@@ -70,20 +70,6 @@ const _TwoFactorSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof LoginSchema>;
-
-const SSO_ERROR_MESSAGES: Record<LoginErrorCode, string> = {
-	sso_cancelled: "Single sign-on was cancelled.",
-	sso_invalid_response:
-		"We couldn't verify the response from the identity provider. Please try again.",
-	sso_email_unverified:
-		"Your identity provider account has no verified email address. Ask your administrator to verify it.",
-	sso_access_denied:
-		"Your identity provider account doesn't have access to this Dokploy instance. Ask your administrator to add you to the access group.",
-	sso_unavailable:
-		"The identity provider is not available right now. Please try again in a few minutes.",
-	sso_clock_skew:
-		"The sign-in response from the identity provider has an invalid timestamp. Ask your administrator to check that the server clocks are synchronized.",
-};
 
 const isSsoError = (value: string): value is LoginErrorCode =>
 	(LOGIN_ERROR_CODES as readonly string[]).includes(value);
