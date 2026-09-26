@@ -75,7 +75,7 @@ Lo usan todas las stories.
   - Deleting the user cascades.
 - [X] T008 Implement `LoginStateStore` (`find(userId)`, `upsert(tx, {userId, groups, at})`) in `packages/server/src/oidc-sso/identity/login-state.ts`. Add `recordLoginState` to `ProvisioningTx` in `packages/server/src/oidc-sso/identity/provisioning.ts`, called only when `!isOwner`. Pass T007 (FR-008).
 - [X] T009 [P] Extend `AuthEventInput`, the store and `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts` with optional `action` and `targetUserId`, with tests in `apps/dokploy/__test__/oidc-sso/auth-events.test.ts` (FR-012).
-- [ ] T010 Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-guard.test.ts` for `checkUserManagement({userId, action, targetUserId?, ip?})` (FR-006, FR-012, NFR-SEC-001, contracts/user-management-guard.md):
+- [X] T010 Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-guard.test.ts` for `checkUserManagement({userId, action, targetUserId?, ip?})` (FR-006, FR-012, NFR-SEC-001, contracts/user-management-guard.md):
   - It denies with the contract message for each reason.
   - It records one `user_management` / `denied` event with `action` and `target_user_id`.
   - It allows without recording anything.
@@ -83,8 +83,8 @@ Lo usan todas las stories.
   - If writing the event throws → still denied, and the error is logged.
   - Messages never contain the configured group name.
   - The target user is resolved from `userId`, `memberId` or `memberIdOrEmail` as in the contract, and a failed lookup still denies and records `target_user_id = null`.
-- [ ] T011 Implement `checkUserManagement` in `packages/server/src/oidc-sso/user-management/guard.ts` to pass T010. It reads config from the cached provider. It runs the `instanceOwnerId()` and `LoginStateStore.find` queries in parallel, and only when the group is configured and SSO is active (NFR-PERF-001, NFR-PERF-002).
-- [ ] T012 [P] Create `packages/server/src/oidc-sso/user-management/paths.ts` with `TRPC_USER_MANAGEMENT_PATHS` and `AUTH_USER_MANAGEMENT_PATHS`, both `ReadonlyMap<string, UserManagementAction>`, exactly as the two tables in contracts/user-management-guard.md (FR-004).
+- [X] T011 Implement `checkUserManagement` in `packages/server/src/oidc-sso/user-management/guard.ts` to pass T010. It reads config from the cached provider. It runs the `instanceOwnerId()` and `LoginStateStore.find` queries in parallel, and only when the group is configured and SSO is active (NFR-PERF-001, NFR-PERF-002).
+- [X] T012 [P] Create `packages/server/src/oidc-sso/user-management/paths.ts` with `TRPC_USER_MANAGEMENT_PATHS` and `AUTH_USER_MANAGEMENT_PATHS`, both `ReadonlyMap<string, UserManagementAction>`, exactly as the two tables in contracts/user-management-guard.md (FR-004).
 
 **Checkpoint**: la política, la configuración, la constancia de grupos y la guarda están probadas
 sin tocar upstream.
