@@ -1,6 +1,9 @@
 import { APIError, createAuthMiddleware, getIp } from "better-auth/api";
 import { newCorrelationId } from "../events/auth-events";
-import { EMERGENCY_ORIGIN_HEADER } from "./emergency-origin";
+import {
+	EMERGENCY_ORIGIN_DENIED,
+	EMERGENCY_ORIGIN_HEADER,
+} from "./emergency-origin";
 import type { SsoEndpointDeps } from "./endpoints";
 
 export const SSO_REQUIRED_MESSAGE =
@@ -91,7 +94,10 @@ export const createSsoOnlyGuard = (resolveDeps: () => SsoEndpointDeps) => ({
 				});
 				if (decision.action !== "deny") return;
 
-				if (decision.emergencyAttempt) {
+				const recordedByTunnel =
+					ctx.request?.headers.get(EMERGENCY_ORIGIN_HEADER) ===
+					EMERGENCY_ORIGIN_DENIED;
+				if (decision.emergencyAttempt && !recordedByTunnel) {
 					const email = emailFromBody(ctx.body);
 					const ip = ctx.request
 						? getIp(ctx.request, ctx.context.options)

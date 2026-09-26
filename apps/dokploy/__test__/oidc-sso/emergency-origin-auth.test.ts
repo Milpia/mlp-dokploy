@@ -88,7 +88,8 @@ const post = (
 			headers: {
 				"content-type": "application/json",
 				origin,
-				cookie,
+				// An empty cookie header still turns on better-auth's router check.
+				...(cookie ? { cookie } : {}),
 				"x-forwarded-for": "127.0.0.1",
 			},
 			body: JSON.stringify(body),
@@ -282,13 +283,13 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 		);
 
 		it.each(["button", "disabled"] as const)(
-			"SC-003: in %s mode the owner's sign-in from the tunnel is rejected",
+			"FR-006/MIL-496: in %s mode a non-owner sign-in from the tunnel is still rejected",
 			async (mode) => {
 				await ctx.repository.save({ mode });
 				ctx.services.config.invalidate();
 				await expectInvalidOrigin(
 					await post(ctx, "/sign-in/email", {
-						email: OWNER,
+						email: "dev@example.com",
 						password: PASSWORD,
 					}),
 				);
@@ -354,5 +355,101 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 			expect(response.status).toBe(403);
 			expect(await response.json()).toMatchObject({ code: "INVALID_ORIGIN" });
 		});
+	});
+
+	describe("enmienda 2026-09-26: the tunnel in every mode (MIL-495..497)", () => {
+		let ctx: Ctx;
+
+		beforeEach(async () => {
+			ctx = setup(TUNNEL);
+			await signUp(ctx, OWNER);
+			await signUp(ctx, "dev@example.com");
+		});
+
+		const setMode = async (mode: "sso-only" | "button" | "disabled") => {
+			if (mode === "sso-only") await enableSsoOnly(ctx);
+			else {
+				await ctx.repository.save({ mode });
+				ctx.services.config.invalidate();
+			}
+		};
+
+		const emergencyEvents = () =>
+			ctx.recorded.filter((event) => event.type === "emergency_login");
+
+		it.each(["button", "disabled"] as const)(
+			"FR-004/SC-003: in %s mode the owner signs in from the tunnel, with or without cookies",
+			async (mode) => {
+				await setMode(mode);
+				for (const cookie of [FOREIGN_COOKIE, ""]) {
+					const response = await post(
+						ctx,
+						"/sign-in/email",
+						{ email: OWNER, password: PASSWORD },
+						{ cookie },
+					);
+					expect(response.status).toBe(200);
+					expect(cookiesFrom(response)).toContain("session_token");
+				}
+			},
+		);
+
+		it.each(["sso-only", "button"] as const)(
+			"FR-009/MIL-495: in %s mode the menu sign-out ends the tunnel session without the provider",
+			async (mode) => {
+				await setMode(mode);
+				const signIn = await post(ctx, "/sign-in/email", {
+					email: OWNER,
+					password: PASSWORD,
+				});
+				const { token } = (await signIn.json()) as { token: string };
+				const signOut = await post(
+					ctx,
+					"/oidc/sign-out",
+					{},
+					{ cookie: `${FOREIGN_COOKIE}; ${cookiesFrom(signIn)}` },
+				);
+				expect(signOut.status).toBe(200);
+				expect(await signOut.json()).toEqual({ url: "/" });
+				expect(ctx.memory.session.some((s) => s.token === token)).toBe(false);
+				expect(
+					ctx.deps.services.oidc.buildEndSessionUrl,
+				).not.toHaveBeenCalled();
+			},
+		);
+
+		it("FR-010 (spec 001): from the public origin the menu sign-out still goes to the provider", async () => {
+			await setMode("sso-only");
+			const response = await post(ctx, "/oidc/sign-out", {}, { origin: BASE });
+			expect(response.status).toBe(200);
+			expect(((await response.json()) as { url: string }).url).toContain(
+				ISSUER,
+			);
+		});
+
+		it.each([
+			["sso-only", 403],
+			["button", 403],
+		] as const)(
+			"FR-007/MIL-497: in %s mode a cookieless non-owner attempt is recorded exactly once",
+			async (mode, status) => {
+				await setMode(mode);
+				const response = await post(
+					ctx,
+					"/sign-in/email",
+					{ email: "dev@example.com", password: PASSWORD },
+					{ cookie: "" },
+				);
+				expect(response.status).toBe(status);
+				expect(emergencyEvents()).toEqual([
+					expect.objectContaining({
+						outcome: "denied",
+						reason: "not_owner",
+						email: "dev@example.com",
+						emergencyOrigin: true,
+					}),
+				]);
+			},
+		);
 	});
 });
