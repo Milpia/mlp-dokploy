@@ -162,13 +162,13 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T020 [US3] Write failing tests in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts` (FR-005, NFR-PERF-001):
+- [X] T020 [US3] Write failing tests in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts` (FR-005, NFR-PERF-001):
   - when the ID token lacks `email` and/or `email_verified`, `exchangeCode` fills them from userinfo;
   - claims present in the ID token are never overwritten by userinfo;
   - userinfo is not called when the ID token already has the groups claim, `email` and `email_verified`;
   - a userinfo `sub` different from the ID token's rejects the login with `sso_invalid_response`;
   - a userinfo timeout surfaces as a provider failure, never as «sin grupos».
-- [ ] T032 [P] [US3] Write tests for FR-006 (US3 escenario 1), which must run in the default suite whatever the SaaS credentials are:
+- [X] T032 [P] [US3] Write tests for FR-006 (US3 escenario 1), which must run in the default suite whatever the SaaS credentials are:
   - in `apps/dokploy/__test__/oidc-sso/claims.test.ts`, `extractIdentity` reads groups from a claim named `https://dokploy/groups` and from one named `urn:example:groups.v1`, literally and without treating the name as a path;
   - in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts`, the userinfo fallback fills that same URL-named claim;
   - in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`, `SSO_OIDC_GROUPS_CLAIM=https://dokploy/groups` is accepted unchanged.
@@ -177,7 +177,7 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Extend `exchangeCode` in `packages/server/src/oidc-sso/oidc/client.ts` to pass T020. Fetch userinfo once when any of the groups claim, `email` or `email_verified` is missing from the ID token, and fill only the missing ones. Map `openid-client`'s subject-mismatch error to `SsoLoginError("sso_invalid_response", ...)` (FR-005).
+- [X] T021 [US3] Extend `exchangeCode` in `packages/server/src/oidc-sso/oidc/client.ts` to pass T020. Fetch userinfo once when any of the groups claim, `email` or `email_verified` is missing from the ID token, and fill only the missing ones. Map `openid-client`'s subject-mismatch error to `SsoLoginError("sso_invalid_response", ...)` (FR-005).
 - [ ] T022 [P] [US3] Add Auth0 and FusionAuth to `apps/dokploy/components/dashboard/settings/oidc-sso/provider-presets.ts` (FR-003, research R2):
   - Auth0: issuer `https://<tenant>.auth0.com/`, groups claim `https://dokploy/groups`, no extra scopes, and a hint about the Post-Login Action;
   - FusionAuth: issuer `https://<host>`, groups claim `roles`, extra scope `email`, and a hint about application roles granted through groups.

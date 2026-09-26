@@ -33,7 +33,12 @@ const fakeLib = (overrides: Record<string, unknown> = {}) => {
 		authorizationCodeGrant: vi.fn(async () => ({
 			id_token: "id.token.value",
 			access_token: "access",
-			claims: () => ({ sub: "sub-1", email: "a@b.c", groups: ["/g"] }),
+			claims: () => ({
+				sub: "sub-1",
+				email: "a@b.c",
+				email_verified: true,
+				groups: ["/g"],
+			}),
 		})),
 		buildEndSessionUrl: vi.fn(
 			(_config: unknown, params: Record<string, string>) =>
@@ -244,7 +249,12 @@ describe("createOpenIdClient", () => {
 			{ redirect_uri: "https://x/cb" },
 		);
 		expect(result).toEqual({
-			claims: { sub: "sub-1", email: "a@b.c", groups: ["/g"] },
+			claims: {
+				sub: "sub-1",
+				email: "a@b.c",
+				email_verified: true,
+				groups: ["/g"],
+			},
 			idToken: "id.token.value",
 		});
 		expect(lib.fetchUserInfo).not.toHaveBeenCalled();
@@ -297,6 +307,131 @@ describe("createOpenIdClient", () => {
 			"sub-1",
 		);
 		expect(result.claims.groups).toEqual(["/from-ui"]);
+	});
+
+	describe("spec 004 FR-005: filling missing claims from userinfo", () => {
+		const exchange = (
+			idTokenClaims: Record<string, unknown>,
+			overrides: Record<string, unknown> = {},
+			groupsClaim?: string,
+		) => {
+			const lib = fakeLib({
+				authorizationCodeGrant: vi.fn(async () => ({
+					id_token: "t",
+					access_token: "access",
+					claims: () => ({ sub: "sub-1", ...idTokenClaims }),
+				})),
+				...overrides,
+			});
+			const client = createOpenIdClient(lib as never);
+			return {
+				lib,
+				result: client.exchangeCode(settings, {
+					callbackUrl: new URL("https://x/cb?code=c"),
+					redirectUri: "https://x/cb",
+					state: "s",
+					nonce: "n",
+					codeVerifier: "v",
+					...(groupsClaim ? { groupsClaim } : {}),
+				}),
+			};
+		};
+
+		it("fills email and email_verified from userinfo when the ID token lacks them", async () => {
+			const { result } = exchange(
+				{ groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "ui@example.com",
+						email_verified: true,
+					})),
+				},
+			);
+			await expect(result).resolves.toMatchObject({
+				claims: {
+					email: "ui@example.com",
+					email_verified: true,
+					groups: ["g"],
+				},
+			});
+		});
+
+		it("never overwrites a claim present in the ID token", async () => {
+			const { result } = exchange(
+				{ email: "id@example.com", groups: ["from-id-token"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "ui@example.com",
+						email_verified: true,
+						groups: ["from-userinfo"],
+					})),
+				},
+			);
+			await expect(result).resolves.toMatchObject({
+				claims: {
+					email: "id@example.com",
+					email_verified: true,
+					groups: ["from-id-token"],
+				},
+			});
+		});
+
+		it("NFR-PERF-001: no userinfo call when the ID token has groups, email and email_verified", async () => {
+			const { lib, result } = exchange({
+				email: "a@b.c",
+				email_verified: true,
+				groups: ["g"],
+			});
+			await result;
+			expect(lib.fetchUserInfo).not.toHaveBeenCalled();
+		});
+
+		it("a userinfo subject that differs from the ID token denies the login", async () => {
+			const { result } = exchange(
+				{ groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => {
+						throw Object.assign(
+							new Error('unexpected "response" body "sub" property value'),
+							{ code: "OAUTH_JSON_ATTRIBUTE_COMPARISON_FAILED" },
+						);
+					}),
+				},
+			);
+			await expect(result).rejects.toMatchObject({
+				code: "sso_invalid_response",
+			});
+		});
+
+		it("a userinfo timeout is a provider failure, never a login without groups", async () => {
+			const { result } = exchange(
+				{ email: "a@b.c", email_verified: true },
+				{
+					fetchUserInfo: vi.fn(async () => {
+						throw timeoutError();
+					}),
+				},
+			);
+			await expect(result).rejects.toSatisfy(
+				(error: unknown) => mapOidcError(error) === "sso_unavailable",
+			);
+		});
+
+		it("FR-006: fills a URL-named groups claim literally", async () => {
+			const claim = "https://dokploy/groups";
+			const { result } = exchange(
+				{ email: "a@b.c", email_verified: true },
+				{
+					fetchUserInfo: vi.fn(async () => ({ sub: "sub-1", [claim]: ["g"] })),
+				},
+				claim,
+			);
+			await expect(result).resolves.toMatchObject({
+				claims: { [claim]: ["g"] },
+			});
+		});
 	});
 
 	it("fails closed when no ID token is returned", async () => {

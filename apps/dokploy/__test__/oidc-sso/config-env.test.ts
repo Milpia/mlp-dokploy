@@ -220,3 +220,14 @@ describe("SSO_OIDC_USER_MANAGEMENT_GROUP (spec 002)", () => {
 		]);
 	});
 });
+
+describe("spec 004 FR-006: groups claim from the environment", () => {
+	it("accepts a URL-shaped claim name unchanged", () => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_GROUPS_CLAIM: "https://dokploy/groups" },
+			noFile,
+		);
+		expect(result.values.groupsClaim).toBe("https://dokploy/groups");
+		expect(result.errors).toEqual([]);
+	});
+});

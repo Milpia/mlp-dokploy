@@ -295,17 +295,32 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 			}
 			const claims: Record<string, unknown> = { ...idTokenClaims };
 
-			// Some providers only expose groups through userinfo (e.g. Keycloak
-			// with the mapper's "Add to ID token" switch off).
+			// Some providers only put groups, email or email_verified in userinfo
+			// (Authelia by default, Keycloak with "Add to ID token" off). Fetch it
+			// once, only when one is missing, and fill only the missing ones: the
+			// signed ID token always wins (spec 004 FR-005, NFR-PERF-001).
 			const groupsClaim = input.groupsClaim ?? "groups";
-			if (claims[groupsClaim] === undefined && tokens.access_token) {
-				const userInfo = await lib.fetchUserInfo(
-					config,
-					tokens.access_token,
-					idTokenClaims.sub,
-				);
-				if (userInfo[groupsClaim] !== undefined) {
-					claims[groupsClaim] = userInfo[groupsClaim];
+			const missing = [groupsClaim, "email", "email_verified"].filter(
+				(name) => claims[name] === undefined,
+			);
+			if (missing.length > 0 && tokens.access_token) {
+				let userInfo: Record<string, unknown>;
+				try {
+					// openid-client checks that userinfo's sub matches the ID token's.
+					userInfo = await lib.fetchUserInfo(
+						config,
+						tokens.access_token,
+						idTokenClaims.sub,
+					);
+				} catch (error) {
+					if (isNetworkFailure(error)) throw error;
+					throw new SsoLoginError(
+						"sso_invalid_response",
+						"The identity provider returned invalid user information",
+					);
+				}
+				for (const name of missing) {
+					if (userInfo[name] !== undefined) claims[name] = userInfo[name];
 				}
 			}
 			return { claims, idToken: tokens.id_token };
