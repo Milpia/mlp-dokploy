@@ -29,8 +29,8 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 **Purpose**: dependencia, scripts y documentación de los secretos de prueba.
 
-- [ ] T001 Add `playwright-core` to `apps/dokploy/package.json` devDependencies (research R3, the only new dependency, dev-only) and the scripts `"e2e:oidc": "tsx scripts/oidc-providers.ts"` and `"e2e:oidc:matrix": "tsx scripts/oidc-compat-matrix.ts"`. Update `pnpm-lock.yaml` with `pnpm install`, then check with `pnpm --filter=@dokploy/server build` and `pnpm typecheck` that nothing else changes (FR-013, plan.md upstream touch points).
-- [ ] T002 [P] Write `apps/dokploy/__test__/oidc-sso/providers/README.md` (FR-008, FR-009, research R8):
+- [X] T001 Add `playwright-core` to `apps/dokploy/package.json` devDependencies (research R3, the only new dependency, dev-only) and the scripts `"e2e:oidc": "tsx scripts/oidc-providers.ts"` and `"e2e:oidc:matrix": "tsx scripts/oidc-compat-matrix.ts"`. Update `pnpm-lock.yaml` with `pnpm install`, then check with `pnpm --filter=@dokploy/server build` and `pnpm typecheck` that nothing else changes (FR-013, plan.md upstream touch points).
+- [X] T002 [P] Write `apps/dokploy/__test__/oidc-sso/providers/README.md` (FR-008, FR-009, research R8):
   - how to run a verification;
   - that the client secrets, passwords and keys in `providers/<id>/` are fixed test values for ephemeral containers listening on `127.0.0.1` only;
   - that the SaaS credentials only live in environment variables.
