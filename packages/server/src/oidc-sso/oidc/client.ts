@@ -245,14 +245,12 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 		config: openid.Configuration,
 		settings: OidcSettings,
 	): Promise<TestResult | null> => {
-		let failure: TestResult | null = null;
 		try {
 			await lib.tokenRevocation(config, CONNECTION_TEST_CODE);
 			return null;
 		} catch (error) {
-			failure = credentialFailure(error);
-			if (!failure) return null;
-			if (failure.ok === false && failure.code !== "invalid_client") {
+			const failure = credentialFailure(error);
+			if (!failure || failure.ok || failure.code !== "invalid_client") {
 				return failure;
 			}
 		}
@@ -264,7 +262,7 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 			await lib.tokenRevocation(basic, CONNECTION_TEST_CODE);
 			return null;
 		} catch (error) {
-			return credentialFailure(error) ?? null;
+			return credentialFailure(error);
 		}
 	};
 

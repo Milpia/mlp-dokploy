@@ -8,7 +8,7 @@
  */
 import { execSync } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createHarness, DOKPLOY_BASE, type Harness } from "./harness";
+import { createHarness, type Harness } from "./harness";
 import { buildResult, writeResult } from "./results";
 import { GROUPS } from "./shared";
 import {
