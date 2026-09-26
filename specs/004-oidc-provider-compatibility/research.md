@@ -54,6 +54,8 @@ No se cambia el código. Las verificaciones confirman los dos casos (escenario d
 
 **Cambio durante la implementación (2026-09-26):** `page.route` no sirve. Playwright no enruta las peticiones que llegan por una redirección de red, y todos los proveedores devuelven el navegador al callback con una. Dokploy corre en su lugar detrás de un servidor HTTP mínimo en `127.0.0.1:39000` (`toNodeHandler` de better-auth), con el mismo `auth.handler` en proceso. El puerto no es el 3000 porque suele estar ocupado por un Dokploy local, y una petición que llegara ahí probaría otra instancia. Las URI de redirección de las semillas usan `http://localhost:39000`.
 
+**Zitadel (implementación):** la verificación usa el login v1, que el propio servidor sirve (`ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED=false`), en lugar de Login V2, que exige un segundo contenedor con su propio PAT. Para el módulo no cambia nada: ve el mismo flujo OIDC. Si una instancia usa Login V2, solo cambia la pantalla que rellena el usuario.
+
 **Rationale**: Authentik, Zitadel, Authelia, Okta y Auth0 usan SPA o flujos multipaso. Simularlos con `fetch` exigiría reimplementar la API privada de cada uno. Con un navegador, el conductor queda en unas pocas líneas por proveedor y prueba el flujo que ve un usuario real.
 
 **Alternatives considered**:

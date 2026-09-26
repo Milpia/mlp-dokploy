@@ -183,7 +183,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - FusionAuth: issuer `https://<host>`, groups claim `roles`, extra scope `email`, and a hint about application roles granted through groups.
   
   Also refresh the Authentik hint with the `email_verified` scope mapping.
-- [ ] T023 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/zitadel/` (research R2):
+- [X] T023 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/zitadel/` (research R2):
   - `compose.yml`: `ghcr.io/zitadel/zitadel:v4.19.0 start-from-init`, plus `zitadel-login` and postgres, `ZITADEL_EXTERNALSECURE=false`, and `ZITADEL_FIRSTINSTANCE_*` writing a machine PAT to a mounted path.
   - `seed.ts`: with that PAT, create:
     - a project with roles `dokploy-users`, `dokploy-admins` and `admins-mgmt`, and «assert roles on authentication»;
