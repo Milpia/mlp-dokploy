@@ -1,7 +1,10 @@
 import { db } from "@dokploy/server/db";
 import { member, user } from "@dokploy/server/db/schema";
 import { eq } from "drizzle-orm";
-import { decideUserManagement } from "../domain/user-management";
+import {
+	decideUserManagement,
+	USER_MANAGEMENT_GRANT_TTL_MS,
+} from "../domain/user-management";
 import { newCorrelationId } from "../events/auth-events";
 import {
 	drizzleLoginStateStore,
@@ -145,4 +148,61 @@ export const checkUserManagement = async (
 		);
 	}
 	return result;
+};
+
+export interface UserManagementStatus {
+	canManageUsers: boolean;
+	reason: UserManagementDenyReason | null;
+	/** ISO date; only set while an SSO grant is what allows it. */
+	expiresAt: string | null;
+}
+
+/**
+ * What the UI needs to hide actions and explain an expired grant (FR-007).
+ * Unlike checkUserManagement it records nothing: it runs on every page view.
+ */
+export const getUserManagementStatus = async (
+	deps: UserManagementGuardDeps,
+	userId: string,
+): Promise<UserManagementStatus> => {
+	const now = deps.now ?? (() => new Date());
+	try {
+		const config = await deps.services.config.getEffective();
+		const group = config.userManagementGroup;
+		if (!config.active || !group) {
+			return { canManageUsers: true, reason: null, expiresAt: null };
+		}
+		const [ownerId, loginState] = await Promise.all([
+			deps.services.instanceOwnerId(),
+			deps.loginState.find(userId),
+		]);
+		const isInstanceOwner = ownerId === userId;
+		const decision = decideUserManagement({
+			ssoActive: true,
+			userManagementGroup: group,
+			isInstanceOwner,
+			loginState,
+			now: now(),
+		});
+		if (!decision.allow) {
+			return {
+				canManageUsers: false,
+				reason: decision.reason,
+				expiresAt: null,
+			};
+		}
+		const expiresAt =
+			!isInstanceOwner && loginState
+				? new Date(
+						loginState.lastSsoLoginAt.getTime() + USER_MANAGEMENT_GRANT_TTL_MS,
+					).toISOString()
+				: null;
+		return { canManageUsers: true, reason: null, expiresAt };
+	} catch (error) {
+		(deps.logError ?? ((m, e) => console.error(m, e)))(
+			"OIDC SSO: user-management status failed",
+			error,
+		);
+		return { canManageUsers: false, reason: "check_failed", expiresAt: null };
+	}
 };

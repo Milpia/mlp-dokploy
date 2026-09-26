@@ -1,6 +1,7 @@
 import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import {
 	checkUserManagement,
+	getUserManagementStatus,
 	USER_MANAGEMENT_MESSAGES,
 	type UserManagementGuardDeps,
 } from "@dokploy/server/oidc-sso/user-management/guard";
@@ -199,5 +200,75 @@ describe("checkUserManagement (spec 002)", () => {
 		for (const message of Object.values(USER_MANAGEMENT_MESSAGES)) {
 			expect(message).not.toContain("secret-admins-group");
 		}
+	});
+});
+
+describe("getUserManagementStatus (spec 002, FR-007)", () => {
+	it("FR-009: inactive feature means everyone can manage, no expiry", async () => {
+		const { deps } = await setup({ group: null });
+		await expect(getUserManagementStatus(deps, "lead-1")).resolves.toEqual({
+			canManageUsers: true,
+			reason: null,
+			expiresAt: null,
+		});
+	});
+
+	it("FR-007: a lead cannot manage users and nothing is recorded", async () => {
+		const { deps, recorded } = await setup();
+		await expect(getUserManagementStatus(deps, "lead-1")).resolves.toEqual({
+			canManageUsers: false,
+			reason: "not_in_group",
+			expiresAt: null,
+		});
+		expect(recorded).toHaveLength(0);
+	});
+
+	it("FR-015: an expired grant is reported so the UI can explain it", async () => {
+		const { deps } = await setup({
+			loginState: {
+				groups: ["admins"],
+				lastSsoLoginAt: new Date(NOW.getTime() - USER_MANAGEMENT_GRANT_TTL_MS),
+			},
+		});
+		await expect(
+			getUserManagementStatus(deps, "admin-1"),
+		).resolves.toMatchObject({
+			canManageUsers: false,
+			reason: "grant_expired",
+		});
+	});
+
+	it("FR-015: an allowed admin gets the expiry of the grant", async () => {
+		const { deps } = await setup({
+			loginState: { groups: ["admins"], lastSsoLoginAt: NOW },
+		});
+		await expect(getUserManagementStatus(deps, "admin-1")).resolves.toEqual({
+			canManageUsers: true,
+			reason: null,
+			expiresAt: new Date(
+				NOW.getTime() + USER_MANAGEMENT_GRANT_TTL_MS,
+			).toISOString(),
+		});
+	});
+
+	it("FR-010: the owner has no expiry", async () => {
+		const { deps } = await setup({ loginState: null });
+		await expect(getUserManagementStatus(deps, "owner-id")).resolves.toEqual({
+			canManageUsers: true,
+			reason: null,
+			expiresAt: null,
+		});
+	});
+
+	it("NFR-SEC-001: a failure hides the actions", async () => {
+		const { deps } = await setup();
+		deps.loginState.find = vi.fn(async () => {
+			throw new Error("db down");
+		});
+		await expect(getUserManagementStatus(deps, "lead-1")).resolves.toEqual({
+			canManageUsers: false,
+			reason: "check_failed",
+			expiresAt: null,
+		});
 	});
 });

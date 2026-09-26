@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { activeConfig, ISSUER, makeServices } from "./helpers";
 
-const holder = vi.hoisted(() => ({ services: null as unknown }));
+const holder = vi.hoisted(() => ({
+	services: null as unknown,
+	loginState: null as { groups: string[]; lastSsoLoginAt: Date } | null,
+}));
 
 vi.mock("@dokploy/server/oidc-sso/services", () => ({
 	getOidcSsoServices: () => holder.services,
+}));
+
+vi.mock("@dokploy/server/oidc-sso/identity/login-state", () => ({
+	drizzleLoginStateStore: { find: async () => holder.loginState },
 }));
 
 const { oidcSsoRouter } = await import("@/server/api/routers/oidc-sso");
@@ -176,6 +183,26 @@ describe("oidcSso router", () => {
 		await expect(caller("owner").testConnection({})).resolves.toEqual({
 			ok: true,
 			issuer: ISSUER,
+		});
+	});
+
+	it("spec 002 FR-007: userManagementStatus is open to any signed-in user", async () => {
+		built = makeServices({
+			config: { ...activeConfig, userManagementGroup: "admins" },
+		});
+		built.services.instanceOwnerId = async () => "owner-id";
+		holder.services = built.services;
+		holder.loginState = { groups: ["leads"], lastSsoLoginAt: new Date() };
+		await expect(caller("admin").userManagementStatus()).resolves.toEqual({
+			canManageUsers: false,
+			reason: "not_in_group",
+			expiresAt: null,
+		});
+		await expect(caller("owner").userManagementStatus()).resolves.toMatchObject(
+			{ canManageUsers: true },
+		);
+		await expect(caller(null).userManagementStatus()).rejects.toMatchObject({
+			code: "UNAUTHORIZED",
 		});
 	});
 });
