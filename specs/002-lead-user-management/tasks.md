@@ -127,7 +127,7 @@ en los eventos del SSO (quickstart §2, filas 1–5).
 - [X] T019 [US1] Implement `userManagementVisibility` in `apps/dokploy/components/dashboard/settings/oidc-sso/user-management-visibility.ts` to pass T031, then use it at the upstream touch points in plan.md (FR-007):
   - In `apps/dokploy/components/dashboard/settings/users/show-users.tsx`, pass its upstream flags through the helper.
   - In `apps/dokploy/pages/dashboard/settings/users.tsx`, render `ShowInvitations` only when `canInvite` is true, and show a notice with a "Sign in with SSO" action when `showExpiredNotice` is true.
-- [ ] T020 [US1] Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` and the realm in `apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json` (US1 scenarios 1–4):
+- [X] T020 [US1] Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` and the realm in `apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json` (US1 scenarios 1–4):
   - Add groups `admins`, `leads` and `developers`.
   - Add users `lead1`, `admin1`, `admin2` and `dev1` as in quickstart.md.
   - `lead1` passes a non-management call.
@@ -156,7 +156,7 @@ rol de un admin (quickstart §2, filas 6–8).
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` (US2 scenarios 1–3, FR-010):
+- [X] T022 [US2] Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` (US2 scenarios 1–3, FR-010):
   - `admin1` removes `dev1`.
   - `admin2` (in `admins` and `leads`) assigns permissions.
   - The owner, through the emergency local login, changes a member's role.
