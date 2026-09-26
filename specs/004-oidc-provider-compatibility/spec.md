@@ -14,6 +14,8 @@
 
 - Q: ¿Esto se documenta en la spec 001 o en una nueva? → A: En una spec nueva (004), que extiende la 001 sin reabrirla. La 001 conserva su alcance y apunta a esta.
 - Q: ¿Cómo se verifican Okta y Auth0, que solo existen como SaaS? → A: Con tenants de desarrollo creados solo para pruebas, con credenciales en variables de entorno y ejecución opt-in. Sin credenciales, la prueba se omite e informa de ello.
+- Q: ¿Las verificaciones de los cinco proveedores autoalojables deben ejecutarse también en CI, o solo a mano? → A: Workflow de GitHub Actions para los 5 autoalojables, lanzable a mano y semanal. Okta y Auth0, solo en local.
+- Q: ¿La matriz de compatibilidad se actualiza a mano o se genera a partir de los resultados de las verificaciones? → A: Generada: cada verificación guarda sus resultados y un comando rehace la tabla. Las limitaciones se escriben a mano.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -49,7 +51,7 @@ Quien mantiene el fork abre la matriz de compatibilidad y ve, por proveedor, la 
 1. **Given** un proveedor autoalojable, **When** se lanza su verificación, **Then** se levanta una instancia efímera ya preparada con usuarios y grupos de prueba, se ejecutan todos los escenarios de US1 y la instancia se destruye al terminar, pase o falle.
 2. **Given** Okta o Auth0 sin credenciales de prueba en el entorno, **When** se lanza su verificación, **Then** se omite e informa claramente de qué variables faltan, sin fallar el resto.
 3. **Given** Okta o Auth0 con credenciales de su tenant de pruebas, **When** se lanza su verificación, **Then** se ejecutan los mismos escenarios de US1 contra el tenant.
-4. **Given** una verificación completada, **When** alguien revisa la matriz, **Then** encuentra la versión y la fecha de esa verificación.
+4. **Given** una verificación completada, **When** alguien regenera la matriz, **Then** encuentra la versión, la fecha y el resultado de esa verificación, sin haber editado la tabla a mano.
 
 ---
 
@@ -118,17 +120,20 @@ El owner solo ajusta la configuración (claim de grupos y scopes), y el módulo 
 - **FR-011**: La prueba de conexión MUST clasificar las respuestas de cada proveedor de forma que un secreto incorrecto nunca se informe como conexión correcta.
 - **FR-012**: La spec 001 MUST remitir a esta spec para la lista de proveedores verificados, sin cambiar su propio alcance.
 - **FR-013**: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
+- **FR-014**: Cada verificación MUST guardar sus resultados en un archivo versionado con proveedor, versión, fecha y resultado por escenario. La tabla de la matriz MUST generarse desde esos archivos con un comando, sin editarse a mano. Las limitaciones conocidas son la única parte que se escribe a mano.
 
 ### Non-Functional Requirements
 
 - **NFR-QA-001**: La verificación de un proveedor autoalojable, con el arranque de su instancia efímera incluido, MUST terminar en menos de 10 minutos.
 - **NFR-QA-002**: Las verificaciones MUST NOT formar parte de la suite por defecto (`pnpm test`). Se lanzan de forma explícita, por proveedor o todas a la vez.
+- **NFR-QA-003**: Las verificaciones de los cinco autoalojables MUST ejecutarse en CI una vez por semana y a demanda, y un fallo MUST quedar visible para el equipo. Okta y Auth0 MUST NOT ejecutarse en CI, porque sus credenciales no se guardan en GitHub.
 - **NFR-SEC-001**: Los tenants de prueba de Okta y Auth0 MUST dedicarse solo a pruebas, sin usuarios ni datos reales, y sus credenciales MUST poder revocarse sin afectar a ningún entorno de Milpia.
 - **NFR-PERF-001**: Leer la información de usuario (FR-005) MUST hacerse solo cuando falten datos en el token, con el mismo tiempo máximo de espera que el resto de llamadas al proveedor. MUST NOT añadir llamadas en los logins cuyo token ya trae los grupos.
 
 ### Key Entities
 
-- **Proveedor verificado**: nombre, versión probada, fecha de la última verificación, resultado por función y limitaciones conocidas. Es la fila de la matriz.
+- **Resultado de verificación**: el archivo que deja cada ejecución, con proveedor, versión, fecha y resultado por escenario. Es la fuente de la matriz.
+- **Proveedor verificado**: una fila de la matriz. Combina el último resultado de verificación del proveedor con sus limitaciones conocidas, que se escriben a mano.
 - **Escenario de verificación**: uno de los escenarios comunes de FR-004, con el mismo significado para todos los proveedores.
 - **Entorno de verificación**: una instancia efímera (autoalojables) o un tenant de pruebas (SaaS), con usuarios y grupos de prueba.
 
@@ -148,6 +153,6 @@ El owner solo ajusta la configuración (claim de grupos y scopes), y el módulo 
 - El módulo sigue siendo un cliente OIDC (relying party): la identidad, los grupos, la MFA y las políticas siguen en el proveedor. Esta spec no convierte Dokploy en un IAM ni en un PAM.
 - «Autoalojables» son Keycloak, Authentik, Zitadel, FusionAuth y Authelia, que tienen imagen oficial para instancias efímeras. Okta y Auth0 solo existen como SaaS.
 - El owner crea los tenants de desarrollo gratuitos de Okta y Auth0 y proporciona sus credenciales por entorno. Sin ellos, esas dos filas de la matriz quedan como «no verificado».
-- Las verificaciones se lanzan a mano antes de actualizar el fork, o cuando cambia una versión de proveedor relevante. Una ejecución periódica automática queda fuera de alcance.
+- Además de la ejecución semanal en CI (NFR-QA-003), las verificaciones se lanzan a mano antes de actualizar el fork o cuando cambia una versión de proveedor relevante. Okta y Auth0 solo se verifican en local.
 - Se prueba la versión estable actual de cada proveedor en el momento de implementar. Las versiones antiguas no se cubren.
 - Depende de la spec 001 (módulo oidc-sso) en `canary`. Keycloak ya tiene su batería e2e, que se adapta a los escenarios comunes de FR-004.
