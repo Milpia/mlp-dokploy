@@ -25,6 +25,7 @@ const makeStore = (overrides: Partial<ProvisioningStore> = {}) => {
 		createUser: vi.fn(async () => "new-user-id"),
 		upsertSsoAccount: vi.fn(async () => {}),
 		ensureMembership: vi.fn(async () => {}),
+		recordLoginState: vi.fn(async () => {}),
 	};
 	const store = {
 		findOwner: vi.fn(async () => OWNER),
@@ -38,8 +39,16 @@ const makeStore = (overrides: Partial<ProvisioningStore> = {}) => {
 	return { store: store as ProvisioningStore & typeof store, tx };
 };
 
+const NOW = new Date("2026-09-26T12:00:00Z");
+
 const run = (store: ProvisioningStore, id = identity(), config = groups) =>
-	provisionIdentity({ store, identity: id, idToken: "id-token", ...config });
+	provisionIdentity({
+		store,
+		identity: id,
+		idToken: "id-token",
+		...config,
+		now: () => NOW,
+	});
 
 describe("provisionIdentity", () => {
 	it("denies when there is no owner (fresh instance)", async () => {
@@ -213,5 +222,36 @@ describe("provisionIdentity", () => {
 			allow: false,
 			reason: "user_banned",
 		});
+	});
+
+	it("spec 002 FR-008: records the login's normalized groups in the same transaction", async () => {
+		const { store, tx } = makeStore();
+		await run(store, identity({ groups: ["/leads", "admins", "/leads"] }), {
+			accessGroup: "leads,admins",
+			adminGroup: "admins",
+		});
+		expect(tx.recordLoginState).toHaveBeenCalledWith({
+			userId: "new-user-id",
+			groups: ["admins", "leads"],
+			at: NOW,
+		});
+	});
+
+	it("spec 002 FR-008: the owner's login records nothing", async () => {
+		const { store, tx } = makeStore({
+			findUserByEmail: vi.fn(async () => ({
+				id: OWNER.userId,
+				banned: false,
+				linkedSub: null,
+			})),
+		});
+		await run(store);
+		expect(tx.recordLoginState).not.toHaveBeenCalled();
+	});
+
+	it("spec 002 FR-008: a denied login records nothing", async () => {
+		const { store, tx } = makeStore();
+		await run(store, identity({ groups: [] }));
+		expect(tx.recordLoginState).not.toHaveBeenCalled();
 	});
 });

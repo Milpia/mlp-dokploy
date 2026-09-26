@@ -5,7 +5,23 @@
 	"registrationAllowed": false,
 	"loginWithEmailAllowed": true,
 	"duplicateEmailsAllowed": false,
-	"groups": [{ "name": "dokploy-users" }, { "name": "dokploy-admins" }],
+	"groups": [
+		{
+			"name": "dokploy-users"
+		},
+		{
+			"name": "dokploy-admins"
+		},
+		{
+			"name": "admins"
+		},
+		{
+			"name": "leads"
+		},
+		{
+			"name": "developers"
+		}
+	],
 	"clients": [
 		{
 			"clientId": "dokploy",
@@ -51,7 +67,11 @@
 			"lastName": "Owner",
 			"enabled": true,
 			"credentials": [
-				{ "type": "password", "value": "Passw0rd!", "temporary": false }
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
 			],
 			"groups": []
 		},
@@ -63,7 +83,11 @@
 			"lastName": "Admin",
 			"enabled": true,
 			"credentials": [
-				{ "type": "password", "value": "Passw0rd!", "temporary": false }
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
 			],
 			"groups": ["/dokploy-users", "/dokploy-admins"]
 		},
@@ -75,7 +99,11 @@
 			"lastName": "Dev",
 			"enabled": true,
 			"credentials": [
-				{ "type": "password", "value": "Passw0rd!", "temporary": false }
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
 			],
 			"groups": ["/dokploy-users"]
 		},
@@ -87,7 +115,11 @@
 			"lastName": "Outsider",
 			"enabled": true,
 			"credentials": [
-				{ "type": "password", "value": "Passw0rd!", "temporary": false }
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
 			],
 			"groups": []
 		},
@@ -99,9 +131,77 @@
 			"lastName": "Unverified",
 			"enabled": true,
 			"credentials": [
-				{ "type": "password", "value": "Passw0rd!", "temporary": false }
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
 			],
 			"groups": ["/dokploy-users"]
+		},
+		{
+			"username": "lead1",
+			"email": "lead1@example.com",
+			"emailVerified": true,
+			"firstName": "Lena",
+			"lastName": "Lead",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
+			],
+			"groups": ["/leads"]
+		},
+		{
+			"username": "admin1",
+			"email": "admin1@example.com",
+			"emailVerified": true,
+			"firstName": "Ari",
+			"lastName": "Admin",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
+			],
+			"groups": ["/admins"]
+		},
+		{
+			"username": "admin2",
+			"email": "admin2@example.com",
+			"emailVerified": true,
+			"firstName": "Alex",
+			"lastName": "Admin",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
+			],
+			"groups": ["/admins", "/leads"]
+		},
+		{
+			"username": "dev1",
+			"email": "dev1@example.com",
+			"emailVerified": true,
+			"firstName": "Dev",
+			"lastName": "One",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd!",
+					"temporary": false
+				}
+			],
+			"groups": ["/developers"]
 		}
 	]
 }

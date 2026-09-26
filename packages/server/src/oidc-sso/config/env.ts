@@ -9,6 +9,7 @@ export interface EnvOverrideValues {
 	clientSecret?: string;
 	accessGroup?: string;
 	adminGroup?: string;
+	userManagementGroup?: string;
 	groupsClaim?: string;
 	extraScopes?: string;
 	buttonLabel?: string;
@@ -23,6 +24,7 @@ export interface EnvOverrides {
 }
 
 export const BUTTON_LABEL_MAX_LENGTH = 64;
+export const GROUP_LIST_MAX_LENGTH = 512;
 
 type Env = Record<string, string | undefined>;
 type FileReader = (path: string) => string;
@@ -119,6 +121,17 @@ export const readEnvOverrides = (
 
 	const adminGroup = read(env, "SSO_OIDC_ADMIN_GROUP");
 	if (adminGroup) values.adminGroup = adminGroup;
+
+	const userManagementGroup = read(env, "SSO_OIDC_USER_MANAGEMENT_GROUP");
+	if (userManagementGroup) {
+		if (userManagementGroup.length <= GROUP_LIST_MAX_LENGTH) {
+			values.userManagementGroup = userManagementGroup;
+		} else {
+			errors.push(
+				`SSO_OIDC_USER_MANAGEMENT_GROUP must be at most ${GROUP_LIST_MAX_LENGTH} characters; ignoring it.`,
+			);
+		}
+	}
 
 	const groupsClaim = read(env, "SSO_OIDC_GROUPS_CLAIM");
 	if (groupsClaim) values.groupsClaim = groupsClaim;

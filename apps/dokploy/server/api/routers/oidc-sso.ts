@@ -11,6 +11,10 @@ import {
 	testSsoConnection,
 	updateSsoConfig,
 } from "@dokploy/server/oidc-sso/admin/config-admin";
+import {
+	defaultUserManagementGuardDeps,
+	getUserManagementStatus,
+} from "@dokploy/server/oidc-sso/user-management/guard";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -45,6 +49,7 @@ const updateInput = connectionInput.extend({
 	mode: z.enum(SSO_MODES).optional(),
 	accessGroup: optionalText,
 	adminGroup: optionalText,
+	userManagementGroup: optionalText,
 	groupsClaim: z.string().max(256).optional(),
 	extraScopes: z.string().max(1024).optional(),
 	buttonLabel: z.string().trim().min(1).max(BUTTON_LABEL_MAX_LENGTH).optional(),
@@ -67,6 +72,14 @@ export const oidcSsoRouter = createTRPCRouter({
 		IS_CLOUD
 			? { mode: "disabled" as const, buttonLabel: "" }
 			: getPublicConfig(getOidcSsoServices()),
+	),
+
+	// Any signed-in user asks about themselves, so the users page can hide
+	// what the server would refuse anyway (spec 002, FR-007).
+	userManagementStatus: protectedProcedure.query(({ ctx }) =>
+		IS_CLOUD
+			? { canManageUsers: true, reason: null, expiresAt: null }
+			: getUserManagementStatus(defaultUserManagementGuardDeps(), ctx.user.id),
 	),
 
 	get: ownerProcedure.query(() => getConfigView(getOidcSsoServices())),

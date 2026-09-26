@@ -41,6 +41,7 @@ export interface ConfigUpdateInput {
 	clientSecret?: string;
 	accessGroup?: string | null;
 	adminGroup?: string | null;
+	userManagementGroup?: string | null;
 	groupsClaim?: string;
 	extraScopes?: string;
 	buttonLabel?: string;
@@ -56,6 +57,7 @@ export interface ConfigView {
 	hasClientSecret: boolean;
 	accessGroup: string | null;
 	adminGroup: string | null;
+	userManagementGroup: string | null;
 	groupsClaim: string;
 	extraScopes: string;
 	buttonLabel: string;
@@ -90,6 +92,7 @@ const toView = (
 	hasClientSecret: !!effective.clientSecret,
 	accessGroup: effective.accessGroup,
 	adminGroup: effective.adminGroup,
+	userManagementGroup: effective.userManagementGroup,
 	groupsClaim: effective.groupsClaim,
 	extraScopes: effective.extraScopes,
 	buttonLabel: effective.buttonLabel,
@@ -155,6 +158,9 @@ export const updateSsoConfig = async (
 			: {}),
 		...(input.adminGroup !== undefined
 			? { adminGroup: blankToNull(input.adminGroup) }
+			: {}),
+		...(input.userManagementGroup !== undefined
+			? { userManagementGroup: blankToNull(input.userManagementGroup) }
 			: {}),
 		...(input.groupsClaim !== undefined
 			? { groupsClaim: input.groupsClaim.trim() || DEFAULT_GROUPS_CLAIM }

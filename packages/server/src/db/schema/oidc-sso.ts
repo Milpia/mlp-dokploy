@@ -1,5 +1,6 @@
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
+import { user } from "./user";
 
 export const oidcSsoConfig = pgTable("oidc_sso_config", {
 	id: text("id")
@@ -14,6 +15,7 @@ export const oidcSsoConfig = pgTable("oidc_sso_config", {
 	clientSecret: text("client_secret"),
 	accessGroup: text("access_group"),
 	adminGroup: text("admin_group"),
+	userManagementGroup: text("user_management_group"),
 	groupsClaim: text("groups_claim").notNull().default("groups"),
 	// Space-separated, appended to "openid email profile".
 	extraScopes: text("extra_scopes").notNull().default(""),
@@ -40,7 +42,20 @@ export const oidcSsoAuthEvent = pgTable(
 		ip: text("ip"),
 		correlationId: text("correlation_id").notNull(),
 		emergencyOrigin: boolean("emergency_origin").notNull().default(false),
+		action: text("action"),
+		// No foreign key, like userId: the event outlives the affected user.
+		targetUserId: text("target_user_id"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
 	(t) => [index("oidcSsoAuthEvent_createdAt_idx").on(t.createdAt)],
 );
+
+/** Groups seen at each user's last SSO login (spec 002, research R5). */
+export const oidcSsoLoginState = pgTable("oidc_sso_login_state", {
+	userId: text("user_id")
+		.primaryKey()
+		.references(() => user.id, { onDelete: "cascade" }),
+	groups: text("groups").array().notNull(),
+	lastSsoLoginAt: timestamp("last_sso_login_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
+});

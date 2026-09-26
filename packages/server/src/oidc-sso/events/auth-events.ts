@@ -2,7 +2,11 @@ import { randomBytes } from "node:crypto";
 import { db } from "@dokploy/server/db";
 import { oidcSsoAuthEvent } from "@dokploy/server/db/schema";
 import { desc, lt } from "drizzle-orm";
-import type { AuthEventOutcome, AuthEventType } from "../types";
+import type {
+	AuthEventOutcome,
+	AuthEventType,
+	UserManagementAction,
+} from "../types";
 
 export interface AuthEventInput {
 	type: AuthEventType;
@@ -14,6 +18,9 @@ export interface AuthEventInput {
 	ip?: string;
 	/** Set when an emergency login arrived through the emergency origin (spec 003). */
 	emergencyOrigin?: boolean;
+	/** Only on user_management events (spec 002). */
+	action?: UserManagementAction;
+	targetUserId?: string;
 }
 
 export interface AuthEvent extends AuthEventInput {
@@ -55,6 +62,8 @@ export const drizzleAuthEventStore: AuthEventStore = {
 			...(row.userId ? { userId: row.userId } : {}),
 			...(row.ip ? { ip: row.ip } : {}),
 			...(row.emergencyOrigin ? { emergencyOrigin: true } : {}),
+			...(row.action ? { action: row.action as UserManagementAction } : {}),
+			...(row.targetUserId ? { targetUserId: row.targetUserId } : {}),
 		}));
 	},
 	async deleteOlderThan(cutoff) {

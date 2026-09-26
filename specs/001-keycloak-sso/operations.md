@@ -104,6 +104,7 @@ Configura el claim que lleva los grupos o roles y los scopes necesarios para rec
 | `SSO_OIDC_BUTTON_LABEL` | texto del botón |
 | `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
 | `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto desde el que el owner puede usar la ruta de emergencia por un túnel (spec 003), p. ej. `http://localhost:3900` |
+| `SSO_OIDC_USER_MANAGEMENT_GROUP` | grupo o lista separada por comas que puede gestionar usuarios (spec 002); vacío, rige upstream |
 
 - Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen
   bloqueados en ella.
@@ -125,6 +126,7 @@ SSO_OIDC_CLIENT_ID=dokploy
 SSO_OIDC_CLIENT_SECRET=<desde PROD_ENV_FILE, con copia en Vault>
 SSO_OIDC_ACCESS_GROUP=admins,leads
 SSO_OIDC_ADMIN_GROUP=admins,leads
+SSO_OIDC_USER_MANAGEMENT_GROUP=admins
 SSO_OIDC_EMERGENCY_ORIGIN=http://localhost:3900
 BETTER_AUTH_URL=https://deploy.milpia.com
 ```
@@ -199,6 +201,27 @@ Si un usuario del grupo recibe `sso_access_denied`, revisa que el token lleve el
 el error más frecuente con Okta, Authelia y Zitadel.
 
 Los eventos se conservan 90 días.
+
+### Gestión de usuarios denegada (spec 002)
+
+Con `SSO_OIDC_USER_MANAGEMENT_GROUP` definido, solo el owner y los miembros de ese grupo pueden
+gestionar usuarios: borrar, invitar, cambiar roles o permisos y gestionar roles personalizados. El
+resto de admins (en Milpia, `leads`) conserva todo lo demás y ve la lista de usuarios sin acciones.
+
+- Los grupos se leen del último login por SSO. Un cambio de grupos en el proveedor se aplica en el
+  siguiente login.
+- El permiso caduca **8 horas** después de ese login. Pasado ese tiempo, el admin ve un aviso en
+  Settings › Users y debe volver a entrar con SSO. El owner no depende del SSO.
+- Si la comprobación falla (base de datos, configuración), la acción se deniega.
+- Cada denegación queda en la tabla de eventos como `user_management` / `denied`, con la acción, el
+  usuario afectado y la IP.
+
+| Motivo | Mensaje | Qué hacer |
+|---|---|---|
+| `not_in_group` | `You are not allowed to manage users.` | Añadir al usuario al grupo en el proveedor y volver a entrar |
+| `no_sso_login` | `Sign in with SSO to manage users.` | Entrar por SSO (un login local no basta) |
+| `grant_expired` | `Your permission to manage users expired. Sign in with SSO again.` | Volver a entrar por SSO |
+| `check_failed` | `You are not allowed to manage users.` (mismo texto, para no revelar el fallo) | Revisar los logs `OIDC SSO` y la base de datos |
 
 ## 6. Consideraciones de seguridad
 

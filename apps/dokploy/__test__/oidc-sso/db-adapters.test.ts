@@ -26,8 +26,14 @@ const {
 	findOwnerEmail,
 	provisionIdentity,
 } = await import("@dokploy/server/oidc-sso/identity/provisioning");
+const { drizzleLoginStateStore } = await import(
+	"@dokploy/server/oidc-sso/identity/login-state"
+);
 const { ownerHasEnterpriseLicense, getOidcSsoServices } = await import(
 	"@dokploy/server/oidc-sso/services"
+);
+const { drizzleResolveTarget, defaultUserManagementGuardDeps } = await import(
+	"@dokploy/server/oidc-sso/user-management/guard"
 );
 
 type Db = import("drizzle-orm/pglite").PgliteDatabase<typeof schema>;
@@ -96,6 +102,17 @@ describe("drizzleConfigRepository (FR-001, FR-015)", () => {
 		await expect(drizzleConfigRepository.get()).resolves.toMatchObject({
 			mode: "button",
 			clientSecret: "super-secret",
+		});
+	});
+
+	it("spec 002 FR-001: round-trips the user-management group", async () => {
+		await drizzleConfigRepository.save({ userManagementGroup: "admins" });
+		await expect(drizzleConfigRepository.get()).resolves.toMatchObject({
+			userManagementGroup: "admins",
+		});
+		await drizzleConfigRepository.save({ userManagementGroup: null });
+		await expect(drizzleConfigRepository.get()).resolves.toMatchObject({
+			userManagementGroup: null,
 		});
 	});
 
@@ -356,5 +373,114 @@ describe("services wiring", () => {
 
 	it("shares one set of services per process", () => {
 		expect(getOidcSsoServices()).toBe(getOidcSsoServices());
+	});
+});
+
+describe("drizzleAuthEventStore user-management fields (spec 002, FR-012)", () => {
+	it("stores the action and the affected user of a denied attempt", async () => {
+		await drizzleAuthEventStore.insert({
+			type: "user_management",
+			outcome: "denied",
+			reason: "not_in_group",
+			correlationId: "UM-1",
+			userId: "lead-x",
+			action: "remove_user",
+			targetUserId: "dev-x",
+		});
+		const events = await drizzleAuthEventStore.listRecent(20);
+		expect(events.find((e) => e.correlationId === "UM-1")).toMatchObject({
+			type: "user_management",
+			action: "remove_user",
+			targetUserId: "dev-x",
+		});
+	});
+});
+
+describe("drizzleLoginStateStore (spec 002, FR-008)", () => {
+	it("upserts the last login and cascades when the user is deleted", async () => {
+		const now = new Date("2026-09-26T12:00:00Z");
+		await db.insert(schema.user).values({
+			id: "lead-1",
+			email: "lead@example.com",
+			emailVerified: true,
+			updatedAt: now,
+		});
+		expect(await drizzleLoginStateStore.find("lead-1")).toBeNull();
+
+		await db.transaction((tx) =>
+			drizzleLoginStateStore.upsert(tx as never, {
+				userId: "lead-1",
+				groups: ["leads"],
+				at: now,
+			}),
+		);
+		const later = new Date("2026-09-26T13:00:00Z");
+		await db.transaction((tx) =>
+			drizzleLoginStateStore.upsert(tx as never, {
+				userId: "lead-1",
+				groups: ["admins", "leads"],
+				at: later,
+			}),
+		);
+		await expect(drizzleLoginStateStore.find("lead-1")).resolves.toEqual({
+			groups: ["admins", "leads"],
+			lastSsoLoginAt: later,
+		});
+		const { eq } = await import("drizzle-orm");
+		const rowsOf = () =>
+			db
+				.select()
+				.from(schema.oidcSsoLoginState)
+				.where(eq(schema.oidcSsoLoginState.userId, "lead-1"));
+		expect(await rowsOf()).toHaveLength(1);
+
+		await db.delete(schema.user).where(eq(schema.user.id, "lead-1"));
+		expect(await rowsOf()).toHaveLength(0);
+	});
+});
+
+describe("drizzleResolveTarget (spec 002, FR-012)", () => {
+	const ownerMemberId = async () => {
+		const { eq } = await import("drizzle-orm");
+		const [row] = await db
+			.select()
+			.from(schema.member)
+			.where(eq(schema.member.userId, OWNER_ID));
+		return row?.id as string;
+	};
+
+	it("returns a user id as given, without a query", async () => {
+		await expect(drizzleResolveTarget({ userId: "u-1" })).resolves.toBe("u-1");
+	});
+
+	it("resolves a member id, from memberId or memberIdOrEmail", async () => {
+		const memberId = await ownerMemberId();
+		await expect(drizzleResolveTarget({ memberId })).resolves.toBe(OWNER_ID);
+		await expect(
+			drizzleResolveTarget({ memberIdOrEmail: memberId }),
+		).resolves.toBe(OWNER_ID);
+	});
+
+	it("resolves an email", async () => {
+		await expect(
+			drizzleResolveTarget({ memberIdOrEmail: "Owner@Example.com" }),
+		).resolves.toBe(OWNER_ID);
+	});
+
+	it("returns null when nothing matches", async () => {
+		await expect(
+			drizzleResolveTarget({ memberIdOrEmail: "nobody@example.com" }),
+		).resolves.toBeNull();
+		await expect(
+			drizzleResolveTarget({ memberId: "missing" }),
+		).resolves.toBeNull();
+		await expect(drizzleResolveTarget({})).resolves.toBeNull();
+	});
+
+	it("wires the default guard dependencies to the Drizzle adapters", () => {
+		const deps = defaultUserManagementGuardDeps();
+		expect(deps.services).toBe(getOidcSsoServices());
+		expect(deps.loginState).toBe(drizzleLoginStateStore);
+		expect(deps.resolveTarget).toBe(drizzleResolveTarget);
 	});
 });

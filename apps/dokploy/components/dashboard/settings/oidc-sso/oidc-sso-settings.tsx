@@ -46,6 +46,7 @@ const schema = z.object({
 	clientSecret: z.string().max(1024),
 	accessGroup: z.string().trim().max(512),
 	adminGroup: z.string().trim().max(512),
+	userManagementGroup: z.string().trim().max(512),
 	groupsClaim: z.string().trim().max(256),
 	extraScopes: z.string().trim().max(1024),
 	buttonLabel: z.string().trim().min(1, "Required").max(64),
@@ -69,6 +70,7 @@ const toFormValues = (view: ConfigView): FormValues => ({
 	clientSecret: "",
 	accessGroup: view.accessGroup ?? "",
 	adminGroup: view.adminGroup ?? "",
+	userManagementGroup: view.userManagementGroup ?? "",
 	groupsClaim: view.groupsClaim,
 	extraScopes: view.extraScopes,
 	buttonLabel: view.buttonLabel,
@@ -136,6 +138,7 @@ export const OidcSsoSettings = () => {
 			"clientId",
 			"accessGroup",
 			"adminGroup",
+			"userManagementGroup",
 			"groupsClaim",
 			"extraScopes",
 			"buttonLabel",
@@ -405,6 +408,31 @@ export const OidcSsoSettings = () => {
 										is never changed.
 									</AlertBlock>
 								)}
+								<FormField
+									control={form.control}
+									name="userManagementGroup"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												User management group
+												<EnvBadge show={fromEnv("userManagementGroup")} />
+											</FormLabel>
+											<FormControl>
+												<Input
+													placeholder="admins"
+													disabled={!editable("userManagementGroup")}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription>
+												Only the owner and members of this group can manage
+												users. Leave empty to keep Dokploy&apos;s default rules.
+												Requires an SSO login in the last 8 hours.
+											</FormDescription>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 								<FormField
 									control={form.control}
 									name="groupsClaim"
