@@ -189,3 +189,34 @@ describe("SSO_OIDC_EMERGENCY_ORIGIN (spec 003)", () => {
 		expect(result.errors).toEqual([]);
 	});
 });
+
+describe("SSO_OIDC_USER_MANAGEMENT_GROUP (spec 002)", () => {
+	it("FR-001/FR-002: reads a trimmed comma-separated group list", () => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_USER_MANAGEMENT_GROUP: "  admins,owners  " },
+			noFile,
+		);
+		expect(result.values.userManagementGroup).toBe("admins,owners");
+		expect(result.errors).toEqual([]);
+	});
+
+	it("FR-009: an empty value counts as undefined", () => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_USER_MANAGEMENT_GROUP: "   " },
+			noFile,
+		);
+		expect(result.values.userManagementGroup).toBeUndefined();
+		expect(result.errors).toEqual([]);
+	});
+
+	it("FR-001: rejects a value longer than 512 characters", () => {
+		const result = readEnvOverrides(
+			{ SSO_OIDC_USER_MANAGEMENT_GROUP: "a".repeat(513) },
+			noFile,
+		);
+		expect(result.values.userManagementGroup).toBeUndefined();
+		expect(result.errors).toEqual([
+			"SSO_OIDC_USER_MANAGEMENT_GROUP must be at most 512 characters; ignoring it.",
+		]);
+	});
+});

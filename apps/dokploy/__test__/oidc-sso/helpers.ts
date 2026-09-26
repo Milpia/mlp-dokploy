@@ -24,6 +24,7 @@ export const activeConfig: StoredConfig = {
 	clientSecret: "secret",
 	accessGroup: "dokploy-users",
 	adminGroup: "dokploy-admins",
+	userManagementGroup: null,
 };
 
 export const memoryRepository = (initial: StoredConfig = activeConfig) => {

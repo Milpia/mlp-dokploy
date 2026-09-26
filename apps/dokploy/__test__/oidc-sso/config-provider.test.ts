@@ -96,6 +96,26 @@ describe("buildEffectiveConfig", () => {
 		expect(config.sources.issuerUrl).toBe("db");
 	});
 
+	it("spec 002 FR-001: the user-management group from env wins and is env-sourced", () => {
+		const config = buildEffectiveConfig(
+			{ ...complete, userManagementGroup: "stored" },
+			{ values: { userManagementGroup: "admins" }, errors: [] },
+			flags,
+		);
+		expect(config.userManagementGroup).toBe("admins");
+		expect(config.sources.userManagementGroup).toBe("env");
+	});
+
+	it("spec 002 FR-009: the user-management group defaults to unset", () => {
+		const config = buildEffectiveConfig(
+			complete,
+			{ values: {}, errors: [] },
+			flags,
+		);
+		expect(config.userManagementGroup ?? null).toBeNull();
+		expect(config.sources.userManagementGroup).toBe("db");
+	});
+
 	it("FR-011: sso-only without a verified issuer degrades to button", () => {
 		const config = buildEffectiveConfig(
 			{ ...complete, mode: "sso-only" },

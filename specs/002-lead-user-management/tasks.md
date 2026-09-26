@@ -28,7 +28,7 @@ fallar primero.
 
 **Purpose**: Tipos compartidos.
 
-- [ ] T001 Add domain types to `packages/server/src/oidc-sso/types.ts` (FR-004, FR-012):
+- [X] T001 Add domain types to `packages/server/src/oidc-sso/types.ts` (FR-004, FR-012):
   - `UserManagementAction = "remove_user" | "remove_member" | "invite" | "create_user" | "resend_invitation" | "cancel_invitation" | "change_role" | "change_permissions" | "manage_roles"`
   - `UserManagementDenyReason = "no_sso_login" | "grant_expired" | "not_in_group" | "check_failed"`
   - add `"user_management"` to `AuthEventType`
@@ -42,7 +42,7 @@ Lo usan todas las stories.
 
 **⚠️ CRITICAL**: ninguna user story puede empezar hasta terminar esta fase.
 
-- [ ] T002 Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration in `apps/dokploy/drizzle/` after `0196_chief_goliath.sql` with `pnpm --filter=dokploy run migration:generate` (FR-001, FR-008, FR-012, data-model.md):
+- [X] T002 Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration in `apps/dokploy/drizzle/` after `0196_chief_goliath.sql` with `pnpm --filter=dokploy run migration:generate` (FR-001, FR-008, FR-012, data-model.md):
   - `oidc_sso_config.user_management_group` text, nullable, default `null`.
   - New table `oidc_sso_login_state`:
     - `user_id` text PK, FK → `user.id` `ON DELETE CASCADE`;
@@ -51,7 +51,7 @@ Lo usan todas las stories.
     - `updated_at` timestamp not null.
   - `oidc_sso_auth_event.action` text, nullable.
   - `oidc_sso_auth_event.target_user_id` text, nullable, with no FK.
-- [ ] T003 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-policy.test.ts` covering every branch of research R4, in order (FR-003, FR-009, FR-010, FR-014, FR-015, NFR-SEC-001):
+- [X] T003 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-policy.test.ts` covering every branch of research R4, in order (FR-003, FR-009, FR-010, FR-014, FR-015, NFR-SEC-001):
   - SSO inactive → allow.
   - Group not configured → allow.
   - Instance owner → allow, even with no login state or an expired one.
@@ -60,13 +60,13 @@ Lo usan todas las stories.
   - Groups outside the configured group → `not_in_group`.
   - A user in `admins` and `leads` with group `admins` → allow.
   - A comma list in the configured group → allow when any entry matches.
-- [ ] T004 Implement the pure `decideUserManagement(input: UserManagementInput)` and `USER_MANAGEMENT_GRANT_TTL_MS = 8 * 60 * 60 * 1000` in `packages/server/src/oidc-sso/domain/user-management.ts` to pass T003. Reuse `isInGroup` from `domain/claims.ts` (FR-002, FR-003, FR-015).
-- [ ] T005 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`, `config-provider.test.ts` and `db-adapters.test.ts` for `userManagementGroup` (FR-001, FR-002):
+- [X] T004 Implement the pure `decideUserManagement(input: UserManagementInput)` and `USER_MANAGEMENT_GRANT_TTL_MS = 8 * 60 * 60 * 1000` in `packages/server/src/oidc-sso/domain/user-management.ts` to pass T003. Reuse `isInGroup` from `domain/claims.ts` (FR-002, FR-003, FR-015).
+- [X] T005 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/config-env.test.ts`, `config-provider.test.ts` and `db-adapters.test.ts` for `userManagementGroup` (FR-001, FR-002):
   - `SSO_OIDC_USER_MANAGEMENT_GROUP` is trimmed, and empty means undefined.
   - It is limited to "≤ 512 caracteres"; longer is reported as an env error.
   - The env value wins over the stored one, and `sources.userManagementGroup` is `"env"`.
   - The repository round-trips the value.
-- [ ] T006 Add `userManagementGroup` to `packages/server/src/oidc-sso/config/env.ts`, `config/repository.ts` and `config/provider.ts`, following `adminGroup` exactly, to pass T005 (FR-001, FR-002).
+- [X] T006 Add `userManagementGroup` to `packages/server/src/oidc-sso/config/env.ts`, `config/repository.ts` and `config/provider.ts`, following `adminGroup` exactly, to pass T005 (FR-001, FR-002).
 - [ ] T007 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/login-state.test.ts` (PGlite) and `provisioning.test.ts` (FR-008, FR-014, data-model.md):
   - A successful non-owner SSO login upserts `oidc_sso_login_state` inside the provisioning transaction, with sorted groups and the login time.
   - The owner's login writes nothing.

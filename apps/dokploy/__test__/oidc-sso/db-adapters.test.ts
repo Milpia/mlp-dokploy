@@ -99,6 +99,17 @@ describe("drizzleConfigRepository (FR-001, FR-015)", () => {
 		});
 	});
 
+	it("spec 002 FR-001: round-trips the user-management group", async () => {
+		await drizzleConfigRepository.save({ userManagementGroup: "admins" });
+		await expect(drizzleConfigRepository.get()).resolves.toMatchObject({
+			userManagementGroup: "admins",
+		});
+		await drizzleConfigRepository.save({ userManagementGroup: null });
+		await expect(drizzleConfigRepository.get()).resolves.toMatchObject({
+			userManagementGroup: null,
+		});
+	});
+
 	it("updates the single row instead of inserting another", async () => {
 		await drizzleConfigRepository.save({ buttonLabel: "Entrar" });
 		expect(await db.select().from(schema.oidcSsoConfig)).toHaveLength(1);

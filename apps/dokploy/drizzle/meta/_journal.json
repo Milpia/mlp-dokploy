@@ -1380,6 +1380,13 @@
       "when": 1790385409645,
       "tag": "0196_chief_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 197,
+      "version": "7",
+      "when": 1790399191866,
+      "tag": "0197_equal_wallflower",
+      "breakpoints": true
     }
   ]
 }
