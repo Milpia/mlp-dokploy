@@ -16,6 +16,7 @@
 - Q: ¿Cómo se verifican Okta y Auth0, que solo existen como SaaS? → A: Con tenants de desarrollo creados solo para pruebas, con credenciales en variables de entorno y ejecución opt-in. Sin credenciales, la prueba se omite e informa de ello.
 - Q: ¿Las verificaciones de los cinco proveedores autoalojables deben ejecutarse también en CI, o solo a mano? → A: Workflow de GitHub Actions para los 5 autoalojables, lanzable a mano y semanal. Okta y Auth0, solo en local.
 - Q: ¿La matriz de compatibilidad se actualiza a mano o se genera a partir de los resultados de las verificaciones? → A: Generada: cada verificación guarda sus resultados y un comando rehace la tabla. Las limitaciones se escriben a mano.
+- Q: ¿La verificación de cada proveedor debe comprobar también las funciones de las specs 002 y 003? → A: Sí para la 002 (un escenario por proveedor para el grupo de gestión de usuarios, en cuanto esa spec esté implementada). La 003 no, porque no depende del proveedor.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -103,7 +104,8 @@ El owner solo ajusta la configuración (claim de grupos y scopes), y el módulo 
   - cambio de rol tras cambiar de grupo;
   - cierre de sesión en modo SSO-only, con fin de sesión en el proveedor o pantalla de «sesión cerrada»;
   - prueba de conexión con secreto correcto e incorrecto.
-- **FR-005**: Cuando el token de identidad no incluye el claim de grupos o la verificación del email, el sistema MUST obtenerlos de la información de usuario del proveedor. Si están en los dos sitios, MUST prevalecer el token de identidad.
+  - Cuando la spec 002 esté implementada, además: un usuario del grupo de gestión de usuarios puede gestionar usuarios y uno que solo es admin por otro grupo no puede. Hasta entonces, este escenario figura en la matriz como «pendiente de la spec 002».
+- **FR-005**: Cuando el token de identidad no incluye el claim de grupos o la verificación del email, el sistema MUST obtenerlos de la información de usuario del proveedor. Si están en los dos sitios, MUST prevalecer el token de identidad. La información de usuario MUST descartarse, y el login denegarse, si su `sub` no coincide con el del token de identidad (OpenID Connect Core §5.3.2).
 - **FR-006**: El nombre del claim de grupos MUST admitir cualquier texto, incluidos nombres con forma de URL, puntos, barras y dos puntos, y el sistema MUST tratarlo como un nombre literal, sin interpretarlo como ruta.
 - **FR-007**: Las diferencias entre proveedores MUST resolverse con configuración o con reglas genéricas de OIDC, nunca con código dedicado a un proveedor concreto. Si una diferencia no se puede resolver así, MUST documentarse como limitación en la matriz.
 - **FR-008**: Las verificaciones de Okta y Auth0 MUST ser opt-in:
@@ -155,4 +157,5 @@ El owner solo ajusta la configuración (claim de grupos y scopes), y el módulo 
 - El owner crea los tenants de desarrollo gratuitos de Okta y Auth0 y proporciona sus credenciales por entorno. Sin ellos, esas dos filas de la matriz quedan como «no verificado».
 - Además de la ejecución semanal en CI (NFR-QA-003), las verificaciones se lanzan a mano antes de actualizar el fork o cuando cambia una versión de proveedor relevante. Okta y Auth0 solo se verifican en local.
 - Se prueba la versión estable actual de cada proveedor en el momento de implementar. Las versiones antiguas no se cubren.
+- El acceso de emergencia por túnel (spec 003) no depende del proveedor, porque usa la contraseña local del owner. Queda fuera de esta verificación y conserva su propia prueba.
 - Depende de la spec 001 (módulo oidc-sso) en `canary`. Keycloak ya tiene su batería e2e, que se adapta a los escenarios comunes de FR-004.
