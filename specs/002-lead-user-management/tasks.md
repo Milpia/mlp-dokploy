@@ -42,7 +42,7 @@ Lo usan todas las stories.
 
 **⚠️ CRITICAL**: ninguna user story puede empezar hasta terminar esta fase.
 
-- [ ] T002 Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration in `apps/dokploy/drizzle/` after `0197_lying_hitman.sql` with `pnpm --filter=dokploy run migration:generate` (FR-001, FR-008, FR-012, data-model.md):
+- [ ] T002 Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration in `apps/dokploy/drizzle/` after `0196_chief_goliath.sql` with `pnpm --filter=dokploy run migration:generate` (FR-001, FR-008, FR-012, data-model.md):
   - `oidc_sso_config.user_management_group` text, nullable, default `null`.
   - New table `oidc_sso_login_state`:
     - `user_id` text PK, FK → `user.id` `ON DELETE CASCADE`;

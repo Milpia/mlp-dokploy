@@ -1,7 +1,7 @@
 # Data Model: Los leads operan como admin pero no gestionan usuarios
 
 Todos los cambios son aditivos y afectan solo a tablas del módulo `oidc-sso` (principio II). Van
-en una migración de Drizzle nueva, detrás de `0197_lying_hitman.sql`.
+en una migración de Drizzle nueva, detrás de `0196_chief_goliath.sql`.
 
 ## oidc_sso_config (columna nueva)
 

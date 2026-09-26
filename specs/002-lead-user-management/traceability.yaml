@@ -14,7 +14,7 @@ feature:
   issue_type: Story
   task_issue_type: Subtask
   synced_at: '2026-09-25T19:21:31Z'
-  synced_from_sha: a757a6142c38da88f392f765d372aec59ce6fe62
+  synced_from_sha: a32af8d02bc83fba57990395bee03361cdd91d84
   spec_digest: sha256:3c5c3a885b24b6188a41a033ffc5583967952755d4a797f735e350e1fe9cb558
 links:
 - type: relates
@@ -526,7 +526,7 @@ phase_tasks:
   tasks:
   - local_id: T002
     title: Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration in `apps/dokploy/drizzle/`
-      after `0197_lying_hitman.sql` with `pnpm --filt
+      after `0196_chief_goliath.sql` with `pnpm --filt
     jira: MIL-440
     parallel: false
     paths:
