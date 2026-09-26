@@ -2,14 +2,18 @@ export const EMERGENCY_SIGN_IN_PATH = "/sign-in/email";
 
 /**
  * The only routes where the emergency origin is trusted (spec 003 FR-004,
- * FR-005, FR-009). The second factor routes carry no email: they only work
- * with the signed `two_factor` cookie that a successful owner sign-in sets.
+ * FR-005, FR-009), in every SSO mode: with the provider down the operator may
+ * switch to button or disabled, and the tunnel must stay a way in (MIL-496).
+ * The second factor routes carry no email: they only work with the signed
+ * `two_factor` cookie that a successful owner sign-in sets.
  */
 export const EMERGENCY_ORIGIN_PATHS: ReadonlySet<string> = new Set([
 	EMERGENCY_SIGN_IN_PATH,
 	"/two-factor/verify-totp",
 	"/two-factor/verify-backup-code",
 	"/sign-out",
+	// Dokploy's menu signs out here, not through better-auth's /sign-out (MIL-495).
+	"/oidc/sign-out",
 ]);
 
 export interface EmergencyOriginInput {
@@ -19,7 +23,6 @@ export interface EmergencyOriginInput {
 	requestOrigin: string | null;
 	/** Relative to better-auth's base path. */
 	path: string;
-	ssoOnlyActive: boolean;
 	/** Only read for the sign-in route. */
 	email: string | null;
 	ownerEmail: string | null;
@@ -54,7 +57,6 @@ export const decideEmergencyOrigin = (
 	input: EmergencyOriginInput,
 ): EmergencyOriginDecision => {
 	if (!isEmergencyCandidate(input)) return keep;
-	if (!input.ssoOnlyActive) return keep;
 	if (input.path !== EMERGENCY_SIGN_IN_PATH) return { rewrite: true };
 
 	const email = normalizeEmail(input.email);

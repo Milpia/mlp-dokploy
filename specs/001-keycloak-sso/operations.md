@@ -152,21 +152,24 @@ al contenedor. Requiere `SSO_OIDC_EMERGENCY_ORIGIN` con el origen local del tún
 
 1. Abre el túnel: `ssh -L 3900:127.0.0.1:3000 <servidor>`. El puerto local tiene que coincidir con
    el de `SSO_OIDC_EMERGENCY_ORIGIN` (`http://localhost:3900`).
-2. Abre `http://localhost:3900/?emergency=1` y entra con el email y la contraseña local del owner.
-   Si el owner tiene 2FA, introduce el código TOTP o un código de respaldo.
+2. Abre `http://localhost:3900/?emergency=1` (o `http://localhost:3900` si la instancia no está en
+   SSO-only) y entra con el email y la contraseña local del owner. Si el owner tiene 2FA,
+   introduce el código TOTP o un código de respaldo.
 3. En **Settings → OIDC SSO**, cambia a **Button** o **Disabled** si hace falta. Si el modo
-   viene de `SSO_OIDC_MODE`, hay que cambiar la variable y reiniciar.
-4. Cierra sesión desde el menú y cierra el túnel.
+   viene de `SSO_OIDC_MODE`, hay que cambiar la variable y reiniciar. El túnel sigue sirviendo en
+   cualquier modo, así que puedes volver a entrar por él.
+4. Cierra sesión desde el menú (por el túnel no se pasa por el proveedor) y cierra el túnel.
 
-Desde ese origen solo se aceptan cuatro peticiones, y solo con SSO-only activo:
+Desde ese origen, en cualquier modo, solo se aceptan cinco peticiones:
 - el login del owner;
 - el TOTP;
 - el código de respaldo;
-- el cierre de sesión.
+- los dos cierres de sesión (el del menú y el de better-auth).
 
-Todo lo demás se rechaza con «Invalid origin»: registro, restablecer o cambiar la contraseña,
-passkeys, organización, y activar o desactivar el 2FA. Cada intento por el túnel aparece en los
-eventos con la marca «via emergency origin». El resto del panel (proyectos, ajustes del SSO)
+Todo lo demás se rechaza con 403: registro, restablecer o cambiar la contraseña, passkeys,
+organización, y activar o desactivar el 2FA. El mensaje es «Invalid origin» o, en SSO-only, «Single
+sign-on is required», según la petición. Cada intento por el túnel aparece una sola vez en los
+eventos, con la marca «via emergency origin». El resto del panel (proyectos, ajustes del SSO)
 funciona con normalidad.
 
 ### El owner no recuerda su contraseña local

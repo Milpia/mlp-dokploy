@@ -8,6 +8,7 @@ import { deleteSessionCookie, setSessionCookie } from "better-auth/cookies";
 import { symmetricDecodeJWT, symmetricEncodeJWT } from "better-auth/crypto";
 import * as z from "zod";
 import type { LoginErrorCode } from "../types";
+import { EMERGENCY_ORIGIN_HEADER } from "./emergency-origin";
 import {
 	completeLogin,
 	type LoginFlowDeps,
@@ -180,6 +181,10 @@ export const createSsoEndpoints = (resolveDeps: () => SsoEndpointDeps) => ({
 				await ctx.context.internalAdapter.deleteSession(session.session.token);
 			}
 			deleteSessionCookie(ctx);
+			// Through the tunnel the provider is down: end only the local session (MIL-495).
+			if (ctx.request?.headers.get(EMERGENCY_ORIGIN_HEADER) === "1") {
+				return ctx.json({ url: "/" });
+			}
 			const origin = new URL(ctx.context.baseURL).origin;
 			const url = await resolveSignOutTarget(deps, {
 				origin,

@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-25
 
-**Status**: Draft
+**Status**: Draft (enmendada el 2026-09-26 tras las pruebas del laboratorio, MIL-427)
 
 **Input**: User description: "Opción C del riesgo R4 de la spec 014 de infra: que el owner pueda usar la ruta de emergencia (`/?emergency=1`, spec 001 FR-012) a través de un túnel SSH hasta el contenedor (`http://localhost:3000`) cuando la instancia publica `https://deploy.milpia.com`. Hoy el login falla con 'Invalid origin' porque ese origen no es de confianza. Condiciones de infra: (1) el origen extra solo se acepta en la ruta de emergencia del owner (`/sign-in/email` bajo la guarda de SSO-only), nunca de forma global; (2) sin la variable, ningún origen extra (por defecto); (3) en prod será `http://localhost:3000`; (4) cada intento se sigue registrando. Motivo: con Keycloak caído, oauth2-proxy delante de Traefik no deja pasar a nadie, así que el único camino es el túnel directo al contenedor."
 
@@ -12,14 +12,21 @@
 
 ### Session 2026-09-25
 
-- Q: ¿Debe aceptarse el origen de emergencia también en la verificación del segundo factor (código TOTP o de respaldo) que sigue al login de emergencia del owner? → A: Sí: se acepta en la verificación TOTP y en la del código de respaldo, solo en modo SSO-only.
-- Q: ¿Debe poder el owner cerrar sesión desde el origen de emergencia cuando termina? → A: Sí: se acepta también en el cierre de sesión, solo en modo SSO-only.
+- Q: ¿Debe aceptarse el origen de emergencia también en la verificación del segundo factor (código TOTP o de respaldo) que sigue al login de emergencia del owner? → A: Sí: se acepta en la verificación TOTP y en la del código de respaldo, solo en modo SSO-only. *(Ampliado a todos los modos en la sesión del 2026-09-26.)*
+- Q: ¿Debe poder el owner cerrar sesión desde el origen de emergencia cuando termina? → A: Sí: se acepta también en el cierre de sesión, solo en modo SSO-only. *(Ampliado a todos los modos en la sesión del 2026-09-26.)*
+
+### Session 2026-09-26 (enmienda tras el laboratorio, MIL-427)
+
+- Q: Con el proveedor caído, la guía de operación pide pasar a modo botón o desactivar el SSO, y entonces el túnel deja de aceptar el login del owner y nadie entra (MIL-496). ¿Debe aceptarse el origen de emergencia también fuera de SSO-only? → A: Sí, en modo botón y con el SSO desactivado, con las mismas rutas y las mismas condiciones que en SSO-only (decisión del owner, pedida por infra para el paso 3 de R4).
+- Q: ¿Qué cierre de sesión cubre FR-009? → A: Los dos por los que se puede cerrar sesión: el de better-auth y el del menú de Dokploy (`/oidc/sign-out`). Si la petición llega por el túnel, se cierra solo la sesión local y no se redirige al fin de sesión del proveedor, que en ese escenario está caído (MIL-495).
+- Q: ¿Cuántas veces se registra un intento rechazado desde el túnel? → A: Una sola, con la marca de origen de emergencia (MIL-497).
+- Q: ¿Con qué mensaje se rechazan las demás acciones desde el túnel? → A: La spec no fija el mensaje: según la petición lo rechaza el control de orígenes («Invalid origin») o la guarda de SSO-only («Single sign-on is required»). Lo que se exige es el rechazo (MIL-498).
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - El owner recupera el acceso por túnel con el proveedor de identidad caído (Priority: P1)
 
-El proveedor de identidad está caído y la instancia está en modo SSO-only. Nadie llega al panel por la dirección pública. El owner abre un túnel SSH hasta el contenedor, entra en `http://localhost:3900/?emergency=1` e inicia sesión con su email y contraseña local. Llega al panel y puede, por ejemplo, desactivar SSO-only.
+El proveedor de identidad está caído. Nadie llega al panel por la dirección pública. El owner abre un túnel SSH hasta el contenedor, entra en `http://localhost:3900/?emergency=1` (o en `http://localhost:3900` si la instancia no está en SSO-only) e inicia sesión con su email y contraseña local. Llega al panel y puede, por ejemplo, pasar a modo botón; después puede volver a entrar por el túnel y cerrar sesión.
 
 **Why this priority**: es la vía de recuperación que exige el principio III de la constitución. Sin ella, la vía web de emergencia de la spec 001 no sirve en el despliegue real de Milpia.
 
@@ -30,23 +37,24 @@ El proveedor de identidad está caído y la instancia está en modo SSO-only. Na
 1. **Given** SSO-only activo y el origen de emergencia configurado, **When** el owner inicia sesión con su contraseña desde ese origen, **Then** entra al panel.
 2. **Given** lo mismo y el owner con segundo factor activado, **When** completa el segundo factor desde ese origen, **Then** entra al panel.
 3. **Given** un intento de emergencia desde ese origen, correcto o fallido, **When** el owner revisa los eventos del SSO, **Then** el intento aparece con su resultado, el email usado y el origen de emergencia.
-4. **Given** SSO-only activo, el origen configurado y el owner dentro por el túnel, **When** cierra sesión desde el menú, **Then** la sesión termina.
+4. **Given** SSO-only activo, el origen configurado y el owner dentro por el túnel, **When** cierra sesión desde el menú, **Then** la sesión termina y el navegador vuelve al login del túnel, sin pasar por el proveedor.
+5. **Given** el origen configurado y la instancia en modo botón o con el SSO desactivado, **When** el owner inicia sesión desde ese origen, completa su segundo factor si lo tiene y después cierra sesión, **Then** entra al panel y la sesión termina.
 
 ---
 
 ### User Story 2 - El origen de emergencia no abre nada más (Priority: P1)
 
-Desde el origen de emergencia, cualquier otra acción que dependa del control de orígenes se rechaza como hoy: el login de otro usuario, el registro, el restablecimiento de contraseña, las de organización y las de sesión, salvo cerrar la propia sesión. Fuera del modo SSO-only, el origen de emergencia no se acepta en ninguna ruta.
+Desde el origen de emergencia, cualquier otra acción que dependa del control de orígenes se rechaza como hoy, en cualquier modo: el login de otro usuario, el registro, el restablecimiento de contraseña, las de organización y las de sesión, salvo cerrar la propia sesión.
 
 **Why this priority**: el origen de emergencia debilita a propósito una protección contra falsificación de peticiones (CSRF). Debe hacerlo en el mínimo sitio posible.
 
-**Independent Test**: con el origen configurado, desde `http://localhost:3900` un usuario que no es el owner intenta iniciar sesión, y alguien intenta registrarse o pedir un restablecimiento de contraseña. Todo se rechaza. Con la instancia en modo botón, tampoco el owner puede iniciar sesión desde ese origen.
+**Independent Test**: con el origen configurado, en SSO-only y en modo botón, desde `http://localhost:3900` un usuario que no es el owner intenta iniciar sesión, y alguien intenta registrarse o pedir un restablecimiento de contraseña. Todo se rechaza.
 
 **Acceptance Scenarios**:
 
-1. **Given** SSO-only activo y el origen configurado, **When** un usuario que no es el owner intenta iniciar sesión desde ese origen, **Then** se rechaza y queda registrado, igual que hoy.
-2. **Given** SSO-only activo y el origen configurado, **When** llega desde ese origen cualquier otra acción que dependa del control de orígenes, **Then** se rechaza por origen no permitido.
-3. **Given** la instancia en modo botón o con el SSO desactivado, **When** el owner intenta iniciar sesión desde el origen de emergencia, **Then** se rechaza por origen no permitido.
+1. **Given** el origen configurado, en cualquier modo, **When** un usuario que no es el owner intenta iniciar sesión desde ese origen, **Then** se rechaza y queda registrado una sola vez, con la marca de origen de emergencia.
+2. **Given** el origen configurado, en cualquier modo, **When** llega desde ese origen cualquier otra acción que dependa del control de orígenes, **Then** se rechaza (por origen no permitido o, en SSO-only, por la guarda de SSO-only).
+3. **Given** la instancia en modo botón o con el SSO desactivado, **When** un usuario que no es el owner intenta iniciar sesión desde el origen de emergencia, **Then** se rechaza por origen no permitido y queda registrado.
 
 ---
 
@@ -78,17 +86,17 @@ Mientras nadie defina el origen de emergencia, Dokploy se comporta exactamente c
 - **FR-001**: El sistema MUST admitir un único origen de emergencia configurable solo por variable de entorno, sin ajuste en la interfaz.
 - **FR-002**: El valor MUST ser un origen exacto (esquema `http` o `https`, host y puerto opcional), sin ruta, consulta ni comodines. Un valor que no cumpla MUST ignorarse y registrarse como error de configuración.
 - **FR-003**: Sin origen de emergencia definido, la lista de orígenes de confianza MUST ser idéntica a la de upstream.
-- **FR-004**: El sistema MUST aceptar el origen de emergencia solo cuando se cumplen a la vez tres condiciones: el modo SSO-only está activo, la petición es el login con email y contraseña, y el email es el del owner. Salvo en los casos de FR-005 y FR-009, MUST NOT aceptarlo en ninguna otra petición.
-- **FR-005**: Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en la verificación del segundo factor que sigue a un login de emergencia del owner: el código TOTP y el código de respaldo. MUST NOT aceptarlo en el resto de rutas del segundo factor (activarlo, desactivarlo, generar códigos).
+- **FR-004**: El sistema MUST aceptar el origen de emergencia solo cuando se cumplen a la vez dos condiciones: la petición es el login con email y contraseña, y el email es el del owner. Aplica en cualquier modo del SSO (SSO-only, botón o desactivado). Salvo en los casos de FR-005 y FR-009, MUST NOT aceptarlo en ninguna otra petición.
+- **FR-005**: En cualquier modo del SSO, el sistema MUST aceptar también el origen de emergencia en la verificación del segundo factor que sigue a un login de emergencia del owner: el código TOTP y el código de respaldo. MUST NOT aceptarlo en el resto de rutas del segundo factor (activarlo, desactivarlo, generar códigos).
 - **FR-006**: Los usuarios que no son el owner MUST seguir siendo rechazados en la ruta de emergencia como hoy (spec 001, FR-012), vengan del origen que vengan.
-- **FR-007**: El sistema MUST registrar cada intento de login de emergencia hecho desde el origen de emergencia, correcto o fallido, con el email, la IP, el resultado y una marca que indique que llegó por el origen de emergencia.
+- **FR-007**: El sistema MUST registrar cada intento de login de emergencia hecho desde el origen de emergencia, correcto o fallido, con el email, la IP, el resultado y una marca que indique que llegó por el origen de emergencia. Cada intento MUST quedar registrado exactamente una vez.
 - **FR-008**: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
-- **FR-009**: Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en el cierre de sesión, para que el owner termine la sesión de emergencia desde el mismo navegador.
+- **FR-009**: En cualquier modo del SSO, el sistema MUST aceptar también el origen de emergencia en el cierre de sesión, tanto el de better-auth como el del menú de Dokploy, para que el owner termine la sesión de emergencia desde el mismo navegador. Si el cierre llega por el túnel, MUST cerrar solo la sesión local y MUST NOT redirigir al fin de sesión del proveedor.
 
 ### Non-Functional Requirements
 
 - **NFR-PERF-001**: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna petición.
-- **NFR-PERF-002**: Con el origen definido, las peticiones que no sean de login MUST NOT tener ninguna consulta añadida.
+- **NFR-PERF-002**: Con el origen definido, las peticiones que no sean de login MUST NOT tener ninguna consulta añadida. El login desde el origen de emergencia añade como máximo la búsqueda del email del owner.
 - **NFR-SEC-001**: El origen de emergencia MUST añadirse solo a la lista de orígenes de la petición en curso, sin modificar ninguna lista compartida entre peticiones.
 - **NFR-SEC-002**: Ante cualquier error al comprobar las condiciones de FR-004 (configuración ilegible, owner no encontrado), el sistema MUST NOT añadir el origen.
 
@@ -102,9 +110,9 @@ Mientras nadie defina el origen de emergencia, Dokploy se comporta exactamente c
 ### Measurable Outcomes
 
 - **SC-001**: Con el proveedor de identidad caído, el owner recupera el acceso al panel por túnel en menos de 5 minutos siguiendo la guía de operación.
-- **SC-002**: El 100 % de las peticiones desde el origen de emergencia que no sean el login del owner, su segundo factor o el cierre de sesión se rechazan en modo SSO-only.
-- **SC-003**: Fuera del modo SSO-only, el 100 % de las peticiones desde el origen de emergencia se rechazan igual que hoy.
-- **SC-004**: El 100 % de los intentos de emergencia desde ese origen quedan registrados.
+- **SC-002**: En cualquier modo, el 100 % de las peticiones desde el origen de emergencia que no sean el login del owner, su segundo factor o el cierre de sesión se rechazan.
+- **SC-003**: Con el proveedor caído y la instancia en modo botón o con el SSO desactivado, el owner entra y sale por el túnel siguiendo la guía de operación (paso 3 de R4 de la spec 014 de infra).
+- **SC-004**: El 100 % de los intentos de emergencia desde ese origen quedan registrados, cada uno exactamente una vez.
 - **SC-005**: Sin la variable, las pruebas actuales de login y de SSO pasan sin modificarse.
 
 ## Assumptions

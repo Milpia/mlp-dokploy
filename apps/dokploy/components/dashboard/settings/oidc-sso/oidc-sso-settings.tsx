@@ -570,8 +570,8 @@ export const OidcSsoSettings = () => {
 									{view.emergencyOrigin ? (
 										<>
 											<span className="font-mono">{view.emergencyOrigin}</span>{" "}
-											(set by environment). While SSO-only is active, the owner
-											can use the emergency sign-in from this origin.
+											(set by environment). In any mode, the owner can sign in
+											and out from this origin.
 										</>
 									) : (
 										"Not set"

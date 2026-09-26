@@ -123,8 +123,9 @@ requirements:
     - T011
     - T012
     - T013
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-497
+    status: at_risk
   FR-008:
     text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
     tasks:
@@ -149,8 +150,9 @@ requirements:
     - T007
     - T008
     - T009
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-495
+    status: at_risk
   NFR-PERF-001:
     text: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna
       petición.
@@ -470,7 +472,33 @@ phase_tasks:
     paths: []
     requirements:
     - FR-008
-bugs: []
+bugs:
+- jira: MIL-495
+  summary: Por el túnel, «Log out» no cierra la sesión del owner con SSO-only activo
+  violates:
+  - FR-009
+  breaks: []
+  detected_in: MIL-460
+  regression_test: null
+- jira: MIL-496
+  summary: El procedimiento de emergencia por túnel deja a todos fuera si se cambia a modo Button
+  violates: []
+  breaks: []
+  detected_in: null
+  regression_test: null
+- jira: MIL-497
+  summary: Un login denegado por el túnel queda registrado dos veces, una sin la marca del túnel
+  violates:
+  - FR-007
+  breaks: []
+  detected_in: MIL-465
+  regression_test: null
+- jira: MIL-498
+  summary: Por el túnel, el registro y el restablecimiento de contraseña se rechazan con otro motivo
+  violates: []
+  breaks: []
+  detected_in: null
+  regression_test: null
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []

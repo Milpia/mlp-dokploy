@@ -25,7 +25,6 @@ EmergencyOriginInput {
   method: string
   requestOrigin: string | null      // Origin, o el origen de Referer
   path: string                      // relativa al basePath de better-auth
-  ssoOnlyActive: boolean
   email: string | null              // solo /sign-in/email
   ownerEmail: string | null
 }

@@ -14,7 +14,6 @@ const input = (
 	method: "POST",
 	requestOrigin: ORIGIN,
 	path: "/sign-in/email",
-	ssoOnlyActive: true,
 	email: OWNER,
 	ownerEmail: OWNER,
 	...overrides,
@@ -69,17 +68,6 @@ describe("decideEmergencyOrigin", () => {
 		expect(decideEmergencyOrigin(input({ path }))).toEqual(keep);
 	});
 
-	it.each([
-		"/sign-in/email",
-		"/two-factor/verify-totp",
-		"/two-factor/verify-backup-code",
-		"/sign-out",
-	])("SC-003: leaves %s alone outside sso-only", (path) => {
-		expect(
-			decideEmergencyOrigin(input({ path, ssoOnlyActive: false })),
-		).toEqual(keep);
-	});
-
 	it.each(["/two-factor/verify-totp", "/two-factor/verify-backup-code"])(
 		"FR-005: rewrites the second factor step %s",
 		(path) => {
@@ -89,11 +77,14 @@ describe("decideEmergencyOrigin", () => {
 		},
 	);
 
-	it("FR-009: rewrites sign-out", () => {
-		expect(
-			decideEmergencyOrigin(input({ path: "/sign-out", email: null })),
-		).toEqual({ rewrite: true });
-	});
+	it.each(["/sign-out", "/oidc/sign-out"])(
+		"FR-009/MIL-495: rewrites the sign-out %s",
+		(path) => {
+			expect(decideEmergencyOrigin(input({ path, email: null }))).toEqual({
+				rewrite: true,
+			});
+		},
+	);
 
 	it("FR-006: a non-owner sign-in is left alone and flagged for recording", () => {
 		expect(decideEmergencyOrigin(input({ email: "dev@example.com" }))).toEqual({

@@ -35,13 +35,13 @@ const request = (
 
 const setup = async ({
 	emergencyOrigin = TUNNEL as string | null,
-	ssoOnly = true,
+	mode = "sso-only" as "sso-only" | "button" | "disabled",
 	ownerEmail = "owner@example.com" as string | null,
 } = {}) => {
 	const built = makeDeps({ emergencyOrigin, ownerEmail });
-	if (ssoOnly) {
-		await built.repository.save({ mode: "sso-only", verifiedIssuer: ISSUER });
-	}
+	await built.repository.save(
+		mode === "sso-only" ? { mode, verifiedIssuer: ISSUER } : { mode },
+	);
 	const handler = createEmergencyOriginHandler(() => built.deps);
 	return { ...built, handler };
 };
@@ -125,9 +125,52 @@ describe("emergency origin onRequest adapter (spec 003)", () => {
 		expect(getEffective).not.toHaveBeenCalled();
 	});
 
-	it("SC-003: outside sso-only the request is left alone", async () => {
-		const { handler } = await setup({ ssoOnly: false });
-		expect(await handler(request("/sign-in/email"), context)).toBeUndefined();
+	it.each(["button", "disabled"] as const)(
+		"FR-004/MIL-496: in %s mode the owner's sign-in and both sign-outs are rewritten",
+		async (mode) => {
+			const { handler } = await setup({ mode });
+			for (const path of ["/sign-in/email", "/sign-out", "/oidc/sign-out"]) {
+				const next = await rewritten(await handler(request(path), context));
+				expect(next.headers.get("origin")).toBe(BASE);
+				expect(next.headers.get(EMERGENCY_ORIGIN_HEADER)).toBe("1");
+			}
+		},
+	);
+
+	it.each(["button", "disabled"] as const)(
+		"FR-006/MIL-496: in %s mode a non-owner sign-in is still left alone and recorded",
+		async (mode) => {
+			const { handler, recorded } = await setup({ mode });
+			const result = await handler(
+				request("/sign-in/email", {
+					body: { email: "dev@example.com", password: "x" },
+				}),
+				context,
+			);
+			const next = result && "request" in result ? result.request : null;
+			expect(next?.headers.get("origin") ?? TUNNEL).toBe(TUNNEL);
+			expect(recorded).toEqual([
+				expect.objectContaining({
+					type: "emergency_login",
+					reason: "not_owner",
+					emergencyOrigin: true,
+				}),
+			]);
+		},
+	);
+
+	it("NFR-PERF-002: reads no SSO configuration on any emergency path", async () => {
+		const { handler, deps } = await setup();
+		const getEffective = vi.spyOn(deps.services.config, "getEffective");
+		for (const path of [
+			"/sign-in/email",
+			"/two-factor/verify-totp",
+			"/sign-out",
+			"/oidc/sign-out",
+		]) {
+			await handler(request(path), context);
+		}
+		expect(getEffective).not.toHaveBeenCalled();
 	});
 
 	it("FR-004: paths are matched relative to the auth base path", async () => {
@@ -155,11 +198,9 @@ describe("emergency origin onRequest adapter (spec 003)", () => {
 		expect(next.headers.get("origin")).toBe(BASE);
 	});
 
-	it("NFR-SEC-002: a failing config read leaves the request as it came", async () => {
+	it("NFR-SEC-002: a failing owner lookup leaves the request as it came", async () => {
 		const { handler, deps } = await setup();
-		vi.spyOn(deps.services.config, "getEffective").mockRejectedValue(
-			new Error("db down"),
-		);
+		vi.mocked(deps.findOwnerEmail).mockRejectedValue(new Error("db down"));
 		const logError = vi.spyOn(console, "error").mockImplementation(() => {});
 		expect(await handler(request("/sign-in/email"), context)).toBeUndefined();
 		expect(logError).toHaveBeenCalled();
@@ -209,9 +250,11 @@ describe("emergency origin onRequest adapter (spec 003)", () => {
 			...context,
 			options: { advanced: { ipAddress: { disableIpTracking: true } } },
 		};
-		expect(
+		const next = await rewritten(
 			await handler(request("/sign-in/email", { body: {} }), withoutIpTracking),
-		).toBeUndefined();
+		);
+		expect(next.headers.get("origin")).toBe(TUNNEL);
+		expect(next.headers.get(EMERGENCY_ORIGIN_HEADER)).toBe("denied");
 		expect(recorded.at(-1)).toEqual(
 			expect.objectContaining({
 				type: "emergency_login",

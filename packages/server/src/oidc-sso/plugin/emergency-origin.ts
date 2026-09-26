@@ -7,8 +7,12 @@ import {
 import { newCorrelationId } from "../events/auth-events";
 import type { SsoEndpointDeps } from "./endpoints";
 
-/** Set only by this plugin; any copy sent by a client is removed first. */
+/**
+ * Set only by this plugin; any copy sent by a client is removed first. "1"
+ * means the origin was rewritten; "denied" that the attempt is already recorded.
+ */
 export const EMERGENCY_ORIGIN_HEADER = "x-oidc-sso-emergency-origin";
+export const EMERGENCY_ORIGIN_DENIED = "denied";
 
 export interface RequestContext {
 	baseURL: string;
@@ -81,14 +85,12 @@ export const createEmergencyOriginHandler =
 		if (!isEmergencyCandidate(candidate)) return untouched();
 
 		try {
-			const config = await deps.services.config.getEffective();
 			const isSignIn = path === EMERGENCY_SIGN_IN_PATH;
 			const [email, ownerEmail] = isSignIn
 				? await Promise.all([readEmail(request), deps.findOwnerEmail()])
 				: [null, null];
 			const decision = decideEmergencyOrigin({
 				...candidate,
-				ssoOnlyActive: config.active && config.mode === "sso-only",
 				email,
 				ownerEmail,
 			});
@@ -110,6 +112,10 @@ export const createEmergencyOriginHandler =
 					...(email ? { email: email.trim().toLowerCase() } : {}),
 					...(ip ? { ip } : {}),
 				});
+				// Without cookies better-auth checks the origin only after the hooks,
+				// so the SSO-only guard would record the same attempt again (MIL-497).
+				incoming.set(EMERGENCY_ORIGIN_HEADER, EMERGENCY_ORIGIN_DENIED);
+				return { request: withHeaders(request, incoming) };
 			}
 		} catch (error) {
 			console.error("OIDC SSO: emergency origin check failed", error);
