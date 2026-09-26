@@ -30,15 +30,29 @@ const managementToken = async () => {
 	return token;
 };
 
+// Free tenants allow very few Management API calls per second.
+const MAX_RATE_LIMIT_RETRIES = 8;
+
 export const auth0Api = async (pathName: string, init: RequestInit = {}) => {
-	const response = await fetch(`https://${domain()}/api/v2${pathName}`, {
-		...init,
-		headers: {
-			authorization: `Bearer ${await managementToken()}`,
-			"content-type": "application/json",
-			...init.headers,
-		},
-	});
+	let response: Response;
+	for (let attempt = 0; ; attempt++) {
+		response = await fetch(`https://${domain()}/api/v2${pathName}`, {
+			...init,
+			headers: {
+				authorization: `Bearer ${await managementToken()}`,
+				"content-type": "application/json",
+				...init.headers,
+			},
+		});
+		if (response.status !== 429 || attempt >= MAX_RATE_LIMIT_RETRIES) break;
+		const reset = Number(response.headers.get("x-ratelimit-reset"));
+		const waitMs = reset
+			? Math.max(reset * 1000 - Date.now(), 500)
+			: 1000 * 2 ** attempt;
+		await new Promise((resolve) =>
+			setTimeout(resolve, Math.min(waitMs, 30_000)),
+		);
+	}
 	const text = await response.text();
 	if (!response.ok) {
 		throw new Error(
