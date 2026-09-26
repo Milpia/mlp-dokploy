@@ -1095,8 +1095,9 @@ requirements:
     commits:
     - 30e62ad83
     - 7def99db9
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-508
+    status: at_risk
   NFR-QA-005:
     text: La funcionalidad MUST documentar la configuración de Keycloak (cliente, URL de retorno, grupos),
       las variables de entorno y los dos procedimientos de emergencia.
@@ -1760,6 +1761,13 @@ bugs:
 - jira: MIL-507
   summary: Eventos de error de SSO desde el origen público durante el corte del proveedor
   violates: []
+  breaks: []
+  detected_in: null
+  regression_test: null
+- jira: MIL-508
+  summary: El login rechazado por conflicto de identidad dice «no estás en el grupo de acceso»
+  violates:
+  - NFR-QA-004
   breaks: []
   detected_in: null
   regression_test: null
