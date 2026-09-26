@@ -174,7 +174,7 @@ campo aparece bloqueado en la pantalla de SSO (quickstart §2, filas 9–10).
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T023 [P] [US3] Add tests to `apps/dokploy/__test__/oidc-sso/router.test.ts` (FR-001, FR-009, US3 scenarios 1–3):
+- [X] T023 [P] [US3] Add tests to `apps/dokploy/__test__/oidc-sso/router.test.ts` (FR-001, FR-009, US3 scenarios 1–3):
   - `oidcSso.get` returns `userManagementGroup` and its source.
   - `oidcSso.update` saves it, invalidates the cache and records `config_change`.
   - `oidcSso.update` rejects it with `BAD_REQUEST` when it comes from env.
@@ -183,8 +183,8 @@ campo aparece bloqueado en la pantalla de SSO (quickstart §2, filas 9–10).
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Accept and return `userManagementGroup` in `oidcSso.get` and `oidcSso.update` in `apps/dokploy/server/api/routers/oidc-sso.ts`, with a zod `string().max(512).nullable()` after trim. Pass T023 (FR-001, FR-002).
-- [ ] T025 [US3] Add the "User management group" field in `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` (FR-001):
+- [X] T024 [US3] Accept and return `userManagementGroup` in `oidcSso.get` and `oidcSso.update` in `apps/dokploy/server/api/routers/oidc-sso.ts`, with a zod `string().max(512).nullable()` after trim. Pass T023 (FR-001, FR-002).
+- [X] T025 [US3] Add the "User management group" field in `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx` (FR-001):
   - Put it next to the admin group.
   - Help text: "Only the owner and members of this group can manage users. Leave empty to keep Dokploy's default rules. Requires an SSO login in the last 8 hours".
   - Lock it when `sources.userManagementGroup === "env"`.
