@@ -1,10 +1,13 @@
 import { DEFAULT_STORED_CONFIG } from "@dokploy/server/oidc-sso/config/repository";
 import { createEmergencyOriginHandler } from "@dokploy/server/oidc-sso/plugin/emergency-origin";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
+import type { UserManagementGuardDeps } from "@dokploy/server/oidc-sso/user-management/guard";
+import { initTRPC } from "@trpc/server";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { describe, expect, it, vi } from "vitest";
-import { ISSUER, makeDeps } from "./helpers";
+import { createUserManagementGuard } from "@/server/api/middlewares/user-management";
+import { activeConfig, ISSUER, makeDeps, makeServices } from "./helpers";
 
 const BASE = "http://localhost:3000";
 const SECRET = "test-secret-that-is-long-enough-for-better-auth";
@@ -183,5 +186,74 @@ describe("performance (NFR-PERF, SC-008, SC-009)", () => {
 		expect(disabled).toBeLessThan(1);
 		expect(otherOrigin).toBeLessThan(1);
 		expect(emergencyPath).toBeLessThan(5);
+	}, 60_000);
+
+	it("spec 002 NFR-PERF-001/002: the user-management guard stays within budget", async () => {
+		const measure = async (
+			group: string | null,
+			guarded: boolean,
+			path: "project.create" | "user.remove",
+		) => {
+			const built = makeServices({
+				config: { ...activeConfig, userManagementGroup: group },
+			});
+			const find = vi.fn(async () => ({
+				groups: ["admins"],
+				lastSsoLoginAt: new Date(),
+			}));
+			const deps: UserManagementGuardDeps = {
+				services: built.services,
+				loginState: { find },
+				resolveTarget: async () => null,
+				now: () => new Date(),
+				logError: vi.fn(),
+			};
+			const t = initTRPC.context<{ user: { id: string } }>().create();
+			const base = guarded
+				? t.procedure.use(createUserManagementGuard(() => deps))
+				: t.procedure;
+			const leaf = base.mutation(async () => "ok");
+			const caller = t.createCallerFactory(
+				t.router({
+					project: t.router({ create: leaf }),
+					user: t.router({ remove: leaf }),
+				}),
+			)({ user: { id: "admin-1" } });
+			const run = () =>
+				path === "user.remove" ? caller.user.remove() : caller.project.create();
+			for (let i = 0; i < 50; i++) await run();
+			find.mockClear();
+			const samples: number[] = [];
+			for (let i = 0; i < 500; i++) {
+				const t0 = performance.now();
+				await run();
+				samples.push(performance.now() - t0);
+			}
+			return { p95: p95(samples), reads: find.mock.calls.length };
+		};
+
+		const baseline = await measure(null, false, "project.create");
+		const offOther = await measure(null, true, "project.create");
+		const onOther = await measure("admins", true, "project.create");
+		const baselineManage = await measure(null, false, "user.remove");
+		const onManage = await measure("admins", true, "user.remove");
+
+		const added = {
+			disabled: offOther.p95 - baseline.p95,
+			enabledOther: onOther.p95 - baseline.p95,
+			manageAction: onManage.p95 - baselineManage.p95,
+		};
+		console.info(
+			`spec 002 guard p95 added (ms): disabled=${added.disabled.toFixed(3)} ` +
+				`enabled, other request=${added.enabledOther.toFixed(3)} ` +
+				`management action=${added.manageAction.toFixed(3)}`,
+		);
+
+		expect(offOther.reads).toBe(0);
+		expect(onOther.reads).toBe(0);
+		expect(onManage.reads).toBe(500);
+		expect(added.disabled).toBeLessThan(1);
+		expect(added.enabledOther).toBeLessThan(1);
+		expect(added.manageAction).toBeLessThan(20);
 	}, 60_000);
 });
