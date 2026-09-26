@@ -511,8 +511,9 @@ requirements:
     - e6c239a0b
     - a7a01e2ba
     - 7def99db9
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-506
+    status: at_risk
   FR-014:
     text: El owner MUST poder comprobar la conexión con Keycloak antes de guardarla y recibir un motivo
       concreto cuando falla.
@@ -1747,6 +1748,19 @@ bugs:
   detected_in: MIL-411
   regression_test: 'apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts::FR-014: a wrong secret is
     reported as invalid_client'
+- jira: MIL-506
+  summary: Un login rechazado por el origen se registra como «invalid_credentials»
+  violates:
+  - FR-013
+  breaks: []
+  detected_in: null
+  regression_test: null
+- jira: MIL-507
+  summary: Eventos de error de SSO desde el origen público durante el corte del proveedor
+  violates: []
+  breaks: []
+  detected_in: null
+  regression_test: null
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
