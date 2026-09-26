@@ -158,7 +158,7 @@ editable, ni en la interfaz ni en la BD (spec, Assumptions).
 
 **Decision**: el menú de Dokploy cierra sesión con `POST /api/auth/oidc/sign-out`, no con el
 `/sign-out` de better-auth. Esa ruta entra en la lista de R2. Cuando la petición trae la cabecera
-interna `x-oidc-sso-emergency-origin: 1`, el endpoint borra la sesión y responde `url: "/"` sin
+interna `x-oidc-sso-emergency-origin: 1`, el endpoint borra la sesión y responde `url: "/?emergency=1"` (MIL-504: `/` redirige al proveedor en SSO-only) sin
 calcular el fin de sesión del proveedor, que en ese escenario está caído.
 
 **Rationale**: con el origen público, el comportamiento no cambia (FR-010 de la spec 001). Por el

@@ -189,6 +189,8 @@ real (MIL-498). Ver spec.md, Clarifications › Session 2026-09-26, y research R
 - [X] T025 [P] Update `specs/001-keycloak-sso/operations.md` §4: the tunnel works in every mode, step 3 (switch to Button or Disabled) keeps the way back in, and the rejection message can be «Invalid origin» or «Single sign-on is required» (SC-001, SC-003; MIL-496, MIL-498).
 - [X] T026 Run the oidc-sso suite with coverage, `pnpm typecheck`, the `@dokploy/server` production build and `/security-review` on the branch; resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).
 
+- [X] T027 Fix the second lab round bugs (MIL-427): by the tunnel `/oidc/sign-out` answers `/?emergency=1` (MIL-504, FR-009); owner logins through the tunnel are recorded in every mode (MIL-505, FR-007); an origin rejection is recorded as `invalid_origin` (MIL-506, spec 001 FR-013). Regression tests in `emergency-origin-auth.test.ts`.
+
 After the merge, T020 (MIL-470) is repeated in the lab with the new image: L5 in `sso-only` and in `button`.
 
 ---
