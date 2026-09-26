@@ -43,14 +43,14 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 **⚠️ CRITICAL**: ningún proveedor puede verificarse hasta terminar esta fase.
 
-- [ ] T003 [P] Create `apps/dokploy/__test__/oidc-sso/providers/types.ts` with the `ProviderId`, `ScenarioId`, `VerificationResult` (`schema: "oidc-compat/v1"`) and `ProviderDriver` types exactly as in data-model.md (FR-004, FR-014).
-- [ ] T004 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/providers/results.test.ts` for the results writer (FR-008, FR-014, data-model rules):
+- [X] T003 [P] Create `apps/dokploy/__test__/oidc-sso/providers/types.ts` with the `ProviderId`, `ScenarioId`, `VerificationResult` (`schema: "oidc-compat/v1"`) and `ProviderDriver` types exactly as in data-model.md (FR-004, FR-014).
+- [X] T004 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/providers/results.test.ts` for the results writer (FR-008, FR-014, data-model rules):
   - «`status = passed` solo si ningún escenario tiene `failed`»;
   - «`not-applicable` solo se permite en `sign-out`»;
   - a `skipped` result carries `skippedReason` naming the missing variables;
   - every value of the SaaS variables in `contracts/runner-and-env.md` is redacted from `failures[].message` before writing;
   - the file lands at `specs/004-oidc-provider-compatibility/results/<id>.json`.
-- [ ] T005 Implement `apps/dokploy/__test__/oidc-sso/providers/results.ts` (`buildResult`, `redact`, `writeResult`) to pass T004 (FR-008, FR-014).
+- [X] T005 Implement `apps/dokploy/__test__/oidc-sso/providers/results.ts` (`buildResult`, `redact`, `writeResult`) to pass T004 (FR-008, FR-014).
 - [ ] T006 Create `apps/dokploy/__test__/oidc-sso/providers/harness.ts`. Extract the in-memory Dokploy setup from `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` (memory repository, provisioning store, events, `betterAuth` with `oidcSso()`) and add a `playwright-core` Chromium browser whose `page.route("http://localhost:3000/**")` answers through `auth.handler`, so Dokploy needs no server (research R3). Helpers (FR-004):
   - `configure(driver.moduleConfig(), mode)`;
   - `signIn(user)`, which calls `driver.login(page, user)` and returns the landing URL and the role;
