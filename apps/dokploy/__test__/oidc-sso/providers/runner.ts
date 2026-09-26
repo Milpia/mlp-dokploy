@@ -1,6 +1,7 @@
 import { execSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { buildResult, RESULTS_DIR, writeResult } from "./results";
 import {
 	PROVIDER_IDS,
@@ -10,8 +11,10 @@ import {
 	type VerificationResult,
 } from "./types";
 
-export const PROVIDERS_DIR = __dirname;
-const APP_DIR = path.resolve(__dirname, "../../..");
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+export const PROVIDERS_DIR = HERE;
+const APP_DIR = path.resolve(HERE, "../../..");
 const READY_TIMEOUT_MS = 5 * 60_000;
 
 export interface RunnerDeps {

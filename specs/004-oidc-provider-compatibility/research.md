@@ -52,6 +52,8 @@ No se cambia el código. Las verificaciones confirman los dos casos (escenario d
 - El navegador intercepta con `page.route` las peticiones a `http://localhost:3000/**` y las responde con `auth.handler`, así que no hace falta arrancar el servidor de Dokploy.
 - Cada proveedor aporta solo un «conductor» de login: los selectores de usuario, contraseña y enviar, y cómo aceptar el consentimiento si lo hay.
 
+**Cambio durante la implementación (2026-09-26):** `page.route` no sirve. Playwright no enruta las peticiones que llegan por una redirección de red, y todos los proveedores devuelven el navegador al callback con una. Dokploy corre en su lugar detrás de un servidor HTTP mínimo en `127.0.0.1:39000` (`toNodeHandler` de better-auth), con el mismo `auth.handler` en proceso. El puerto no es el 3000 porque suele estar ocupado por un Dokploy local, y una petición que llegara ahí probaría otra instancia. Las URI de redirección de las semillas usan `http://localhost:39000`.
+
 **Rationale**: Authentik, Zitadel, Authelia, Okta y Auth0 usan SPA o flujos multipaso. Simularlos con `fetch` exigiría reimplementar la API privada de cada uno. Con un navegador, el conductor queda en unas pocas líneas por proveedor y prueba el flujo que ve un usuario real.
 
 **Alternatives considered**:

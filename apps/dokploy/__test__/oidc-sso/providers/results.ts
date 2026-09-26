@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
 	type ProviderId,
 	SCENARIO_IDS,
@@ -8,8 +9,10 @@ import {
 	type VerificationResult,
 } from "./types";
 
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
 export const RESULTS_DIR = path.resolve(
-	__dirname,
+	HERE,
 	"../../../../../specs/004-oidc-provider-compatibility/results",
 );
 

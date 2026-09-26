@@ -10,6 +10,7 @@ import { execSync } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createHarness, DOKPLOY_BASE, type Harness } from "./harness";
 import { buildResult, writeResult } from "./results";
+import { GROUPS } from "./shared";
 import {
 	type ModuleConfig,
 	type ProviderDriver,
@@ -23,13 +24,6 @@ import {
 // globalThis.process.env is the real environment.
 const runtimeEnv = globalThis.process.env;
 const providerId = runtimeEnv.OIDC_E2E_PROVIDER as ProviderId | undefined;
-
-/** The group names every provider's seed uses (roles at Zitadel, FusionAuth and Auth0). */
-export const GROUPS = {
-	access: "dokploy-users",
-	admin: "dokploy-admins",
-	management: "admins-mgmt",
-} as const;
 
 const SCENARIO_TIMEOUT_MS = 120_000;
 

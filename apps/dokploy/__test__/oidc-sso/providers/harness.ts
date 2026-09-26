@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { SsoConfigProvider } from "@dokploy/server/oidc-sso/config/provider";
 import type { LoginState } from "@dokploy/server/oidc-sso/domain/user-management";
 import type {
@@ -14,18 +15,23 @@ import {
 } from "@dokploy/server/oidc-sso/user-management/guard";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
+import { toNodeHandler } from "better-auth/node";
 import {
 	type Browser,
 	type BrowserContext,
 	chromium,
 	type Page,
-	type Route,
 } from "playwright-core";
 import { activeConfig, fakeEvents, memoryRepository } from "../helpers";
 import type { ModuleConfig, TestUser } from "./types";
 
-/** Must match the redirect URI registered at every provider. */
-export const DOKPLOY_BASE = "http://localhost:3000";
+/**
+ * Must match the redirect URI registered at every provider. Not 3000: that
+ * port is often taken by a local Dokploy, and a request reaching it would
+ * test the wrong instance.
+ */
+export const DOKPLOY_PORT = 39000;
+export const DOKPLOY_BASE = `http://localhost:${DOKPLOY_PORT}`;
 const OWNER_ID = "owner-id";
 const OWNER_EMAIL = "owner@dokploy.test";
 
@@ -91,33 +97,9 @@ const memoryProvisioning = (tables: { user: Row[] }) => {
 	return { store, roles, idTokens, loginStates, userIdOf };
 };
 
-const toRequest = async (route: Route): Promise<Request> => {
-	const request = route.request();
-	const headers = await request.allHeaders();
-	const body = request.postDataBuffer();
-	return new Request(request.url(), {
-		method: request.method(),
-		headers,
-		...(body && request.method() !== "GET"
-			? { body: new Uint8Array(body) }
-			: {}),
-	});
-};
-
-const fulfillFrom = async (route: Route, response: Response) => {
-	const headers: Record<string, string> = {};
-	response.headers.forEach((value, key) => {
-		if (key !== "set-cookie") headers[key] = value;
-	});
-	const cookies = response.headers.getSetCookie();
-	// Playwright joins repeated headers with a newline.
-	if (cookies.length > 0) headers["set-cookie"] = cookies.join("\n");
-	await route.fulfill({
-		status: response.status,
-		headers,
-		body: Buffer.from(await response.arrayBuffer()),
-	});
-};
+/** A Dokploy page, not an /api/auth hop that is still redirecting. */
+const isDokployPage = (url: URL) =>
+	url.origin === DOKPLOY_BASE && !url.pathname.startsWith("/api/auth/");
 
 export interface SignInResult {
 	/** Path and query Dokploy sent the browser to at the end of the flow. */
@@ -135,9 +117,10 @@ export interface SignOutResult {
 }
 
 /**
- * Dokploy runs in process (the real better-auth handler with oidcSso()), and
- * Chromium reaches it through page.route, so no server or port is needed.
- * The provider's own pages are real (research R3).
+ * Dokploy runs in process: the real better-auth handler with oidcSso(),
+ * behind a plain HTTP server on loopback. page.route cannot be used, because
+ * Playwright does not route requests that arrive through a network redirect,
+ * and every provider sends the browser back with one (research R3).
  */
 export const createHarness = async (
 	moduleConfig: ModuleConfig,
@@ -195,6 +178,22 @@ export const createHarness = async (
 		resolveTarget: async (ref) => ref.userId ?? null,
 	};
 
+	const authHandler = toNodeHandler(auth);
+	const server = createServer((request, response) => {
+		const url = new URL(request.url ?? "/", DOKPLOY_BASE);
+		if (url.pathname.startsWith("/api/auth/")) {
+			void authHandler(request, response);
+			return;
+		}
+		// Any other Dokploy page: a stub, so the browser has somewhere to land.
+		response.writeHead(200, { "content-type": "text/html" });
+		response.end(`<html><body>dokploy ${url.pathname}</body></html>`);
+	});
+	await new Promise<void>((resolve, reject) => {
+		server.once("error", reject);
+		server.listen(DOKPLOY_PORT, "127.0.0.1", resolve);
+	});
+
 	const browser: Browser = await chromium.launch();
 	let context: BrowserContext | null = null;
 	let page: Page | null = null;
@@ -205,19 +204,6 @@ export const createHarness = async (
 			ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? false,
 		});
 		const next = await context.newPage();
-		await next.route(`${DOKPLOY_BASE}/**`, async (route) => {
-			const url = new URL(route.request().url());
-			if (url.pathname.startsWith("/api/auth/")) {
-				await fulfillFrom(route, await auth.handler(await toRequest(route)));
-				return;
-			}
-			// Any other Dokploy page: a stub, so the browser has somewhere to land.
-			await route.fulfill({
-				status: 200,
-				contentType: "text/html",
-				body: `<html><body>dokploy ${url.pathname}</body></html>`,
-			});
-		});
 		page = next;
 		return next;
 	};
@@ -249,11 +235,8 @@ export const createHarness = async (
 			await current.goto(
 				`${DOKPLOY_BASE}/api/auth/oidc/sign-in?returnTo=${encodeURIComponent("/dashboard/projects")}`,
 			);
-			if (!current.url().startsWith(DOKPLOY_BASE)) {
-				await login(current, user);
-				await current.waitForURL(`${DOKPLOY_BASE}/**`, { timeout: 60_000 });
-			}
-			await current.waitForLoadState("load");
+			if (!current.url().startsWith(DOKPLOY_BASE)) await login(current, user);
+			await current.waitForURL(isDokployPage, { timeout: 60_000 });
 			const userId = provisioning.userIdOf(user.email);
 			return {
 				landing: pathOf(current.url()),
@@ -277,7 +260,7 @@ export const createHarness = async (
 			});
 			await current.goto(new URL(target, DOKPLOY_BASE).toString());
 			if (!current.url().startsWith(DOKPLOY_BASE)) {
-				await current.waitForURL(`${DOKPLOY_BASE}/**`, { timeout: 60_000 });
+				await current.waitForURL(isDokployPage, { timeout: 60_000 });
 			}
 			return {
 				target,
@@ -302,6 +285,7 @@ export const createHarness = async (
 		async close() {
 			await context?.close();
 			await browser.close();
+			await new Promise((resolve) => server.close(resolve));
 		},
 	};
 };
