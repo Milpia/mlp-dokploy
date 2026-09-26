@@ -171,7 +171,7 @@ ve la configuración efectiva.
 - [X] T018 Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint` (FR-008, principle IV):
   - Coverage of `packages/server/src/oidc-sso/**` must stay ≥ 90 % lines, with 100 % branches of `domain/emergency-origin.ts` and `plugin/emergency-origin.ts`.
   - Confirm with `grep` that no new file imports anything under `/proprietary`.
-- [ ] T019 Run `/security-review` on the branch, focused on the `Origin` rewrite (plan.md Complexity Tracking), and resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).
+- [X] T019 Run `/security-review` on the branch, focused on the `Origin` rewrite (plan.md Complexity Tracking), and resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).
 - [ ] T020 Run the quickstart.md manual scenarios 1–10 and record the results in the PR description. Then tell the infra session the PR number, so MIL-425's image and the L5 lab test can include it (SC-001–SC-005).
 
 ---
