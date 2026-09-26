@@ -28,53 +28,109 @@ Dokploy no basta: si sigue en el grupo, se le vuelve a crear la cuenta.
 
 ## 2. Configuración por proveedor
 
+Estado verificado de cada proveedor, con versión, fecha y resultado por escenario:
+[matriz de compatibilidad](../004-oidc-provider-compatibility/compatibility.md) (spec 004). Cada
+proveedor autoalojable se vuelve a verificar con `pnpm --filter=dokploy run e2e:oidc <proveedor>`.
+
+Lo común a todos:
+- **Redirect URI:** `https://<dokploy>/api/auth/oidc/callback`, exacta.
+- **Post-logout redirect URI:** `https://<dokploy>/` (solo en modo SSO-only).
+- **Cliente confidencial** con secreto. Dokploy siempre usa PKCE `S256`.
+- **Scopes:** Dokploy pide `openid email profile`. Los «scopes adicionales» se suman a esos.
+- **`email_verified`:** tiene que llegar como `true`, en el ID token o en userinfo. Dokploy consulta
+  userinfo solo si al ID token le faltan los grupos, `email` o `email_verified`, y nunca sustituye lo
+  que ya trae el ID token.
+
 ### Keycloak (referencia)
 
-- Issuer: `https://<keycloak>/realms/<realm>`.
-- Cliente: *Client authentication* On, *Standard flow* On, *Direct access grants* e *Implicit* Off,
-  y en *Advanced*, PKCE `S256`.
-- Grupos: un mapper *Group Membership* con claim `groups` y *Add to ID token* activado, o un client
-  scope `groups` asignado como **Default** (no Optional). *Full group path* puede estar activado o
-  no: `admins` coincide tanto con `/admins` como con `/equipo/admins`.
-- Logout: sí.
+- **Issuer:** `https://<keycloak>/realms/<realm>`.
+- **Cliente:** *Client authentication* On, *Standard flow* On, *Direct access grants* e *Implicit*
+  Off; en *Advanced*, PKCE `S256`. *Valid redirect URIs* y *Valid post logout redirect URIs* con
+  las URIs de arriba.
+- **Grupos:** un mapper *Group Membership* con claim `groups` y *Add to ID token* activado, o un
+  client scope `groups` asignado como **Default** (no Optional). *Full group path* puede estar
+  activado o no: `admins` coincide tanto con `/admins` como con `/equipo/admins`.
+- **Ejemplo:** claim `groups` → `["dokploy-users"]`. Scopes adicionales: ninguno.
+- **Logout:** sí.
 
 ### Okta
 
-- Issuer: `https://<org>.okta.com/oauth2/default` (o el de tu authorization server).
-- Aplicación: *OIDC – Web Application*, grant *Authorization Code*.
-- Grupos: en el authorization server, añade un claim `groups` al ID token (filtro, p. ej.,
-  *Matches regex* `.*`). Scopes adicionales: `groups`.
-- Logout: sí.
+- **Issuer:** `https://<org>.okta.com` (authorization server de la organización) o
+  `https://<org>.okta.com/oauth2/default` (uno propio).
+- **Aplicación:** *OIDC – Web Application*, grant *Authorization Code*, con las URIs de arriba y
+  asignada a los grupos que deban entrar.
+- **Grupos:** añade un claim `groups` al ID token con filtro, p. ej., *Matches regex* `.*`. Scopes
+  adicionales: `groups`.
+- **Política de acceso:** si la política de la aplicación exige MFA, se aplica en Okta; Dokploy no
+  interviene.
+- **Logout:** sí (con `id_token_hint`).
+- **Limitación:** no verificado todavía, a falta de un tenant de pruebas (ver la matriz).
+
+### Auth0
+
+- **Issuer:** `https://<tenant>.auth0.com/`, con la barra final.
+- **Aplicación:** *Regular Web Application*, con *Allowed Callback URLs* y *Allowed Logout URLs*
+  con las URIs de arriba.
+- **Grupos:** Auth0 no tiene claim de grupos. Crea roles con los nombres que quieras usar como
+  grupos y una **Action Post-Login** que los copie a un claim con namespace:
+  `api.idToken.setCustomClaim("https://dokploy/groups", event.authorization.roles)`.
+  Claim de grupos en Dokploy: `https://dokploy/groups`. Scopes adicionales: ninguno.
+- **Logout:** solo si el tenant tiene activado el logout RP-initiated. Si no, Dokploy muestra su
+  pantalla de «sesión cerrada».
+- **Limitación:** no verificado todavía, a falta de un tenant de pruebas (ver la matriz).
 
 ### Authentik
 
-- Issuer: `https://<authentik>/application/o/<slug>/`.
-- Proveedor *OAuth2/OpenID*, cliente confidencial. El scope `profile` por defecto ya incluye
-  `groups`.
-- Logout: sí.
+- **Issuer:** `https://<authentik>/application/o/<slug>/`.
+- **Proveedor** *OAuth2/OpenID*, cliente confidencial, *Redirect URI* en modo *strict* con la URI
+  de arriba, y **`authorization_code` entre los grant types permitidos** (obligatorio desde 2025.x).
+- **Grupos:** el scope mapping `profile` por defecto ya incluye `groups`.
+- **`email_verified`:** Authentik lo envía como `false` por defecto. Crea un scope mapping para el
+  scope `email` que devuelva `{"email": request.user.email, "email_verified": True}` y úsalo en lugar
+  del de serie.
+- **Logout:** sí. Al terminar, Authentik muestra su propia página de sesión cerrada.
 
 ### Zitadel
 
-- Issuer: `https://<instancia>.zitadel.cloud` (o tu dominio).
-- Aplicación *Web*, *Code* con autenticación básica o POST.
-- Zitadel usa **roles de proyecto**, no grupos. Activa *Assert Roles on Authentication* y usa las
-  claves de rol como grupos de acceso y de administración.
+- **Issuer:** `https://<instancia>.zitadel.cloud` (o tu dominio).
+- **Aplicación** *Web*, *Code*, autenticación POST o básica, con las URIs de arriba.
+- **Grupos:** Zitadel usa **roles de proyecto**. Activa *Assert Roles on Authentication* en el
+  proyecto y *User roles inside ID token* en la aplicación, y usa las claves de rol como grupos.
   - Claim de grupos: `urn:zitadel:iam:org:project:roles`.
   - Scopes adicionales: `urn:zitadel:iam:org:projects:roles`.
-- Logout: sí.
+- **`email_verified`:** llega en el ID token con *User Info inside ID token*, o por userinfo.
+- **Logout:** sí.
+
+### FusionAuth
+
+- **Issuer:** la URL pública de FusionAuth. **Hay que fijarla** en el tenant (*Tenants › Edit › General ›
+  Issuer*): por defecto trae un valor de ejemplo y Dokploy rechaza el discovery.
+- **Aplicación:** OAuth con autenticación de cliente obligatoria, *Authorized redirect URLs* con la
+  redirect URI y *Logout URL* con la post-logout URI. Client ID: el ID de la aplicación.
+- **Grupos:** crea roles de aplicación con los nombres de tus grupos y asígnalos a grupos de
+  FusionAuth; registra a los usuarios en la aplicación. Pon la **política de scopes de la aplicación
+  en «Compatibility»**: con «Strict», los roles no llegan al ID token.
+  - Claim de grupos: `roles`. Scopes adicionales: `email`.
+- **Logout:** sí (`/oauth2/logout`).
 
 ### Authelia
 
-- Issuer: `https://<authelia>`.
-- Cliente en `identity_providers.oidc.clients` con `redirect_uris` y los scopes
-  `openid email profile groups`. Scopes adicionales: `groups`.
-- **Logout: no** (sin `end_session_endpoint`). En modo SSO-only, cerrar sesión lleva a una pantalla
-  de «sesión cerrada» que no redirige sola. La sesión de Authelia sigue abierta hasta que caduque.
+- **Issuer:** `https://<authelia>`. Authelia exige HTTPS y un dominio de cookie con punto.
+- **Cliente** en `identity_providers.oidc.clients`: confidencial, `redirect_uris` con la redirect URI,
+  scopes `openid email profile groups`, `grant_types: [authorization_code]` y
+  `token_endpoint_auth_method: client_secret_post`. Scopes adicionales en Dokploy: `groups`.
+- **Grupos y `email_verified`:** sin `claims_policy`, solo llegan por userinfo. Dokploy lo consulta
+  automáticamente, así que no hace falta configurar nada más.
+- **Logout: no** (sin `end_session_endpoint`, authelia#5057). En modo SSO-only, cerrar sesión lleva a
+  una pantalla de «sesión cerrada» que no redirige sola. La sesión de Authelia sigue abierta hasta
+  que caduque.
 
 ### Otro proveedor OIDC
 
 Cualquier proveedor con discovery (`/.well-known/openid-configuration`) y ID tokens firmados.
-Configura el claim que lleva los grupos o roles y los scopes necesarios para recibirlo.
+Configura el claim que lleva los grupos o roles y los scopes necesarios para recibirlo. La prueba de
+conexión comprueba el secreto revocando un token inventado cuando el proveedor publica
+`revocation_endpoint` (RFC 7009), y si no, con un código de autorización inventado.
 
 ## 3. Configurar Dokploy
 

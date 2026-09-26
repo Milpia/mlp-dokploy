@@ -116,7 +116,7 @@ description: "Task list for 004-oidc-provider-compatibility"
     - the memberships and the app assignment;
     - a password-only sign-on rule for the app.
   - `driver.ts`: `requiredEnv` and the identifier-first Sign-In Widget login.
-- [ ] T014 [US1] Update the Keycloak, Authentik and Okta sections of `specs/001-keycloak-sso/operations.md` with every FR-002 item:
+- [X] T014 [US1] Update the Keycloak, Authentik and Okta sections of `specs/001-keycloak-sso/operations.md` with every FR-002 item:
   - client, redirect and post-logout URIs;
   - scopes;
   - how groups and `email_verified` are sent (Authentik's scope mapping, Okta's groups filter and password-only policy);
@@ -148,7 +148,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - a matrix over `keycloak`, `authentik`, `zitadel`, `fusionauth` and `authelia`, with no SaaS providers;
   - each job: `pnpm install --frozen-lockfile`, then `pnpm --filter=dokploy exec playwright-core install --with-deps chromium`, then `pnpm --filter=dokploy run e2e:oidc <id>`, then upload `results/<id>.json` as an artifact;
   - it runs only in `Milpia/mlp-dokploy`.
-- [ ] T019 [US2] Run `pnpm --filter=dokploy run e2e:oidc:matrix` and commit `specs/004-oidc-provider-compatibility/compatibility.md`. Link it from `specs/001-keycloak-sso/operations.md`, and make FR-022 and FR-024 in `specs/001-keycloak-sso/spec.md` point to spec 004 for the verified providers and the Auth0/FusionAuth presets (FR-010, FR-012).
+- [X] T019 [US2] Run `pnpm --filter=dokploy run e2e:oidc:matrix` and commit `specs/004-oidc-provider-compatibility/compatibility.md`. Link it from `specs/001-keycloak-sso/operations.md`, and make FR-022 and FR-024 in `specs/001-keycloak-sso/spec.md` point to spec 004 for the verified providers and the Auth0/FusionAuth presets (FR-010, FR-012).
 
 **Checkpoint**: US1 y US2 juntas dan una matriz real y repetible.
 
@@ -218,7 +218,7 @@ description: "Task list for 004-oidc-provider-compatibility"
     - the four users (`email_verified: true`, `OIDC_E2E_SAAS_PASSWORD`) and their role assignments;
     - the Action, deployed and bound to the post-login trigger.
   - `driver.ts`: `requiredEnv`, Universal Login (identifier, then password), and accepting the consent screen.
-- [ ] T027 [US3] Add or refresh the Zitadel, FusionAuth, Authelia and Auth0 sections of `specs/001-keycloak-sso/operations.md` with every FR-002 item (FR-002). The notes to include:
+- [X] T027 [US3] Add or refresh the Zitadel, FusionAuth, Authelia and Auth0 sections of `specs/001-keycloak-sso/operations.md` with every FR-002 item (FR-002). The notes to include:
   - Zitadel: project roles as groups;
   - FusionAuth: application roles through groups;
   - Authelia: groups and email only in userinfo, HTTPS and a dotted cookie domain, no end-session;
