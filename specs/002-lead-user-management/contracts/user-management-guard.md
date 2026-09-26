@@ -40,7 +40,7 @@ Los mensajes no revelan el nombre del grupo configurado.
 
 Las tres rutas `customRole.*` se añadieron al implementar (T014): la prueba de deriva las detectó como mutaciones de definiciones de roles (FR-004). Solo se comprueba su ruta; el router vive en `/proprietary` y no se importa.
 
-Se encadena en `protectedProcedure` (`apps/dokploy/server/api/trpc.ts`).
+Se encadena en `protectedProcedure` y en `enterpriseProcedure` (`apps/dokploy/server/api/trpc.ts`). `enterpriseProcedure` no deriva de `protectedProcedure` y sirve las rutas `customRole.*`; la revisión de seguridad (T029) detectó que sin ese segundo enganche la guarda no las cubría. La prueba de deriva comprueba que cada ruta de la tabla lleva la guarda en su cadena de middlewares.
 
 | Path tRPC | `UserManagementAction` |
 |---|---|

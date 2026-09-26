@@ -216,7 +216,7 @@ export const adminProcedure = t.procedure.use(({ ctx, next }) => {
  * Does NOT call the license server on every request; full validation (haveValidLicenseKey)
  * is used in the UI gate and when activating/validating keys.
  */
-export const enterpriseProcedure = t.procedure.use(async ({ ctx, next }) => {
+const enterpriseAuthProcedure = t.procedure.use(async ({ ctx, next }) => {
 	if (
 		!ctx.session ||
 		!ctx.user ||
@@ -243,6 +243,10 @@ export const enterpriseProcedure = t.procedure.use(async ({ ctx, next }) => {
 		},
 	});
 });
+
+// Chained after the enterprise check so the guard sees the session user.
+export const enterpriseProcedure =
+	enterpriseAuthProcedure.use(userManagementGuard);
 
 /**
  * Permission-checked procedure factory.

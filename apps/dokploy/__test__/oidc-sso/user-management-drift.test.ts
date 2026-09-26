@@ -1,5 +1,6 @@
 import { TRPC_USER_MANAGEMENT_PATHS } from "@dokploy/server/oidc-sso/user-management/paths";
 import { describe, expect, it } from "vitest";
+import { userManagementGuard } from "@/server/api/middlewares/user-management";
 import { appRouter } from "@/server/api/root";
 
 // Mutations whose path looks like user management but that only act on the
@@ -21,7 +22,10 @@ const REVIEWED_NOT_USER_MANAGEMENT = new Set<string>([
 
 const SUSPICIOUS = /(user|member|invit|role|permission|organization)/i;
 
-type Procedures = Record<string, { _def: { type: string } }>;
+type Procedures = Record<
+	string,
+	{ _def: { type: string; middlewares: unknown[] } }
+>;
 
 const procedures = (): Procedures =>
 	(appRouter as unknown as { _def: { procedures: Procedures } })._def
@@ -36,6 +40,16 @@ describe("user-management path list vs appRouter (spec 002, FR-004)", () => {
 			(path) => !paths.has(path),
 		);
 		expect(missing).toEqual([]);
+	});
+
+	// A listed path served by a builder that skips protectedProcedure (e.g.
+	// enterpriseProcedure) would never reach the guard (security review, T029).
+	it("every protected path actually runs the guard", () => {
+		const all = procedures();
+		const unguarded = [...TRPC_USER_MANAGEMENT_PATHS.keys()].filter(
+			(path) => !all[path]?._def.middlewares.includes(userManagementGuard),
+		);
+		expect(unguarded).toEqual([]);
 	});
 
 	it("every mutation that looks like user management is classified", () => {

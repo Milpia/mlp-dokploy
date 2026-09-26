@@ -71,7 +71,7 @@ procedimientos tRPC y siete rutas de better-auth quedan protegidos.
 
 | Archivo | Cambio | Por qué es imprescindible |
 |---|---|---|
-| `apps/dokploy/server/api/trpc.ts` | encadenar `userManagementGuard` en `protectedProcedure` (import y `.use`) | único punto común a los siete procedimientos (R2) |
+| `apps/dokploy/server/api/trpc.ts` | encadenar `userManagementGuard` en `protectedProcedure` y en `enterpriseProcedure` (import y `.use`; T029) | único punto común a los siete procedimientos (R2) |
 | `apps/dokploy/components/dashboard/settings/users/show-users.tsx` | combinar `canManageUsers` con `canChangeRole`, `canEditPermissions`, `canRemove` y `canDelete` | FR-007: esas acciones se deciden aquí |
 | `apps/dokploy/pages/dashboard/settings/users.tsx` | ocultar `ShowInvitations` y mostrar el aviso de caducidad | FR-007 |
 | `apps/dokploy/drizzle/*` | migración generada | obligatoria para la tabla y las columnas nuevas |
