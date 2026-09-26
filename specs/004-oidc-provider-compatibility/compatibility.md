@@ -6,13 +6,13 @@ Cada fila resume la última verificación del proveedor con la batería común d
 
 | Proveedor | Versión | Fecha | Entorno | Commit | Alta por grupo | Rol admin | Denegación | Cambio de rol | Cierre de sesión | Conexión OK | Secreto malo | Gestión de usuarios (002) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Keycloak | 26.7.4 | 2026-09-26 | local | 62ef076 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
+| Keycloak | 26.7.4 | 2026-09-26 | local | f8b7726 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
 | Okta | — | 2026-09-26 | — | — | no verificado (faltan: OKTA_E2E_ORG_URL, OKTA_E2E_API_TOKEN, OIDC_E2E_SAAS_PASSWORD) | — | — | — | — | — | — | — |
 | Auth0 | — | 2026-09-26 | — | — | no verificado (faltan: AUTH0_E2E_DOMAIN, AUTH0_E2E_MGMT_CLIENT_ID, AUTH0_E2E_MGMT_CLIENT_SECRET, OIDC_E2E_SAAS_PASSWORD) | — | — | — | — | — | — | — |
-| Authentik | 2026.8.3 | 2026-09-26 | local | 62ef076 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
-| Zitadel | v4.19.0 | 2026-09-26 | local | aae3c92 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
-| FusionAuth | 1.69.2 | 2026-09-26 | local | 62ef076 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
-| Authelia | 4.39.28 | 2026-09-26 | local | 62ef076 | pasa | pasa | pasa | pasa | pasa (sin fin de sesión en el proveedor) | pasa | pasa | pasa |
+| Authentik | 2026.8.3 | 2026-09-26 | local | f8b7726 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
+| Zitadel | v4.19.0 | 2026-09-26 | local | f8b7726 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
+| FusionAuth | 1.69.2 | 2026-09-26 | local | f8b7726 | pasa | pasa | pasa | pasa | pasa | pasa | pasa | pasa |
+| Authelia | 4.39.28 | 2026-09-26 | local | f8b7726 | pasa | pasa | pasa | pasa | pasa (sin fin de sesión en el proveedor) | pasa | pasa | pasa |
 
 ## Limitaciones conocidas
 

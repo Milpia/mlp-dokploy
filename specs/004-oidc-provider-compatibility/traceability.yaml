@@ -13,8 +13,8 @@ feature:
   story: MIL-474
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-26T04:17:20Z'
-  synced_from_sha: 81ee73f2a100efdf3bc2ca16bde2e295558c4751
+  synced_at: '2026-09-26T16:35:50Z'
+  synced_from_sha: f8b772675e4805ce50a10a8f8b4250db65bc8735
   spec_digest: sha256:8a8f593713dcaa059cf6aad0d3affcdcd7e49aae8ef167270e896ec58c347260
 links:
 - type: relates
@@ -34,7 +34,7 @@ requirements:
     - MIL-490
     - MIL-492
     bugs: []
-    status: planned
+    status: in_progress
     local_tasks:
     - T010
     - T011
@@ -53,7 +53,7 @@ requirements:
     - MIL-482
     - MIL-492
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T012
     - T014
@@ -65,7 +65,7 @@ requirements:
     tasks:
     - MIL-487
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T022
   FR-004:
@@ -75,7 +75,7 @@ requirements:
     - MIL-477
     - MIL-479
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T003
     - T004
@@ -94,7 +94,7 @@ requirements:
     - MIL-490
     - MIL-493
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T020
     - T021
@@ -107,7 +107,7 @@ requirements:
     tasks:
     - MIL-486
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T020
     - T021
@@ -120,7 +120,7 @@ requirements:
     - MIL-488
     - MIL-492
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T023
     - T027
@@ -135,7 +135,7 @@ requirements:
     - MIL-491
     - MIL-493
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T001
     - T002
@@ -153,7 +153,7 @@ requirements:
     - MIL-475
     - MIL-478
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T001
     - T002
@@ -165,7 +165,7 @@ requirements:
     - MIL-483
     - MIL-485
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T016
     - T017
@@ -177,7 +177,7 @@ requirements:
     - MIL-477
     - MIL-489
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T006
     - T007
@@ -187,7 +187,7 @@ requirements:
     tasks:
     - MIL-485
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T019
   FR-013:
@@ -195,7 +195,7 @@ requirements:
     tasks:
     - MIL-475
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T001
     - T002
@@ -207,7 +207,7 @@ requirements:
     - MIL-476
     - MIL-483
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T003
     - T004
@@ -220,7 +220,7 @@ requirements:
     tasks:
     - MIL-478
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T008
     - T009
@@ -230,7 +230,7 @@ requirements:
     tasks:
     - MIL-477
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T006
     - T007
@@ -241,7 +241,7 @@ requirements:
     tasks:
     - MIL-484
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T018
   NFR-SEC-001:
@@ -251,7 +251,7 @@ requirements:
     - MIL-481
     - MIL-491
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T013
     - T026
@@ -262,7 +262,7 @@ requirements:
     tasks:
     - MIL-486
     bugs: []
-    status: planned
+    status: implemented
     local_tasks:
     - T020
     - T021

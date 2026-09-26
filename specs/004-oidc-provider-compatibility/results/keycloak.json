@@ -2,8 +2,8 @@
 	"schema": "oidc-compat/v1",
 	"provider": "keycloak",
 	"providerVersion": "26.7.4",
-	"moduleCommit": "62ef076ed6cd43d750c528285e2ab6898716f327",
-	"ranAt": "2026-09-26T16:09:05.808Z",
+	"moduleCommit": "f8b772675e4805ce50a10a8f8b4250db65bc8735",
+	"ranAt": "2026-09-26T16:31:25.739Z",
 	"environment": "local",
 	"status": "passed",
 	"scenarios": {

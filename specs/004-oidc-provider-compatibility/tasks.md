@@ -122,7 +122,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - how groups and `email_verified` are sent (Authentik's scope mapping, Okta's groups filter and password-only policy);
   - claim and example values;
   - known limitations.
-- [ ] T015 [US1] Run `e2e:oidc authentik`, plus `e2e:oidc okta` if credentials are available, and commit their `results/*.json` (FR-001, SC-001).
+- [X] T015 [US1] Run `e2e:oidc authentik`, plus `e2e:oidc okta` if credentials are available, and commit their `results/*.json` (FR-001, SC-001).
 
 **Checkpoint**: US1 da tres proveedores verificados y el harness probado de extremo a extremo.
 
@@ -223,7 +223,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - FusionAuth: application roles through groups;
   - Authelia: groups and email only in userinfo, HTTPS and a dotted cookie domain, no end-session;
   - Auth0: the namespaced claim through an Action, and the logout toggle.
-- [ ] T028 [US3] Run `e2e:oidc zitadel`, `fusionauth` and `authelia`, plus `auth0` if credentials are available. Record any limitation in `limitations.md`, regenerate the matrix and commit the results (FR-001, FR-007, SC-001).
+- [X] T028 [US3] Run `e2e:oidc zitadel`, `fusionauth` and `authelia`, plus `auth0` if credentials are available. Record any limitation in `limitations.md`, regenerate the matrix and commit the results (FR-001, FR-007, SC-001).
 
 **Checkpoint**: los siete proveedores quedan verificados, o con sus limitaciones documentadas.
 
@@ -232,7 +232,7 @@ description: "Task list for 004-oidc-provider-compatibility"
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [X] T029 [P] Run `/security-review` on the branch. Focus on the userinfo change (precedence, subject check) and the runner's credential redaction, then resolve HIGH/MEDIUM findings (principle III, FR-005, FR-008).
-- [ ] T030 Run `pnpm typecheck`, `pnpm --filter=@dokploy/server build` (then restore `packages/server/package.json`), `pnpm format-and-lint` and the `oidc-sso` suite with coverage (principle IV, SC-006):
+- [X] T030 Run `pnpm typecheck`, `pnpm --filter=@dokploy/server build` (then restore `packages/server/package.json`), `pnpm format-and-lint` and the `oidc-sso` suite with coverage (principle IV, SC-006):
   - `oidc/client.ts` keeps ≥ 90 % lines, with 100 % of the new userinfo branches.
   - `grep` confirms that no provider name appears in `packages/server/src/oidc-sso/**`.
 - [ ] T031 Validate `quickstart.md` sections 1–6 (SC-002, SC-003, SC-005):
