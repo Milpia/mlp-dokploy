@@ -1,3 +1,4 @@
+import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import type { UserManagementGuardDeps } from "@dokploy/server/oidc-sso/user-management/guard";
 import { TRPC_USER_MANAGEMENT_PATHS } from "@dokploy/server/oidc-sso/user-management/paths";
 import { initTRPC, TRPCError } from "@trpc/server";
@@ -19,6 +20,7 @@ const setup = (
 		lastSsoLoginAt: NOW,
 	},
 	group: string | null = "admins",
+	{ userId = "lead-1", now = NOW } = {},
 ) => {
 	const built = makeServices({
 		config: { ...activeConfig, userManagementGroup: group },
@@ -27,12 +29,21 @@ const setup = (
 		services: built.services,
 		loginState: { find: vi.fn(async () => loginState) },
 		resolveTarget: vi.fn(async (ref) => ref.userId ?? null),
-		now: () => NOW,
+		now: () => now,
 		logError: vi.fn(),
 	};
 	const t = initTRPC.context<Ctx>().create();
 	const procedure = t.procedure.use(createUserManagementGuard(() => deps));
-	const handler = vi.fn(async () => "handled");
+	const handler = vi.fn(async ({ path }: { path: string }) => {
+		// Stands in for upstream's own hierarchy check on updateMemberRole.
+		if (path === "organization.updateMemberRole") {
+			throw new TRPCError({
+				code: "FORBIDDEN",
+				message: "Only the owner can change an admin's role",
+			});
+		}
+		return "handled";
+	});
 	const leaf = procedure
 		.input(z.object({ userId: z.string().optional() }).optional())
 		.mutation(handler);
@@ -52,7 +63,7 @@ const setup = (
 		project: t.router({ create: leaf }),
 	});
 	const caller = t.createCallerFactory(router)({
-		user: { id: "lead-1" },
+		user: { id: userId },
 		req: { headers: { "x-forwarded-for": "10.0.0.9" } },
 	});
 	return { ...built, deps, handler, caller };
@@ -117,9 +128,7 @@ describe("tRPC user-management guard (spec 002)", () => {
 
 	it("FR-009: without a configured group every path is left to upstream", async () => {
 		const { caller, handler } = setup(null, null);
-		await expect(call(caller, "organization.updateMemberRole")).resolves.toBe(
-			"handled",
-		);
+		await expect(call(caller, "user.remove")).resolves.toBe("handled");
 		expect(handler).toHaveBeenCalledTimes(1);
 	});
 
@@ -131,5 +140,58 @@ describe("tRPC user-management guard (spec 002)", () => {
 			code: "FORBIDDEN",
 			message: "Sign in with SSO to manage users.",
 		});
+	});
+
+	it("FR-003/FR-015: an admin with an SSO login under 8 h ago reaches the handler", async () => {
+		const { caller, handler } = setup({
+			groups: ["admins"],
+			lastSsoLoginAt: new Date(
+				NOW.getTime() - USER_MANAGEMENT_GRANT_TTL_MS + 1,
+			),
+		});
+		await expect(call(caller, "user.assignPermissions")).resolves.toBe(
+			"handled",
+		);
+		expect(handler).toHaveBeenCalledTimes(1);
+	});
+
+	it("FR-010: the owner reaches the handler with no login state", async () => {
+		const { caller, handler, deps } = setup(null, "admins", {
+			userId: "owner-id",
+		});
+		deps.services.instanceOwnerId = vi.fn(async () => "owner-id");
+		await expect(
+			call(caller, "user.remove", { userId: "dev-1" }),
+		).resolves.toBe("handled");
+		expect(handler).toHaveBeenCalledTimes(1);
+	});
+
+	it("FR-011: an allowed admin still gets upstream's own FORBIDDEN", async () => {
+		const { caller, handler, recorded } = setup({
+			groups: ["admins"],
+			lastSsoLoginAt: NOW,
+		});
+		await expect(
+			call(caller, "organization.updateMemberRole"),
+		).rejects.toMatchObject({
+			code: "FORBIDDEN",
+			message: "Only the owner can change an admin's role",
+		});
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(recorded).toHaveLength(0);
+	});
+
+	it("FR-015: after 8 h the same admin gets grant_expired", async () => {
+		const { caller, handler } = setup(
+			{ groups: ["admins"], lastSsoLoginAt: NOW },
+			"admins",
+			{ now: new Date(NOW.getTime() + USER_MANAGEMENT_GRANT_TTL_MS) },
+		);
+		await expect(call(caller, "user.remove")).rejects.toMatchObject({
+			code: "FORBIDDEN",
+			message:
+				"Your permission to manage users expired. Sign in with SSO again.",
+		});
+		expect(handler).not.toHaveBeenCalled();
 	});
 });

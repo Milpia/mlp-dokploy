@@ -148,7 +148,7 @@ rol de un admin (quickstart §2, filas 6–8).
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T021 [P] [US2] Add allow-path tests to `apps/dokploy/__test__/oidc-sso/user-management-trpc.test.ts` and `user-management-hook.test.ts` (FR-003, FR-010, FR-011, FR-015):
+- [X] T021 [P] [US2] Add allow-path tests to `apps/dokploy/__test__/oidc-sso/user-management-trpc.test.ts` and `user-management-hook.test.ts` (FR-003, FR-010, FR-011, FR-015):
   - An admin in the group with a login < 8 h ago reaches the handler.
   - The owner reaches it with no login state.
   - An admin in the group still gets upstream's own `FORBIDDEN` when changing another admin's role through tRPC (the guard does not widen anything).

@@ -1,3 +1,4 @@
+import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
 import type { UserManagementGuardDeps } from "@dokploy/server/oidc-sso/user-management/guard";
 import { AUTH_USER_MANAGEMENT_PATHS } from "@dokploy/server/oidc-sso/user-management/paths";
@@ -11,7 +12,7 @@ const BASE = "http://localhost:3000";
 const PASSWORD = "correct horse battery staple";
 const NOW = new Date("2026-09-26T12:00:00Z");
 
-const setup = (groups: string[] | null) => {
+const setup = (groups: string[] | null, { now = NOW } = {}) => {
 	const built = makeDeps({
 		config: { ...activeConfig, userManagementGroup: "admins" },
 	});
@@ -23,7 +24,7 @@ const setup = (groups: string[] | null) => {
 			),
 		},
 		resolveTarget: vi.fn(async () => "target-user"),
-		now: () => NOW,
+		now: () => now,
 		logError: vi.fn(),
 	};
 	const memory = {
@@ -174,5 +175,40 @@ describe("better-auth organization routes guard (spec 002)", () => {
 			cookie,
 		);
 		expect(response.status).toBe(200);
+	});
+
+	it("FR-010: the owner gets through with no login state", async () => {
+		ctx = setup(null);
+		const cookie = await signedIn(ctx);
+		const session = await ctx.auth.api.getSession({
+			headers: new Headers({ cookie }),
+		});
+		ctx.guardDeps.services.instanceOwnerId = vi.fn(
+			async () => session?.user.id ?? "",
+		);
+		const response = await post(
+			ctx,
+			"/organization/invite-member",
+			{ email: "new@example.com", role: "member" },
+			cookie,
+		);
+		expect(response.status).toBe(200);
+	});
+
+	it("FR-015: after 8 h an admin of the group gets grant_expired", async () => {
+		ctx = setup(["admins"], {
+			now: new Date(NOW.getTime() + USER_MANAGEMENT_GRANT_TTL_MS),
+		});
+		const cookie = await signedIn(ctx);
+		const response = await post(
+			ctx,
+			"/organization/invite-member",
+			{ email: "new@example.com", role: "member" },
+			cookie,
+		);
+		expect(response.status).toBe(403);
+		expect(((await response.json()) as { message: string }).message).toBe(
+			"Your permission to manage users expired. Sign in with SSO again.",
+		);
 	});
 });
