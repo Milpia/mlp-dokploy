@@ -356,6 +356,15 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 				for (const name of missing) {
 					if (userInfo[name] !== undefined) claims[name] = userInfo[name];
 				}
+				// email_verified from userinfo only vouches for userinfo's own email.
+				if (
+					missing.includes("email_verified") &&
+					!missing.includes("email") &&
+					String(userInfo.email ?? "").toLowerCase() !==
+						String(claims.email ?? "").toLowerCase()
+				) {
+					delete claims.email_verified;
+				}
 			}
 			return { claims, idToken: tokens.id_token };
 		},

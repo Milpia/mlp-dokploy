@@ -371,12 +371,36 @@ describe("createOpenIdClient", () => {
 				},
 			);
 			await expect(result).resolves.toMatchObject({
-				claims: {
-					email: "id@example.com",
-					email_verified: true,
-					groups: ["from-id-token"],
-				},
+				claims: { email: "id@example.com", groups: ["from-id-token"] },
 			});
+		});
+
+		it("takes email_verified from userinfo only when it describes the ID token's email", async () => {
+			const other = exchange(
+				{ email: "id@example.com", groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "other@example.com",
+						email_verified: true,
+					})),
+				},
+			);
+			const otherClaims = (await other.result).claims;
+			expect(otherClaims.email).toBe("id@example.com");
+			expect(otherClaims.email_verified).toBeUndefined();
+
+			const same = exchange(
+				{ email: "ID@example.com", groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "id@example.com",
+						email_verified: true,
+					})),
+				},
+			);
+			expect((await same.result).claims.email_verified).toBe(true);
 		});
 
 		it("NFR-PERF-001: no userinfo call when the ID token has groups, email and email_verified", async () => {

@@ -231,7 +231,7 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T029 [P] Run `/security-review` on the branch. Focus on the userinfo change (precedence, subject check) and the runner's credential redaction, then resolve HIGH/MEDIUM findings (principle III, FR-005, FR-008).
+- [X] T029 [P] Run `/security-review` on the branch. Focus on the userinfo change (precedence, subject check) and the runner's credential redaction, then resolve HIGH/MEDIUM findings (principle III, FR-005, FR-008).
 - [ ] T030 Run `pnpm typecheck`, `pnpm --filter=@dokploy/server build` (then restore `packages/server/package.json`), `pnpm format-and-lint` and the `oidc-sso` suite with coverage (principle IV, SC-006):
   - `oidc/client.ts` keeps ≥ 90 % lines, with 100 % of the new userinfo branches.
   - `grep` confirms that no provider name appears in `packages/server/src/oidc-sso/**`.
