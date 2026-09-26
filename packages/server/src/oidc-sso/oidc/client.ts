@@ -73,6 +73,7 @@ type OpenIdLib = Pick<
 	| "buildEndSessionUrl"
 	| "fetchUserInfo"
 	| "genericGrantRequest"
+	| "tokenRevocation"
 	| "randomPKCECodeVerifier"
 	| "calculatePKCECodeChallenge"
 	| "randomState"
@@ -80,6 +81,37 @@ type OpenIdLib = Pick<
 	| "allowInsecureRequests"
 	| "ClientSecretPost"
 >;
+
+/**
+ * A failed client check, or null when the refusal came after the client was
+ * authenticated (invalid_grant, unsupported_token_type...), which means the
+ * credentials are valid.
+ */
+const credentialFailure = (error: unknown): TestResult | null => {
+	const oauthError = (error as { error?: string }).error;
+	const status = (error as { status?: number }).status;
+	if (
+		oauthError === "invalid_client" ||
+		oauthError === "unauthorized_client" ||
+		status === 401
+	) {
+		return {
+			ok: false,
+			code: "invalid_client",
+			message: "The identity provider rejected the client ID or secret.",
+		};
+	}
+	const network = isNetworkFailure(error);
+	if (network) {
+		return {
+			ok: false,
+			code: network,
+			message:
+				"The identity provider stopped answering while checking the client.",
+		};
+	}
+	return null;
+};
 
 const REQUEST_TIMEOUT_SECONDS = 5;
 const CONNECTION_TEST_CODE = "dokploy-connection-test";
@@ -351,6 +383,20 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 				};
 			}
 
+			// Revoking a made-up token (RFC 7009 §2.1) needs client authentication
+			// and changes nothing, so when the provider offers it, it decides.
+			// The code test below is only a fallback: some providers look at the
+			// code before the client and pass a wrong secret, and others reject
+			// its unregistered redirect URI as invalid_client (spec 004 FR-011).
+			if (config.serverMetadata().revocation_endpoint) {
+				try {
+					await lib.tokenRevocation(config, CONNECTION_TEST_CODE);
+				} catch (error) {
+					const failure = credentialFailure(error);
+					if (failure) return failure;
+				}
+				return { ok: true, issuer: config.serverMetadata().issuer };
+			}
 			// A made-up authorization code: RFC 6749 §4.1.3 has the server
 			// authenticate the client before looking at the code, so bad
 			// credentials fail as invalid_client (Keycloak: unauthorized_client,
@@ -362,30 +408,8 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 					redirect_uri: CONNECTION_TEST_REDIRECT_URI,
 				});
 			} catch (error) {
-				const oauthError = (error as { error?: string }).error;
-				const status = (error as { status?: number }).status;
-				if (
-					oauthError === "invalid_client" ||
-					oauthError === "unauthorized_client" ||
-					status === 401
-				) {
-					return {
-						ok: false,
-						code: "invalid_client",
-						message: "The identity provider rejected the client ID or secret.",
-					};
-				}
-				const network = isNetworkFailure(error);
-				if (network) {
-					return {
-						ok: false,
-						code: network,
-						message:
-							"The identity provider stopped answering while checking the client.",
-					};
-				}
-				// invalid_grant and similar refusals come after client
-				// authentication, so the credentials are valid.
+				const failure = credentialFailure(error);
+				if (failure) return failure;
 			}
 			return { ok: true, issuer: config.serverMetadata().issuer };
 		},

@@ -48,6 +48,7 @@ const fakeLib = (overrides: Record<string, unknown> = {}) => {
 				status: 400,
 			});
 		}),
+		tokenRevocation: vi.fn(async () => undefined),
 		randomPKCECodeVerifier: vi.fn(() => "verifier"),
 		calculatePKCECodeChallenge: vi.fn(async () => "challenge"),
 		randomState: vi.fn(() => "state"),
@@ -461,6 +462,90 @@ describe("testConnection (FR-014)", () => {
 		await expect(client.testConnection(testSettings)).resolves.toMatchObject({
 			ok: false,
 			code,
+		});
+	});
+
+	describe("spec 004 FR-011: providers that check the code before the client", () => {
+		const withRevocation = (overrides: Record<string, unknown> = {}) =>
+			fakeLib({
+				discovery: vi.fn(async () =>
+					fakeConfig({ revocation_endpoint: `${settings.issuerUrl}/revoke` }),
+				),
+				...overrides,
+			});
+
+		it("a wrong secret rejected by the revocation endpoint is invalid_client even when the code test says invalid_grant", async () => {
+			const lib = withRevocation({
+				tokenRevocation: vi.fn(async () => {
+					throw Object.assign(new Error("x"), {
+						error: "invalid_client",
+						status: 401,
+					});
+				}),
+			});
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: false,
+				code: "invalid_client",
+			});
+			expect(lib.tokenRevocation).toHaveBeenCalledWith(
+				expect.anything(),
+				"dokploy-connection-test",
+			);
+		});
+
+		it("an accepted revocation decides, without the code test (its made-up redirect URI makes some providers answer invalid_client)", async () => {
+			const lib = withRevocation({
+				genericGrantRequest: vi.fn(async () => {
+					throw Object.assign(new Error("x"), {
+						error: "invalid_client",
+						status: 400,
+					});
+				}),
+			});
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: true,
+			});
+			expect(lib.genericGrantRequest).not.toHaveBeenCalled();
+		});
+
+		it("an OAuth refusal after client authentication (unsupported_token_type) counts as valid credentials", async () => {
+			const client = createOpenIdClient(
+				withRevocation({
+					tokenRevocation: vi.fn(async () => {
+						throw Object.assign(new Error("x"), {
+							error: "unsupported_token_type",
+							status: 400,
+						});
+					}),
+				}) as never,
+			);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: true,
+			});
+		});
+
+		it("a revocation timeout is reported as timeout", async () => {
+			const client = createOpenIdClient(
+				withRevocation({
+					tokenRevocation: vi.fn(async () => {
+						throw timeoutError();
+					}),
+				}) as never,
+			);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: false,
+				code: "timeout",
+			});
+		});
+
+		it("without a revocation endpoint only the code test runs", async () => {
+			const lib = fakeLib();
+			const client = createOpenIdClient(lib as never);
+			await client.testConnection(settings);
+			expect(lib.tokenRevocation).not.toHaveBeenCalled();
+			expect(lib.genericGrantRequest).toHaveBeenCalled();
 		});
 	});
 
