@@ -134,15 +134,15 @@ description: "Task list for 004-oidc-provider-compatibility"
 
 **Independent Test**: se borra `results/keycloak.json`, se ejecuta `e2e:oidc keycloak` y luego `e2e:oidc:matrix`, y la fila vuelve con la versión y la fecha nuevas sin editar la tabla a mano.
 
-- [ ] T016 [P] [US2] Write failing tests in `apps/dokploy/__test__/oidc-sso/providers/matrix.test.ts` for the generator (FR-010, FR-014):
+- [X] T016 [P] [US2] Write failing tests in `apps/dokploy/__test__/oidc-sso/providers/matrix.test.ts` for the generator (FR-010, FR-014):
   - one row per `ProviderId` in the data-model order;
   - a provider with no result file shows «no verificado»;
   - `not-applicable` on `sign-out` shows «pasa (sin fin de sesión en el proveedor)»;
   - `pending` shows «pendiente de la spec 002»;
   - `limitations.md` sections are embedded per provider;
   - version, date and environment columns.
-- [ ] T017 [US2] Implement `apps/dokploy/scripts/oidc-compat-matrix.ts` to pass T016. Create `specs/004-oidc-provider-compatibility/limitations.md` with one section per provider, starting with «Authelia: sin RP-initiated logout (authelia#5057)» (FR-010, FR-014).
-- [ ] T018 [P] [US2] Create `.github/workflows/milpia-oidc-providers.yml` (NFR-QA-003, research R7):
+- [X] T017 [US2] Implement `apps/dokploy/scripts/oidc-compat-matrix.ts` to pass T016. Create `specs/004-oidc-provider-compatibility/limitations.md` with one section per provider, starting with «Authelia: sin RP-initiated logout (authelia#5057)» (FR-010, FR-014).
+- [X] T018 [P] [US2] Create `.github/workflows/milpia-oidc-providers.yml` (NFR-QA-003, research R7):
   - triggers: `workflow_dispatch` and `schedule` on Monday;
   - `permissions: contents: read`;
   - a matrix over `keycloak`, `authentik`, `zitadel`, `fusionauth` and `authelia`, with no SaaS providers;
