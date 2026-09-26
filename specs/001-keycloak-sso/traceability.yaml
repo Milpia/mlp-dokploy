@@ -1764,6 +1764,9 @@ bugs:
   breaks: []
   detected_in: null
   regression_test: null
+  status: closed
+  resolution: 'no es un defecto: pestaña recargando la URL del proveedor (ronda 3 de MIL-427, mlp-deploy-lab
+    PR #20)'
 - jira: MIL-508
   summary: El login rechazado por conflicto de identidad dice «no estás en el grupo de acceso»
   violates:
