@@ -108,7 +108,7 @@ description: "Task list for 004-oidc-provider-compatibility"
     - an application;
     - an `email` scope mapping returning `email_verified: True`.
   - `driver.ts`: the two-step flow (username, then password) through Playwright's shadow-DOM-piercing locators, and `moveUser` through `/api/v3/core/users/`.
-- [ ] T013 [P] [US1] Create `apps/dokploy/__test__/oidc-sso/providers/okta/` (FR-008, NFR-SEC-001, research R2 and R4):
+- [X] T013 [P] [US1] Create `apps/dokploy/__test__/oidc-sso/providers/okta/` (FR-008, NFR-SEC-001, research R2 and R4):
   - `seed.ts`: idempotent through the Okta Management API with `OKTA_E2E_ORG_URL`/`OKTA_E2E_API_TOKEN`. It creates if missing:
     - a web OIDC app with a groups claim filter (`Matches regex .*`, claim `groups`) and the redirect and post-logout URIs;
     - the three groups;
@@ -210,7 +210,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - `driver.ts`: the single-page form, plus `allowInsecureHttp: false`.
   
   In `apps/dokploy/scripts/oidc-providers.ts`, generate the per-run CA with `openssl` into a temp dir, mount it, set `NODE_EXTRA_CA_CERTS` for Vitest, and set `ignoreHTTPSErrors` for the browser.
-- [ ] T026 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/auth0/` (FR-008, NFR-SEC-001, research R2):
+- [X] T026 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/auth0/` (FR-008, NFR-SEC-001, research R2):
   - `action.js`: a Post-Login Action setting `https://dokploy/groups` from `event.authorization.roles` on the ID token.
   - `seed.ts`: idempotent through the Management API with `AUTH0_E2E_DOMAIN`/`AUTH0_E2E_MGMT_CLIENT_ID`/`AUTH0_E2E_MGMT_CLIENT_SECRET`. It creates if missing:
     - a Regular Web App with callbacks and allowed logout URLs;
