@@ -100,7 +100,7 @@ description: "Task list for 004-oidc-provider-compatibility"
     - an `oidc-group-membership-mapper` with `full.path=false` on the ID token, access token and userinfo.
   - `driver.ts`: selectors `#username`, `#password` and `#kc-login`, and `moveUser` through the admin REST API.
 - [X] T011 [US1] Run `pnpm --filter=dokploy run e2e:oidc keycloak` until it passes. This validates Phase 2 end to end. Commit `specs/004-oidc-provider-compatibility/results/keycloak.json` (FR-001, FR-004).
-- [ ] T012 [P] [US1] Create `apps/dokploy/__test__/oidc-sso/providers/authentik/` (research R2, FR-002 edge case on `email_verified`):
+- [X] T012 [P] [US1] Create `apps/dokploy/__test__/oidc-sso/providers/authentik/` (research R2, FR-002 edge case on `email_verified`):
   - `compose.yml`: `ghcr.io/goauthentik/server:2026.8.3` as `server` and `worker`, plus postgres, with `AUTHENTIK_BOOTSTRAP_PASSWORD`/`TOKEN`.
   - `blueprint.yaml`:
     - groups and users with passwords;

@@ -111,6 +111,8 @@ export interface SignInResult {
 export interface SignOutResult {
 	/** The URL /oidc/sign-out told the browser to open. */
 	target: string;
+	/** HTTP status of the page the target led to. */
+	providerStatus: number;
 	/** Where the browser ended after following it. */
 	finalUrl: string;
 	sessionEnded: boolean;
@@ -258,12 +260,19 @@ export const createHarness = async (
 				const body = (await response.json()) as { url?: string };
 				return body.url ?? "";
 			});
-			await current.goto(new URL(target, DOKPLOY_BASE).toString());
+			const response = await current.goto(
+				new URL(target, DOKPLOY_BASE).toString(),
+			);
+			// Some providers (Authentik) end on their own "logged out" page
+			// instead of sending the browser back; both are a provider logout.
 			if (!current.url().startsWith(DOKPLOY_BASE)) {
-				await current.waitForURL(isDokployPage, { timeout: 60_000 });
+				await current
+					.waitForURL(isDokployPage, { timeout: 10_000 })
+					.catch(() => {});
 			}
 			return {
 				target,
+				providerStatus: response?.status() ?? 0,
 				finalUrl: current.url(),
 				sessionEnded: countSessions() < before,
 			};

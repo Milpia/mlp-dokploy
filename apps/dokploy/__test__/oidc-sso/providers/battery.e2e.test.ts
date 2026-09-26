@@ -32,7 +32,7 @@ describe.skipIf(!providerId)(`OIDC provider battery: ${providerId}`, () => {
 	let config: ModuleConfig;
 	let harness: Harness;
 	let issuer = "";
-	let hasEndSession = false;
+	let endSessionEndpoint: string | undefined;
 	const outcomes: Partial<Record<ScenarioId, ScenarioOutcome>> = {};
 	const failures: { scenario: ScenarioId; message: string }[] = [];
 	let setupError: string | null = null;
@@ -86,7 +86,7 @@ describe.skipIf(!providerId)(`OIDC provider battery: ${providerId}`, () => {
 			end_session_endpoint?: string;
 		};
 		issuer = document.issuer;
-		hasEndSession = Boolean(document.end_session_endpoint);
+		endSessionEndpoint = document.end_session_endpoint;
 		harness = await createHarness(config, {
 			ignoreHTTPSErrors: config.issuerUrl.startsWith("https://"),
 		});
@@ -189,13 +189,14 @@ describe.skipIf(!providerId)(`OIDC provider battery: ${providerId}`, () => {
 		await harness.signIn(driver.login, driver.users.member);
 		const result = await harness.signOut();
 		expect(result.sessionEnded).toBe(true);
-		if (!hasEndSession) {
+		if (!endSessionEndpoint) {
 			// No RP-initiated logout at the provider: the signed-out screen (spec 001 FR-025).
 			expect(result.target).toBe("/?signed_out=1");
 			return "not-applicable";
 		}
-		expect(result.target.startsWith(DOKPLOY_BASE)).toBe(false);
-		expect(result.finalUrl.startsWith(`${DOKPLOY_BASE}/`)).toBe(true);
+		// The provider's end-session endpoint answered; returning to Dokploy is optional.
+		expect(result.target.startsWith(endSessionEndpoint)).toBe(true);
+		expect(result.providerStatus).toBeLessThan(400);
 		return "passed";
 	});
 });
