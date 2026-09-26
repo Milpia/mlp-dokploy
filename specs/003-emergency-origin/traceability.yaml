@@ -125,7 +125,7 @@ requirements:
     - T013
     bugs:
     - MIL-497
-    status: at_risk
+    status: implemented
   FR-008:
     text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
     tasks:
@@ -152,7 +152,7 @@ requirements:
     - T009
     bugs:
     - MIL-495
-    status: at_risk
+    status: implemented
   NFR-PERF-001:
     text: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna
       petición.
@@ -479,26 +479,33 @@ bugs:
   - FR-009
   breaks: []
   detected_in: MIL-460
-  regression_test: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-009/MIL-495: in %s mode the
+    menu sign-out ends the tunnel session without the provider'
+  status: closed
 - jira: MIL-496
   summary: El procedimiento de emergencia por túnel deja a todos fuera si se cambia a modo Button
   violates: []
   breaks: []
   detected_in: null
-  regression_test: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-004/SC-003: in %s mode the
+    owner signs in from the tunnel, with or without cookies'
+  status: closed
 - jira: MIL-497
   summary: Un login denegado por el túnel queda registrado dos veces, una sin la marca del túnel
   violates:
   - FR-007
   breaks: []
   detected_in: MIL-465
-  regression_test: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-007/MIL-497: in %s mode a cookieless
+    non-owner attempt is recorded exactly once'
+  status: closed
 - jira: MIL-498
   summary: Por el túnel, el registro y el restablecimiento de contraseña se rechazan con otro motivo
   violates: []
   breaks: []
   detected_in: null
   regression_test: null
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
