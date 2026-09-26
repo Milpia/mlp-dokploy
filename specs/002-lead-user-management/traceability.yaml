@@ -13,8 +13,8 @@ feature:
   story: MIL-439
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-25T19:21:31Z'
-  synced_from_sha: a32af8d02bc83fba57990395bee03361cdd91d84
+  synced_at: '2026-09-26T06:09:05Z'
+  synced_from_sha: 87c47eea73b7b562996ebcf91503039236eba98a
   spec_digest: sha256:3c5c3a885b24b6188a41a033ffc5583967952755d4a797f735e350e1fe9cb558
 links:
 - type: relates
@@ -40,7 +40,7 @@ requirements:
     - T025
     - T027
     bugs: []
-    status: planned
+    status: implemented
   FR-002:
     text: El grupo de gestión de usuarios MUST admitir una lista separada por comas; basta con pertenecer a uno
       de los grupos.
@@ -57,7 +57,7 @@ requirements:
     - T024
     - T025
     bugs: []
-    status: planned
+    status: implemented
   FR-003:
     text: 'Cuando el grupo de gestión de usuarios está configurado, el sistema MUST permitir gestionar usuarios
       solo al owner y a los admins cuyo último login por SSO mostró que pertenecen a ese grupo. El grupo funciona
@@ -72,7 +72,7 @@ requirements:
     - T021
     - T022
     bugs: []
-    status: planned
+    status: implemented
   FR-004:
     text: 'Gestionar usuarios comprende: borrar un usuario o quitarlo de la organización, invitar a un usuario,
       crear un usuario con credenciales, reenviar o cancelar una invitación, cambiar el rol de un miembro, cambiar
@@ -99,7 +99,7 @@ requirements:
     - T017
     - T020
     bugs: []
-    status: planned
+    status: implemented
   FR-005:
     text: Un admin sin permiso de gestión de usuarios MUST conservar el resto de capacidades del rol admin.
     tasks:
@@ -108,7 +108,7 @@ requirements:
     - T013
     - T016
     bugs: []
-    status: planned
+    status: implemented
   FR-006:
     text: El sistema MUST rechazar en el servidor toda acción de gestión de usuarios de quien no tiene el permiso,
       aunque la petición no venga de la interfaz, con un error de falta de permisos y sin cambiar nada.
@@ -128,7 +128,7 @@ requirements:
     - T017
     - T020
     bugs: []
-    status: planned
+    status: implemented
   FR-007:
     text: La interfaz MUST ocultar las acciones de gestión de usuarios a quien no tiene el permiso, sin ocultarle
       la lista de usuarios. Si el admin pertenece al grupo de gestión pero su permiso caducó (FR-015), la sección
@@ -141,7 +141,7 @@ requirements:
     - T019
     - T031
     bugs: []
-    status: planned
+    status: implemented
   FR-008:
     text: El sistema MUST recalcular la pertenencia al grupo de gestión de usuarios en cada login por SSO, igual
       que el rol (spec 001, FR-008a).
@@ -154,7 +154,7 @@ requirements:
     - T007
     - T008
     bugs: []
-    status: planned
+    status: implemented
   FR-009:
     text: Sin grupo de gestión de usuarios configurado, el sistema MUST mantener las reglas actuales de Dokploy
       sin ningún cambio.
@@ -168,7 +168,7 @@ requirements:
     - T024
     - T025
     bugs: []
-    status: planned
+    status: implemented
   FR-010:
     text: El owner MUST poder gestionar usuarios siempre, con independencia de sus grupos.
     tasks:
@@ -180,7 +180,7 @@ requirements:
     - T021
     - T022
     bugs: []
-    status: planned
+    status: implemented
   FR-011:
     text: 'La restricción MUST NOT ampliar ningún permiso respecto a upstream: una acción que Dokploy rechaza hoy
       (por ejemplo, que un admin cambie el rol de otro admin por la interfaz) MUST seguir rechazándose también para
@@ -191,7 +191,7 @@ requirements:
     - T021
     - T022
     bugs: []
-    status: planned
+    status: implemented
   FR-012:
     text: El sistema MUST registrar en los eventos del SSO (los que el owner ya consulta en la pantalla de SSO)
       cada intento rechazado de gestión de usuarios, con quién lo intentó, la acción y el usuario afectado cuando
@@ -212,7 +212,7 @@ requirements:
     - T020
     - T027
     bugs: []
-    status: planned
+    status: implemented
   FR-013:
     text: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
     tasks:
@@ -223,7 +223,7 @@ requirements:
     - T029
     - T030
     bugs: []
-    status: planned
+    status: in_progress
   FR-014:
     text: Cuando el grupo de gestión de usuarios está configurado, un admin que nunca ha entrado por SSO MUST NOT
       poder gestionar usuarios hasta que un login por SSO confirme que pertenece al grupo. El owner queda exento
@@ -237,7 +237,7 @@ requirements:
     - T007
     - T008
     bugs: []
-    status: planned
+    status: implemented
   FR-015:
     text: El permiso de gestión de usuarios de un admin MUST caducar 8 horas después de su último login por SSO.
       Pasado ese plazo, el sistema MUST rechazar las acciones de gestión con un mensaje que pida volver a iniciar
@@ -255,7 +255,7 @@ requirements:
     - T022
     - T027
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-001:
     text: Con el grupo de gestión de usuarios sin configurar o el SSO inactivo, la funcionalidad MUST NOT añadir
       consultas ni más de 1 ms (p95) a ninguna petición.
@@ -272,7 +272,7 @@ requirements:
     - T016
     - T026
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-002:
     text: Con el grupo configurado, la comprobación MUST añadir como máximo 20 ms (p95) a cada acción de gestión
       de usuarios y MUST NOT añadir consultas al resto de peticiones.
@@ -286,7 +286,7 @@ requirements:
     - T012
     - T026
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-001:
     text: Cualquier error al comprobar el permiso (configuración ilegible, fallo de base de datos, sesión sin organización)
       MUST resolverse denegando la acción de gestión.
@@ -303,7 +303,7 @@ requirements:
     - T012
     - T029
     bugs: []
-    status: planned
+    status: implemented
 success_criteria:
   SC-001:
     text: El 100 % de las acciones de gestión de usuarios de FR-004 intentadas por un lead se rechazan, tanto desde
