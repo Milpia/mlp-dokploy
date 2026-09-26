@@ -20,7 +20,7 @@ En cualquier modo del SSO (desde la enmienda del 2026-09-26) y con `Origin` (o, 
 | `/sign-in/email` | otro email | se registra una vez `emergency_login` / `denied` / `not_owner` con `emergency_origin = true` y la petición sigue sin sustituir: la rechaza better-auth (403 `INVALID_ORIGIN`) o, en SSO-only y sin cookies, la guarda de SSO-only (403 «Single sign-on is required»), que no vuelve a registrarla |
 | `/two-factor/verify-totp`, `/two-factor/verify-backup-code` | ninguna | se procesa como si viniera del origen público; la cookie firmada `two_factor` sigue siendo obligatoria |
 | `/sign-out` | ninguna | se procesa como si viniera del origen público |
-| `/oidc/sign-out` | ninguna | se procesa como si viniera del origen público; cierra solo la sesión local y responde `{ "url": "/" }`, sin pasar por el proveedor |
+| `/oidc/sign-out` | ninguna | se procesa como si viniera del origen público; cierra solo la sesión local y responde `{ "url": "/?emergency=1" }`, el login de emergencia, sin pasar por el proveedor (MIL-504: `/` redirigía al proveedor en SSO-only) |
 | cualquier otra | — | intacta |
 
 La cabecera interna `x-oidc-sso-emergency-origin` se borra siempre de las peticiones que llegan de

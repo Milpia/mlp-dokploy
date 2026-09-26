@@ -72,6 +72,18 @@ const isSsoOnly = async (deps: SsoEndpointDeps) => {
 	return config.active && config.mode === "sso-only";
 };
 
+/** better-auth's origin and CSRF refusals, told apart from a bad password (MIL-506). */
+const ORIGIN_ERROR_CODES = new Set([
+	"INVALID_ORIGIN",
+	"MISSING_OR_NULL_ORIGIN",
+	"CROSS_SITE_NAVIGATION_LOGIN_BLOCKED",
+]);
+
+const failureReason = (returned: APIError) =>
+	ORIGIN_ERROR_CODES.has(String((returned.body as { code?: unknown })?.code))
+		? "invalid_origin"
+		: "invalid_credentials";
+
 const emailFromBody = (body: unknown) =>
 	typeof (body as { email?: unknown } | null)?.email === "string"
 		? ((body as { email: string }).email.trim().toLowerCase() as string)
@@ -120,23 +132,26 @@ export const createSsoOnlyGuard = (resolveDeps: () => SsoEndpointDeps) => ({
 			matcher: (ctx: { path?: string }) => ctx.path === "/sign-in/email",
 			handler: createAuthMiddleware(async (ctx) => {
 				const deps = resolveDeps();
-				if (!(await isSsoOnly(deps))) return;
+				// Only the plugin's onRequest can set this header (spec 003). The
+				// tunnel is accepted in every SSO mode, so its logins are recorded in
+				// every mode too (FR-007, MIL-505).
+				const viaEmergencyOrigin =
+					ctx.request?.headers.get(EMERGENCY_ORIGIN_HEADER) === "1";
+				if (!viaEmergencyOrigin && !(await isSsoOnly(deps))) return;
 				// Non-owner attempts were rejected (and recorded) by the before hook.
 				const email = emailFromBody(ctx.body);
 				const ownerEmail = (await deps.findOwnerEmail())?.toLowerCase();
 				if (!email || email !== ownerEmail) return;
 
-				const failed = ctx.context.returned instanceof APIError;
+				const returned = ctx.context.returned;
+				const failed = returned instanceof APIError;
 				const ip = ctx.request
 					? getIp(ctx.request, ctx.context.options)
 					: undefined;
-				// Only the plugin's onRequest can set this header (spec 003).
-				const viaEmergencyOrigin =
-					ctx.request?.headers.get(EMERGENCY_ORIGIN_HEADER) === "1";
 				await deps.services.events.record({
 					type: "emergency_login",
 					outcome: failed ? "denied" : "success",
-					reason: failed ? "invalid_credentials" : "password_verified",
+					reason: failed ? failureReason(returned) : "password_verified",
 					correlationId: newCorrelationId(),
 					email,
 					...(ip ? { ip } : {}),

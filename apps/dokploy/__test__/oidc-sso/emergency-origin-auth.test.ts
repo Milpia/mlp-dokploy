@@ -395,7 +395,7 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 		);
 
 		it.each(["sso-only", "button"] as const)(
-			"FR-009/MIL-495: in %s mode the menu sign-out ends the tunnel session without the provider",
+			"FR-009/MIL-495/MIL-504: in %s mode the menu sign-out ends the tunnel session and returns to the emergency login",
 			async (mode) => {
 				await setMode(mode);
 				const signIn = await post(ctx, "/sign-in/email", {
@@ -410,7 +410,8 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 					{ cookie: `${FOREIGN_COOKIE}; ${cookiesFrom(signIn)}` },
 				);
 				expect(signOut.status).toBe(200);
-				expect(await signOut.json()).toEqual({ url: "/" });
+				// "/" alone would bounce to the provider in sso-only (MIL-504).
+				expect(await signOut.json()).toEqual({ url: "/?emergency=1" });
 				expect(ctx.memory.session.some((s) => s.token === token)).toBe(false);
 				expect(
 					ctx.deps.services.oidc.buildEndSessionUrl,
@@ -451,5 +452,80 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 				]);
 			},
 		);
+	});
+
+	describe("lab round 2 (MIL-505, MIL-506)", () => {
+		let ctx: Ctx;
+
+		beforeEach(async () => {
+			ctx = setup(TUNNEL);
+			await signUp(ctx, OWNER);
+		});
+
+		const emergencyEvents = () =>
+			ctx.recorded.filter((event) => event.type === "emergency_login");
+
+		it.each(["button", "disabled"] as const)(
+			"FR-007/MIL-505: in %s mode each owner login through the tunnel is recorded once",
+			async (mode) => {
+				await ctx.repository.save({ mode });
+				ctx.services.config.invalidate();
+				const failed = await post(ctx, "/sign-in/email", {
+					email: OWNER,
+					password: "wrong password for the owner",
+				});
+				expect(failed.status).toBe(401);
+				const passed = await post(ctx, "/sign-in/email", {
+					email: OWNER,
+					password: PASSWORD,
+				});
+				expect(passed.status).toBe(200);
+				expect(emergencyEvents()).toEqual([
+					expect.objectContaining({
+						outcome: "denied",
+						reason: "invalid_credentials",
+						emergencyOrigin: true,
+					}),
+					expect.objectContaining({
+						outcome: "success",
+						emergencyOrigin: true,
+					}),
+				]);
+			},
+		);
+
+		it("FR-013/MIL-506: an owner login rejected for its origin is recorded as invalid_origin", async () => {
+			await enableSsoOnly(ctx);
+			const response = await post(
+				ctx,
+				"/sign-in/email",
+				{ email: OWNER, password: PASSWORD },
+				{ origin: "http://evil.example.test", cookie: "" },
+			);
+			expect(response.status).toBe(403);
+			expect(await response.json()).toMatchObject({ code: "INVALID_ORIGIN" });
+			expect(emergencyEvents()).toEqual([
+				expect.objectContaining({
+					outcome: "denied",
+					reason: "invalid_origin",
+				}),
+			]);
+		});
+
+		it("FR-013: a wrong owner password from the public origin is still invalid_credentials", async () => {
+			await enableSsoOnly(ctx);
+			await post(
+				ctx,
+				"/sign-in/email",
+				{ email: OWNER, password: "wrong password for the owner" },
+				{ origin: BASE },
+			);
+			expect(emergencyEvents()).toEqual([
+				expect.objectContaining({
+					outcome: "denied",
+					reason: "invalid_credentials",
+				}),
+			]);
+		});
 	});
 });

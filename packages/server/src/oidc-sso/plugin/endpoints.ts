@@ -181,9 +181,10 @@ export const createSsoEndpoints = (resolveDeps: () => SsoEndpointDeps) => ({
 				await ctx.context.internalAdapter.deleteSession(session.session.token);
 			}
 			deleteSessionCookie(ctx);
-			// Through the tunnel the provider is down: end only the local session (MIL-495).
+			// Through the tunnel the provider is down: end only the local session
+			// (MIL-495). Plain "/" would bounce straight to it in sso-only (MIL-504).
 			if (ctx.request?.headers.get(EMERGENCY_ORIGIN_HEADER) === "1") {
-				return ctx.json({ url: "/" });
+				return ctx.json({ url: "/?emergency=1" });
 			}
 			const origin = new URL(ctx.context.baseURL).origin;
 			const url = await resolveSignOutTarget(deps, {

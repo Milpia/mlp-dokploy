@@ -126,7 +126,7 @@ requirements:
     bugs:
     - MIL-497
     - MIL-505
-    status: at_risk
+    status: implemented
   FR-008:
     text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
     tasks:
@@ -154,7 +154,7 @@ requirements:
     bugs:
     - MIL-495
     - MIL-504
-    status: at_risk
+    status: implemented
   NFR-PERF-001:
     text: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna
       petición.
@@ -514,16 +514,18 @@ bugs:
   - FR-009
   breaks: []
   detected_in: MIL-495
-  regression_test: null
-  status: open
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-009/MIL-495/MIL-504: in %s
+    mode the menu sign-out ends the tunnel session and returns to the emergency login'
+  status: closed
 - jira: MIL-505
   summary: En modo Button o Disabled, los logins del owner por el túnel no quedan registrados
   violates:
   - FR-007
   breaks: []
   detected_in: MIL-496
-  regression_test: null
-  status: open
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-007/MIL-505: in %s mode each
+    owner login through the tunnel is recorded once'
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []

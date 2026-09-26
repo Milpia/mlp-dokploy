@@ -513,7 +513,7 @@ requirements:
     - 7def99db9
     bugs:
     - MIL-506
-    status: at_risk
+    status: implemented
   FR-014:
     text: El owner MUST poder comprobar la conexión con Keycloak antes de guardarla y recibir un motivo
       concreto cuando falla.
@@ -1754,7 +1754,9 @@ bugs:
   - FR-013
   breaks: []
   detected_in: null
-  regression_test: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-013/MIL-506: an owner login
+    rejected for its origin is recorded as invalid_origin'
+  status: closed
 - jira: MIL-507
   summary: Eventos de error de SSO desde el origen público durante el corte del proveedor
   violates: []
