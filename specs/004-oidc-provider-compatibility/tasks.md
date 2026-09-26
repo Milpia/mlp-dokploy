@@ -178,7 +178,7 @@ description: "Task list for 004-oidc-provider-compatibility"
 ### Implementation for User Story 3
 
 - [X] T021 [US3] Extend `exchangeCode` in `packages/server/src/oidc-sso/oidc/client.ts` to pass T020. Fetch userinfo once when any of the groups claim, `email` or `email_verified` is missing from the ID token, and fill only the missing ones. Map `openid-client`'s subject-mismatch error to `SsoLoginError("sso_invalid_response", ...)` (FR-005).
-- [ ] T022 [P] [US3] Add Auth0 and FusionAuth to `apps/dokploy/components/dashboard/settings/oidc-sso/provider-presets.ts` (FR-003, research R2):
+- [X] T022 [P] [US3] Add Auth0 and FusionAuth to `apps/dokploy/components/dashboard/settings/oidc-sso/provider-presets.ts` (FR-003, research R2):
   - Auth0: issuer `https://<tenant>.auth0.com/`, groups claim `https://dokploy/groups`, no extra scopes, and a hint about the Post-Login Action;
   - FusionAuth: issuer `https://<host>`, groups claim `roles`, extra scope `email`, and a hint about application roles granted through groups.
   
