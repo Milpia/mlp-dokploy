@@ -55,29 +55,35 @@ Lo común a todos:
 
 ### Okta
 
-- **Issuer:** `https://<org>.okta.com` (authorization server de la organización) o
-  `https://<org>.okta.com/oauth2/default` (uno propio).
+- **Issuer:** `https://<org>.okta.com/oauth2/default`, el authorization server `default`. Es la
+  dirección de la organización **sin `-admin`**: la de la consola de administración no coincide con
+  el issuer y Dokploy la rechaza. El servidor de la organización (`https://<org>.okta.com`) también
+  funciona, pero su claim de grupos solo se configura en la consola.
 - **Aplicación:** *OIDC – Web Application*, grant *Authorization Code*, con las URIs de arriba y
-  asignada a los grupos que deban entrar.
-- **Grupos:** añade un claim `groups` al ID token con filtro, p. ej., *Matches regex* `.*`. Scopes
-  adicionales: `groups`.
-- **Política de acceso:** si la política de la aplicación exige MFA, se aplica en Okta; Dokploy no
-  interviene.
+  asignada a los usuarios o grupos que deban entrar.
+- **Grupos:** en Security › API › Authorization Servers › `default` › **Claims**, añade el claim
+  `groups` de tipo *ID Token*, valor *Groups*, filtro *Matches regex* `.*` e *Include in any scope*.
+  Scopes adicionales: ninguno.
+- **Access Policies** del servidor `default`: una política que incluya este cliente con una regla
+  que permita *Authorization Code*. Sin ella, Okta responde «You are not allowed to access this app».
+- **MFA:** las organizaciones nuevas exigen Okta Verify al inscribirse. Es una política de Okta:
+  Dokploy no interviene, y el login funciona igual con MFA.
 - **Logout:** sí (con `id_token_hint`).
-- **Limitación:** no verificado todavía, a falta de un tenant de pruebas (ver la matriz).
 
 ### Auth0
 
-- **Issuer:** `https://<tenant>.auth0.com/`, con la barra final.
+- **Issuer:** `https://<tenant>.auth0.com/` (o el dominio regional, p. ej. `.us.auth0.com`), con la
+  barra final.
 - **Aplicación:** *Regular Web Application*, con *Allowed Callback URLs* y *Allowed Logout URLs*
   con las URIs de arriba.
 - **Grupos:** Auth0 no tiene claim de grupos. Crea roles con los nombres que quieras usar como
   grupos y una **Action Post-Login** que los copie a un claim con namespace:
   `api.idToken.setCustomClaim("https://dokploy/groups", event.authorization.roles)`.
   Claim de grupos en Dokploy: `https://dokploy/groups`. Scopes adicionales: ninguno.
-- **Logout:** solo si el tenant tiene activado el logout RP-initiated. Si no, Dokploy muestra su
-  pantalla de «sesión cerrada».
-- **Limitación:** no verificado todavía, a falta de un tenant de pruebas (ver la matriz).
+- **Tras desplegar o enlazar la Action**, Auth0 tarda unos segundos en aplicarla: los logins de ese
+  intervalo llegan sin grupos.
+- **Logout:** sí con el logout RP-initiated del tenant activado. Si no, Dokploy muestra su pantalla
+  de «sesión cerrada».
 
 ### Authentik
 

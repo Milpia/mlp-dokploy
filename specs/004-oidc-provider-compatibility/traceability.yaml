@@ -34,7 +34,7 @@ requirements:
     - MIL-490
     - MIL-492
     bugs: []
-    status: in_progress
+    status: implemented
     local_tasks:
     - T010
     - T011
