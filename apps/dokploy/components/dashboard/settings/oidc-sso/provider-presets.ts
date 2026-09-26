@@ -40,7 +40,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
 		groupsClaim: "groups",
 		extraScopes: "",
 		groupsHint:
-			'Use an OAuth2/OpenID provider with the default profile scope mapping, which includes the user\'s groups in the "groups" claim.',
+			'Use an OAuth2/OpenID provider with the default profile scope mapping, which includes the user\'s groups in the "groups" claim. Allow the authorization_code grant, and add an "email" scope mapping that returns email_verified: True (Authentik sends false by default).',
 	},
 	{
 		id: "zitadel",
@@ -52,13 +52,31 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
 			'Zitadel sends project roles instead of groups: enable "Assert Roles on Authentication" on the project and use role keys as the access and admin groups.',
 	},
 	{
+		id: "auth0",
+		label: "Auth0",
+		issuerPlaceholder: "https://<tenant>.auth0.com/",
+		groupsClaim: "https://dokploy/groups",
+		extraScopes: "",
+		groupsHint:
+			"Auth0 has no groups claim: add a Post-Login Action that copies event.authorization.roles into a namespaced ID token claim (for example, https://dokploy/groups), and use role names as the access and admin groups.",
+	},
+	{
+		id: "fusionauth",
+		label: "FusionAuth",
+		issuerPlaceholder: "https://fusionauth.example.com",
+		groupsClaim: "roles",
+		extraScopes: "email",
+		groupsHint:
+			'Create application roles named like your groups and grant them through FusionAuth groups. Set the tenant issuer to this URL, and the application\'s scope handling policy to "Compatibility" so roles reach the ID token.',
+	},
+	{
 		id: "authelia",
 		label: "Authelia",
 		issuerPlaceholder: "https://auth.example.com",
 		groupsClaim: "groups",
 		extraScopes: "groups",
 		groupsHint:
-			'Allow the groups scope on the client. Authelia has no logout endpoint: in SSO-only mode, signing out shows a "signed out" screen instead of ending the Authelia session.',
+			'Allow the groups scope on the client. Groups and email_verified may arrive only through userinfo, which Dokploy reads when they are missing from the ID token. Authelia has no logout endpoint: in SSO-only mode, signing out shows a "signed out" screen instead of ending the Authelia session.',
 	},
 	{
 		id: "generic",

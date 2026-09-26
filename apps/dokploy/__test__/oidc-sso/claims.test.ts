@@ -137,3 +137,21 @@ describe("group matching", () => {
 		expect(isInGroup(["/"], "/")).toBe(false);
 	});
 });
+
+describe("spec 004 FR-006: groups claim names are literal", () => {
+	it.each(["https://dokploy/groups", "urn:example:groups.v1"])(
+		"reads %s as a plain key, never as a path",
+		(claim) => {
+			const identity = extractIdentity(
+				{
+					sub: "s",
+					[claim]: ["dokploy-users"],
+					https: { "//dokploy/groups": ["wrong"] },
+					urn: { example: ["wrong"] },
+				},
+				claim,
+			);
+			expect(identity.groups).toEqual(["dokploy-users"]);
+		},
+	);
+});

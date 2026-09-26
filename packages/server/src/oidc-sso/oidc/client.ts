@@ -73,13 +73,46 @@ type OpenIdLib = Pick<
 	| "buildEndSessionUrl"
 	| "fetchUserInfo"
 	| "genericGrantRequest"
+	| "tokenRevocation"
 	| "randomPKCECodeVerifier"
 	| "calculatePKCECodeChallenge"
 	| "randomState"
 	| "randomNonce"
 	| "allowInsecureRequests"
 	| "ClientSecretPost"
+	| "ClientSecretBasic"
 >;
+
+/**
+ * A failed client check, or null when the refusal came after the client was
+ * authenticated (invalid_grant, unsupported_token_type...), which means the
+ * credentials are valid.
+ */
+const credentialFailure = (error: unknown): TestResult | null => {
+	const oauthError = (error as { error?: string }).error;
+	const status = (error as { status?: number }).status;
+	if (
+		oauthError === "invalid_client" ||
+		oauthError === "unauthorized_client" ||
+		status === 401
+	) {
+		return {
+			ok: false,
+			code: "invalid_client",
+			message: "The identity provider rejected the client ID or secret.",
+		};
+	}
+	const network = isNetworkFailure(error);
+	if (network) {
+		return {
+			ok: false,
+			code: network,
+			message:
+				"The identity provider stopped answering while checking the client.",
+		};
+	}
+	return null;
+};
 
 const REQUEST_TIMEOUT_SECONDS = 5;
 const CONNECTION_TEST_CODE = "dokploy-connection-test";
@@ -189,30 +222,63 @@ const assertTransportAllowed = (settings: OidcSettings): URL => {
 export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 	const configurations = new Map<string, Promise<openid.Configuration>>();
 
+	const discoverWith = (
+		settings: OidcSettings,
+		clientAuth: openid.ClientAuth,
+	): Promise<openid.Configuration> => {
+		const issuer = assertTransportAllowed(settings);
+		return lib.discovery(issuer, settings.clientId, undefined, clientAuth, {
+			timeout: REQUEST_TIMEOUT_SECONDS,
+			...(settings.allowInsecureHttp && issuer.protocol === "http:"
+				? { execute: [lib.allowInsecureRequests] }
+				: {}),
+		});
+	};
+
+	/**
+	 * Revokes a made-up token (RFC 7009 §2.1): client authentication is
+	 * required and nothing changes. Some servers accept only Basic there
+	 * (Authelia by default), and RFC 6749 §2.3.1 makes Basic the method every
+	 * server supports, so a refusal with POST is retried with Basic.
+	 */
+	const checkByRevocation = async (
+		config: openid.Configuration,
+		settings: OidcSettings,
+	): Promise<TestResult | null> => {
+		try {
+			await lib.tokenRevocation(config, CONNECTION_TEST_CODE);
+			return null;
+		} catch (error) {
+			const failure = credentialFailure(error);
+			if (!failure || failure.ok || failure.code !== "invalid_client") {
+				return failure;
+			}
+		}
+		try {
+			const basic = await discoverWith(
+				settings,
+				lib.ClientSecretBasic(settings.clientSecret),
+			);
+			await lib.tokenRevocation(basic, CONNECTION_TEST_CODE);
+			return null;
+		} catch (error) {
+			return credentialFailure(error);
+		}
+	};
+
 	const discover = (settings: OidcSettings): Promise<openid.Configuration> => {
 		const key = fingerprint(settings);
 		const cached = configurations.get(key);
 		if (cached) return cached;
 
-		const issuer = assertTransportAllowed(settings);
-		const pending = lib
-			.discovery(
-				issuer,
-				settings.clientId,
-				undefined,
-				lib.ClientSecretPost(settings.clientSecret),
-				{
-					timeout: REQUEST_TIMEOUT_SECONDS,
-					...(settings.allowInsecureHttp && issuer.protocol === "http:"
-						? { execute: [lib.allowInsecureRequests] }
-						: {}),
-				},
-			)
-			.then((config) => {
-				(config as unknown as Record<symbol, number>)[openid.clockTolerance] =
-					CLOCK_TOLERANCE_SECONDS;
-				return config;
-			});
+		const pending = discoverWith(
+			settings,
+			lib.ClientSecretPost(settings.clientSecret),
+		).then((config) => {
+			(config as unknown as Record<symbol, number>)[openid.clockTolerance] =
+				CLOCK_TOLERANCE_SECONDS;
+			return config;
+		});
 		// Only one configuration is ever live; old fingerprints are dropped so
 		// a rotated secret does not linger in memory.
 		configurations.clear();
@@ -263,17 +329,41 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 			}
 			const claims: Record<string, unknown> = { ...idTokenClaims };
 
-			// Some providers only expose groups through userinfo (e.g. Keycloak
-			// with the mapper's "Add to ID token" switch off).
+			// Some providers only put groups, email or email_verified in userinfo
+			// (Authelia by default, Keycloak with "Add to ID token" off). Fetch it
+			// once, only when one is missing, and fill only the missing ones: the
+			// signed ID token always wins (spec 004 FR-005, NFR-PERF-001).
 			const groupsClaim = input.groupsClaim ?? "groups";
-			if (claims[groupsClaim] === undefined && tokens.access_token) {
-				const userInfo = await lib.fetchUserInfo(
-					config,
-					tokens.access_token,
-					idTokenClaims.sub,
-				);
-				if (userInfo[groupsClaim] !== undefined) {
-					claims[groupsClaim] = userInfo[groupsClaim];
+			const missing = [groupsClaim, "email", "email_verified"].filter(
+				(name) => claims[name] === undefined,
+			);
+			if (missing.length > 0 && tokens.access_token) {
+				let userInfo: Record<string, unknown>;
+				try {
+					// openid-client checks that userinfo's sub matches the ID token's.
+					userInfo = await lib.fetchUserInfo(
+						config,
+						tokens.access_token,
+						idTokenClaims.sub,
+					);
+				} catch (error) {
+					if (isNetworkFailure(error)) throw error;
+					throw new SsoLoginError(
+						"sso_invalid_response",
+						"The identity provider returned invalid user information",
+					);
+				}
+				for (const name of missing) {
+					if (userInfo[name] !== undefined) claims[name] = userInfo[name];
+				}
+				// email_verified from userinfo only vouches for userinfo's own email.
+				if (
+					missing.includes("email_verified") &&
+					!missing.includes("email") &&
+					String(userInfo.email ?? "").toLowerCase() !==
+						String(claims.email ?? "").toLowerCase()
+				) {
+					delete claims.email_verified;
 				}
 			}
 			return { claims, idToken: tokens.id_token };
@@ -351,6 +441,15 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 				};
 			}
 
+			// Revoking a made-up token (RFC 7009 §2.1) needs client authentication
+			// and changes nothing, so when the provider offers it, it decides.
+			// The code test below is only a fallback: some providers look at the
+			// code before the client and pass a wrong secret, and others reject
+			// its unregistered redirect URI as invalid_client (spec 004 FR-011).
+			if (config.serverMetadata().revocation_endpoint) {
+				const failure = await checkByRevocation(config, settings);
+				return failure ?? { ok: true, issuer: config.serverMetadata().issuer };
+			}
 			// A made-up authorization code: RFC 6749 §4.1.3 has the server
 			// authenticate the client before looking at the code, so bad
 			// credentials fail as invalid_client (Keycloak: unauthorized_client,
@@ -362,30 +461,8 @@ export const createOpenIdClient = (lib: OpenIdLib = openid): OidcClient => {
 					redirect_uri: CONNECTION_TEST_REDIRECT_URI,
 				});
 			} catch (error) {
-				const oauthError = (error as { error?: string }).error;
-				const status = (error as { status?: number }).status;
-				if (
-					oauthError === "invalid_client" ||
-					oauthError === "unauthorized_client" ||
-					status === 401
-				) {
-					return {
-						ok: false,
-						code: "invalid_client",
-						message: "The identity provider rejected the client ID or secret.",
-					};
-				}
-				const network = isNetworkFailure(error);
-				if (network) {
-					return {
-						ok: false,
-						code: network,
-						message:
-							"The identity provider stopped answering while checking the client.",
-					};
-				}
-				// invalid_grant and similar refusals come after client
-				// authentication, so the credentials are valid.
+				const failure = credentialFailure(error);
+				if (failure) return failure;
 			}
 			return { ok: true, issuer: config.serverMetadata().issuer };
 		},

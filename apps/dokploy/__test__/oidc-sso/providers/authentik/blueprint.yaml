@@ -1,0 +1,83 @@
+# Seed for the spec 004 battery: groups, users, an OIDC provider and its application.
+version: 1
+metadata:
+  name: dokploy-e2e
+entries:
+  - model: authentik_core.group
+    id: group-users
+    identifiers: { name: dokploy-users }
+    attrs: { name: dokploy-users }
+  - model: authentik_core.group
+    id: group-admins
+    identifiers: { name: dokploy-admins }
+    attrs: { name: dokploy-admins }
+  - model: authentik_core.group
+    id: group-mgmt
+    identifiers: { name: admins-mgmt }
+    attrs: { name: admins-mgmt }
+
+  - model: authentik_core.user
+    identifiers: { username: member }
+    attrs:
+      name: Mia E2E
+      email: member@e2e.test
+      password: Passw0rd-e2e!
+      groups: [!KeyOf group-users]
+  - model: authentik_core.user
+    identifiers: { username: admin }
+    attrs:
+      name: Ada E2E
+      email: admin@e2e.test
+      password: Passw0rd-e2e!
+      groups: [!KeyOf group-admins]
+  - model: authentik_core.user
+    identifiers: { username: outsider }
+    attrs:
+      name: Otto E2E
+      email: outsider@e2e.test
+      password: Passw0rd-e2e!
+      groups: []
+  - model: authentik_core.user
+    identifiers: { username: manager }
+    attrs:
+      name: Max E2E
+      email: manager@e2e.test
+      password: Passw0rd-e2e!
+      groups: [!KeyOf group-admins, !KeyOf group-mgmt]
+
+  # Authentik reports email_verified: false by default; Dokploy requires it (spec 001 FR-006).
+  - model: authentik_providers_oauth2.scopemapping
+    id: scope-email
+    identifiers: { name: "dokploy-e2e: email" }
+    attrs:
+      name: "dokploy-e2e: email"
+      scope_name: email
+      expression: |
+        return {"email": request.user.email, "email_verified": True}
+
+  - model: authentik_providers_oauth2.oauth2provider
+    id: provider
+    identifiers: { name: dokploy }
+    attrs:
+      name: dokploy
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      client_type: confidential
+      # Since 2025.x each provider lists its allowed grant types explicitly.
+      grant_types: [authorization_code, refresh_token]
+      client_id: dokploy
+      client_secret: dokploy-e2e-secret
+      redirect_uris:
+        - matching_mode: strict
+          url: http://localhost:39000/api/auth/oidc/callback
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-openid]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, goauthentik.io/providers/oauth2/scope-profile]]
+        - !KeyOf scope-email
+
+  - model: authentik_core.application
+    identifiers: { slug: dokploy }
+    attrs:
+      name: Dokploy
+      provider: !KeyOf provider

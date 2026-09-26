@@ -1,0 +1,19 @@
+{
+	"schema": "oidc-compat/v1",
+	"provider": "keycloak",
+	"providerVersion": "26.7.4",
+	"moduleCommit": "f8b772675e4805ce50a10a8f8b4250db65bc8735",
+	"ranAt": "2026-09-26T16:31:25.739Z",
+	"environment": "local",
+	"status": "passed",
+	"scenarios": {
+		"login-provisioning": "passed",
+		"admin-role": "passed",
+		"access-denied": "passed",
+		"role-change": "passed",
+		"sign-out": "passed",
+		"connection-test-ok": "passed",
+		"connection-test-bad": "passed",
+		"user-management-group": "passed"
+	}
+}

@@ -1,0 +1,221 @@
+{
+	"variables": {
+		"apiKey": "dokploy-e2e-fusionauth-api-key-0123456789abcdef",
+		"adminEmail": "admin@fusionauth.e2e.test",
+		"adminPassword": "dokploy-e2e-admin"
+	},
+	"apiKeys": [
+		{
+			"key": "#{apiKey}",
+			"description": "dokploy e2e"
+		}
+	],
+	"requests": [
+		{
+			"method": "POST",
+			"url": "/api/user/registration",
+			"body": {
+				"user": {
+					"email": "#{adminEmail}",
+					"password": "#{adminPassword}"
+				},
+				"registration": {
+					"applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+					"roles": ["admin"]
+				}
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/application/d0c410e2-5e5e-4e2e-9d0c-e2e000000004",
+			"body": {
+				"application": {
+					"name": "Dokploy",
+					"roles": [
+						{
+							"id": "8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0001",
+							"name": "dokploy-users"
+						},
+						{
+							"id": "8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0002",
+							"name": "dokploy-admins"
+						},
+						{
+							"id": "8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0003",
+							"name": "admins-mgmt"
+						}
+					],
+					"oauthConfiguration": {
+						"clientSecret": "dokploy-e2e-secret",
+						"clientAuthenticationPolicy": "Required",
+						"authorizedRedirectURLs": [
+							"http://localhost:39000/api/auth/oidc/callback"
+						],
+						"logoutURL": "http://localhost:39000/",
+						"enabledGrants": ["authorization_code", "refresh_token"],
+						"requireRegistration": true,
+						"scopeHandlingPolicy": "Compatibility"
+					}
+				}
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/5a1c2d3e-0000-4000-8000-000000000001",
+			"body": {
+				"group": {
+					"name": "dokploy-users"
+				},
+				"roleIds": ["8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0001"]
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/5a1c2d3e-0000-4000-8000-000000000002",
+			"body": {
+				"group": {
+					"name": "dokploy-admins"
+				},
+				"roleIds": ["8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0002"]
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/5a1c2d3e-0000-4000-8000-000000000003",
+			"body": {
+				"group": {
+					"name": "admins-mgmt"
+				},
+				"roleIds": ["8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0003"]
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/user/registration/7e6f0000-0000-4000-8000-000000000001",
+			"body": {
+				"user": {
+					"email": "member@e2e.test",
+					"username": "member",
+					"password": "Passw0rd-e2e!",
+					"firstName": "Member",
+					"lastName": "E2E",
+					"verified": true
+				},
+				"registration": {
+					"applicationId": "d0c410e2-5e5e-4e2e-9d0c-e2e000000004"
+				},
+				"skipVerification": true,
+				"skipRegistrationVerification": true
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/member",
+			"body": {
+				"members": {
+					"5a1c2d3e-0000-4000-8000-000000000001": [
+						{
+							"userId": "7e6f0000-0000-4000-8000-000000000001"
+						}
+					]
+				}
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/user/registration/7e6f0000-0000-4000-8000-000000000002",
+			"body": {
+				"user": {
+					"email": "admin@e2e.test",
+					"username": "admin",
+					"password": "Passw0rd-e2e!",
+					"firstName": "Admin",
+					"lastName": "E2E",
+					"verified": true
+				},
+				"registration": {
+					"applicationId": "d0c410e2-5e5e-4e2e-9d0c-e2e000000004"
+				},
+				"skipVerification": true,
+				"skipRegistrationVerification": true
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/member",
+			"body": {
+				"members": {
+					"5a1c2d3e-0000-4000-8000-000000000002": [
+						{
+							"userId": "7e6f0000-0000-4000-8000-000000000002"
+						}
+					]
+				}
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/user/registration/7e6f0000-0000-4000-8000-000000000003",
+			"body": {
+				"user": {
+					"email": "outsider@e2e.test",
+					"username": "outsider",
+					"password": "Passw0rd-e2e!",
+					"firstName": "Outsider",
+					"lastName": "E2E",
+					"verified": true
+				},
+				"registration": {
+					"applicationId": "d0c410e2-5e5e-4e2e-9d0c-e2e000000004"
+				},
+				"skipVerification": true,
+				"skipRegistrationVerification": true
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/user/registration/7e6f0000-0000-4000-8000-000000000004",
+			"body": {
+				"user": {
+					"email": "manager@e2e.test",
+					"username": "manager",
+					"password": "Passw0rd-e2e!",
+					"firstName": "Manager",
+					"lastName": "E2E",
+					"verified": true
+				},
+				"registration": {
+					"applicationId": "d0c410e2-5e5e-4e2e-9d0c-e2e000000004"
+				},
+				"skipVerification": true,
+				"skipRegistrationVerification": true
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/member",
+			"body": {
+				"members": {
+					"5a1c2d3e-0000-4000-8000-000000000002": [
+						{
+							"userId": "7e6f0000-0000-4000-8000-000000000004"
+						}
+					]
+				}
+			}
+		},
+		{
+			"method": "POST",
+			"url": "/api/group/member",
+			"body": {
+				"members": {
+					"5a1c2d3e-0000-4000-8000-000000000003": [
+						{
+							"userId": "7e6f0000-0000-4000-8000-000000000004"
+						}
+					]
+				}
+			}
+		}
+	]
+}

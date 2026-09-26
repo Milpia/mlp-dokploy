@@ -1,0 +1,657 @@
+# Sincronizado con Jira por sdd-jira-backlog (MIL-393 → MIL-474 + 20 Subtasks, MIL-475..MIL-494).
+schema: sdd-jira/v2
+feature:
+  id: 004-oidc-provider-compatibility
+  title: Compatibilidad verificada con siete proveedores OIDC
+  spec: specs/004-oidc-provider-compatibility/spec.md
+  plan: specs/004-oidc-provider-compatibility/plan.md
+  tasks: specs/004-oidc-provider-compatibility/tasks.md
+  branch: 004-oidc-provider-compatibility
+  jira_site: pabelandino.atlassian.net
+  jira_project: MIL
+  master_epic: MIL-393
+  story: MIL-474
+  issue_type: Story
+  task_issue_type: Subtask
+  synced_at: '2026-09-26T16:35:50Z'
+  synced_from_sha: f8b772675e4805ce50a10a8f8b4250db65bc8735
+  spec_digest: sha256:8a8f593713dcaa059cf6aad0d3affcdcd7e49aae8ef167270e896ec58c347260
+links:
+- type: relates
+  issue: MIL-394
+  note: Story de la spec 001, que esta spec extiende
+requirements:
+  FR-001:
+    text: El módulo MUST quedar verificado con Keycloak, Okta, Auth0, Authentik, Zitadel, FusionAuth y Authelia.
+      «Verificado» significa que ese proveedor pasa todos los escenarios de FR-004 contra una instancia real en
+      la versión que registra la matriz (FR-010).
+    tasks:
+    - MIL-479
+    - MIL-480
+    - MIL-482
+    - MIL-488
+    - MIL-489
+    - MIL-490
+    - MIL-492
+    bugs: []
+    status: in_progress
+    local_tasks:
+    - T010
+    - T011
+    - T012
+    - T014
+    - T015
+    - T023
+    - T024
+    - T025
+    - T027
+    - T028
+  FR-002:
+    text: 'La guía de operación MUST incluir una sección por proveedor con estos pasos:'
+    tasks:
+    - MIL-480
+    - MIL-482
+    - MIL-492
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T012
+    - T014
+    - T015
+    - T027
+    - T028
+  FR-003:
+    text: Los presets de la pantalla de SSO (spec 001, FR-024) MUST incluir también Auth0 y FusionAuth.
+    tasks:
+    - MIL-487
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T022
+  FR-004:
+    text: 'Cada proveedor MUST verificarse con la misma batería de escenarios, que son los de US1:'
+    tasks:
+    - MIL-476
+    - MIL-477
+    - MIL-479
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T003
+    - T004
+    - T005
+    - T006
+    - T007
+    - T010
+    - T011
+  FR-005:
+    text: Cuando el token de identidad no incluye el claim de grupos o la verificación del email, el sistema MUST
+      obtenerlos de la información de usuario del proveedor. Si están en los dos sitios, MUST prevalecer el token
+      de identidad. La información de usuario MUST descartarse, y el login denegarse, si su `sub` no coincide con
+      el del token de identidad (OpenID Connect Core §5.3.2).
+    tasks:
+    - MIL-486
+    - MIL-490
+    - MIL-493
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T020
+    - T021
+    - T025
+    - T029
+    - T032
+  FR-006:
+    text: El nombre del claim de grupos MUST admitir cualquier texto, incluidos nombres con forma de URL, puntos,
+      barras y dos puntos, y el sistema MUST tratarlo como un nombre literal, sin interpretarlo como ruta.
+    tasks:
+    - MIL-486
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T020
+    - T021
+    - T032
+  FR-007:
+    text: Las diferencias entre proveedores MUST resolverse con configuración o con reglas genéricas de OIDC, nunca
+      con código dedicado a un proveedor concreto. Si una diferencia no se puede resolver así, MUST documentarse
+      como limitación en la matriz.
+    tasks:
+    - MIL-488
+    - MIL-492
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T023
+    - T027
+    - T028
+  FR-008:
+    text: 'Las verificaciones de Okta y Auth0 MUST ser opt-in:'
+    tasks:
+    - MIL-475
+    - MIL-476
+    - MIL-478
+    - MIL-481
+    - MIL-491
+    - MIL-493
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T001
+    - T002
+    - T003
+    - T004
+    - T005
+    - T008
+    - T009
+    - T013
+    - T026
+    - T029
+  FR-009:
+    text: 'Las verificaciones de los proveedores autoalojables MUST usar instancias efímeras:'
+    tasks:
+    - MIL-475
+    - MIL-478
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T001
+    - T002
+    - T008
+    - T009
+  FR-010:
+    text: 'MUST existir una matriz de compatibilidad junto a la guía de operación. Por proveedor recoge:'
+    tasks:
+    - MIL-483
+    - MIL-485
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T016
+    - T017
+    - T019
+  FR-011:
+    text: La prueba de conexión MUST clasificar las respuestas de cada proveedor de forma que un secreto incorrecto
+      nunca se informe como conexión correcta.
+    tasks:
+    - MIL-477
+    - MIL-489
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T006
+    - T007
+    - T024
+  FR-012:
+    text: La spec 001 MUST remitir a esta spec para la lista de proveedores verificados, sin cambiar su propio alcance.
+    tasks:
+    - MIL-485
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T019
+  FR-013:
+    text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
+    tasks:
+    - MIL-475
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T001
+    - T002
+  FR-014:
+    text: Cada verificación MUST guardar sus resultados en un archivo versionado con proveedor, versión, fecha y
+      resultado por escenario. La tabla de la matriz MUST generarse desde esos archivos con un comando, sin editarse
+      a mano. Las limitaciones conocidas son la única parte que se escribe a mano.
+    tasks:
+    - MIL-476
+    - MIL-483
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T003
+    - T004
+    - T005
+    - T016
+    - T017
+  NFR-QA-001:
+    text: La verificación de un proveedor autoalojable, con el arranque de su instancia efímera incluido, MUST terminar
+      en menos de 10 minutos.
+    tasks:
+    - MIL-478
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T008
+    - T009
+  NFR-QA-002:
+    text: Las verificaciones MUST NOT formar parte de la suite por defecto (`pnpm test`). Se lanzan de forma explícita,
+      por proveedor o todas a la vez.
+    tasks:
+    - MIL-477
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T006
+    - T007
+  NFR-QA-003:
+    text: Las verificaciones de los cinco autoalojables MUST ejecutarse en CI una vez por semana y a demanda, y
+      un fallo MUST quedar visible para el equipo. Okta y Auth0 MUST NOT ejecutarse en CI, porque sus credenciales
+      no se guardan en GitHub.
+    tasks:
+    - MIL-484
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T018
+  NFR-SEC-001:
+    text: Los tenants de prueba de Okta y Auth0 MUST dedicarse solo a pruebas, sin usuarios ni datos reales, y sus
+      credenciales MUST poder revocarse sin afectar a ningún entorno de Milpia.
+    tasks:
+    - MIL-481
+    - MIL-491
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T013
+    - T026
+  NFR-PERF-001:
+    text: Leer la información de usuario (FR-005) MUST hacerse solo cuando falten datos en el token, con el mismo
+      tiempo máximo de espera que el resto de llamadas al proveedor. MUST NOT añadir llamadas en los logins cuyo
+      token ya trae los grupos.
+    tasks:
+    - MIL-486
+    bugs: []
+    status: implemented
+    local_tasks:
+    - T020
+    - T021
+    - T032
+success_criteria:
+  SC-001:
+    text: Los 7 proveedores pasan los escenarios de FR-004, o tienen cada limitación documentada en la matriz con
+      su motivo.
+    verified_by:
+    - MIL-482
+    - MIL-492
+  SC-002:
+    text: Un operador que no conoce el módulo configura cualquiera de los 7 proveedores solo con la guía en menos
+      de 30 minutos, hasta que un usuario del grupo de acceso entra.
+    verified_by:
+    - MIL-494
+  SC-003:
+    text: Cualquier verificación de un proveedor autoalojable se repite con un solo comando y termina en menos de
+      10 minutos.
+    verified_by:
+    - MIL-494
+  SC-004:
+    text: En ninguna ejecución de verificación la prueba de conexión da por buena una conexión con secreto incorrecto.
+    verified_by:
+    - MIL-477
+  SC-005:
+    text: Sin credenciales de los tenants SaaS, lanzar todas las verificaciones completa las de los 5 autoalojables
+      e informa de las 2 omitidas.
+    verified_by:
+    - MIL-478
+    - MIL-494
+  SC-006:
+    text: Ningún cambio de esta spec introduce código que nombre a un proveedor concreto fuera de presets, documentación
+      y pruebas.
+    verified_by:
+    - MIL-494
+user_stories:
+- local_id: US1
+  title: El owner conecta Dokploy a su proveedor, sea cual sea de los siete
+  priority: P1
+  requirements:
+  - FR-001
+  - FR-002
+  - FR-004
+  - FR-008
+  - NFR-SEC-001
+  success_criteria:
+  - SC-001
+  tasks:
+  - local_id: T010
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/keycloak/`
+    jira: MIL-479
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/keycloak/
+    requirements:
+    - FR-001
+    - FR-004
+  - local_id: T011
+    title: Run `pnpm --filter=dokploy run e2e:oidc keycloak` until it passes. This validates Phase 2 end to end.
+      Commit `specs/004-oidc-provider-compatibility/results/keyc
+    jira: MIL-479
+    parallel: false
+    paths:
+    - specs/004-oidc-provider-compatibility/results/keycloak.json
+    requirements:
+    - FR-001
+    - FR-004
+  - local_id: T012
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/authentik/`
+    jira: MIL-480
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/authentik/
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T013
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/okta/`
+    jira: MIL-481
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/okta/
+    requirements:
+    - FR-008
+    - NFR-SEC-001
+  - local_id: T014
+    title: 'Update the Keycloak, Authentik and Okta sections of `specs/001-keycloak-sso/operations.md` with every
+      FR-002 item:'
+    jira: MIL-482
+    parallel: false
+    paths:
+    - specs/001-keycloak-sso/operations.md
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T015
+    title: Run `e2e:oidc authentik`, plus `e2e:oidc okta` if credentials are available, and commit their `results/*.json`
+    jira: MIL-482
+    parallel: false
+    paths: []
+    requirements:
+    - FR-001
+    - FR-002
+- local_id: US2
+  title: El equipo sabe con certeza qué está verificado y con qué versión
+  priority: P1
+  requirements:
+  - FR-010
+  - FR-012
+  - FR-014
+  - NFR-QA-003
+  success_criteria: []
+  tasks:
+  - local_id: T016
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/providers/matrix.test.ts` for the generator
+    jira: MIL-483
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/matrix.test.ts
+    requirements:
+    - FR-010
+    - FR-014
+  - local_id: T017
+    title: Implement `apps/dokploy/scripts/oidc-compat-matrix.ts` to pass T016. Create `specs/004-oidc-provider-compatibility/limitations.md`
+      with one section per provider
+    jira: MIL-483
+    parallel: false
+    paths:
+    - apps/dokploy/scripts/oidc-compat-matrix.ts
+    - specs/004-oidc-provider-compatibility/limitations.md
+    requirements:
+    - FR-010
+    - FR-014
+  - local_id: T018
+    title: Create `.github/workflows/milpia-oidc-providers.yml`
+    jira: MIL-484
+    parallel: true
+    paths:
+    - .github/workflows/milpia-oidc-providers.yml
+    requirements:
+    - NFR-QA-003
+  - local_id: T019
+    title: Run `pnpm --filter=dokploy run e2e:oidc:matrix` and commit `specs/004-oidc-provider-compatibility/compatibility.md`.
+      Link it from `specs/001-keycloak-sso/operat
+    jira: MIL-485
+    parallel: false
+    paths:
+    - specs/001-keycloak-sso/operations.md
+    - specs/001-keycloak-sso/spec.md
+    - specs/004-oidc-provider-compatibility/compatibility.md
+    requirements:
+    - FR-010
+    - FR-012
+- local_id: US3
+  title: Los proveedores que entregan los grupos de otra forma funcionan sin código específico
+  priority: P2
+  requirements:
+  - FR-001
+  - FR-002
+  - FR-003
+  - FR-005
+  - FR-006
+  - FR-007
+  - FR-008
+  - FR-011
+  - NFR-PERF-001
+  - NFR-SEC-001
+  success_criteria:
+  - SC-001
+  tasks:
+  - local_id: T020
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/oidc-client.test.ts`
+    jira: MIL-486
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/oidc-client.test.ts
+    requirements:
+    - FR-005
+    - FR-006
+    - NFR-PERF-001
+  - local_id: T021
+    title: Extend `exchangeCode` in `packages/server/src/oidc-sso/oidc/client.ts` to pass T020. Fetch userinfo once
+      when any of the groups claim, `email` or `email_verifie
+    jira: MIL-486
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/oidc/client.ts
+    requirements:
+    - FR-005
+    - FR-006
+    - NFR-PERF-001
+  - local_id: T022
+    title: Add Auth0 and FusionAuth to `apps/dokploy/components/dashboard/settings/oidc-sso/provider-presets.ts`
+    jira: MIL-487
+    parallel: true
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/provider-presets.ts
+    requirements:
+    - FR-003
+  - local_id: T023
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/zitadel/`
+    jira: MIL-488
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/zitadel/
+    requirements:
+    - FR-001
+    - FR-007
+  - local_id: T024
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/fusionauth/`
+    jira: MIL-489
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/fusionauth/
+    requirements:
+    - FR-001
+    - FR-011
+  - local_id: T025
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/authelia/`
+    jira: MIL-490
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/authelia/
+    requirements:
+    - FR-001
+    - FR-005
+  - local_id: T026
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/auth0/`
+    jira: MIL-491
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/auth0/
+    requirements:
+    - FR-008
+    - NFR-SEC-001
+  - local_id: T027
+    title: Add or refresh the Zitadel, FusionAuth, Authelia and Auth0 sections of `specs/001-keycloak-sso/operations.md`
+      with every FR-002 item
+    jira: MIL-492
+    parallel: false
+    paths:
+    - specs/001-keycloak-sso/operations.md
+    requirements:
+    - FR-001
+    - FR-002
+    - FR-007
+  - local_id: T028
+    title: Run `e2e:oidc zitadel`, `fusionauth` and `authelia`, plus `auth0` if credentials are available. Record
+      any limitation in `limitations.md`, regenerate the matrix
+    jira: MIL-492
+    parallel: false
+    paths: []
+    requirements:
+    - FR-001
+    - FR-002
+    - FR-007
+  - local_id: T032
+    title: Write tests for FR-006
+    jira: MIL-486
+    parallel: true
+    paths: []
+    requirements:
+    - FR-005
+    - FR-006
+    - NFR-PERF-001
+phase_tasks:
+- name: Setup
+  tasks:
+  - local_id: T001
+    title: Add `playwright-core` to `apps/dokploy/package.json` devDependencies
+    jira: MIL-475
+    parallel: false
+    paths:
+    - apps/dokploy/package.json
+    requirements:
+    - FR-008
+    - FR-009
+    - FR-013
+  - local_id: T002
+    title: Write `apps/dokploy/__test__/oidc-sso/providers/README.md`
+    jira: MIL-475
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/README.md
+    requirements:
+    - FR-008
+    - FR-009
+    - FR-013
+- name: Foundational
+  tasks:
+  - local_id: T003
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/types.ts` with the `ProviderId`, `ScenarioId`, `VerificationResult`
+    jira: MIL-476
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/types.ts
+    requirements:
+    - FR-004
+    - FR-008
+    - FR-014
+  - local_id: T004
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/providers/results.test.ts` for the results writer
+    jira: MIL-476
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/results.test.ts
+    requirements:
+    - FR-004
+    - FR-008
+    - FR-014
+  - local_id: T005
+    title: Implement `apps/dokploy/__test__/oidc-sso/providers/results.ts`
+    jira: MIL-476
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/results.ts
+    requirements:
+    - FR-004
+    - FR-008
+    - FR-014
+  - local_id: T006
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/harness.ts`. Extract the in-memory Dokploy setup from
+      `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`
+    jira: MIL-477
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts
+    - apps/dokploy/__test__/oidc-sso/providers/harness.ts
+    requirements:
+    - FR-004
+    - FR-011
+    - NFR-QA-002
+  - local_id: T007
+    title: Create `apps/dokploy/__test__/oidc-sso/providers/battery.e2e.test.ts`. It loads the driver for `OIDC_E2E_PROVIDER`,
+      runs the eight scenarios of data-model.md wi
+    jira: MIL-477
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/battery.e2e.test.ts
+    requirements:
+    - FR-004
+    - FR-011
+    - NFR-QA-002
+  - local_id: T008
+    title: Implement the runner `apps/dokploy/scripts/oidc-providers.ts` following `contracts/runner-and-env.md`
+    jira: MIL-478
+    parallel: false
+    paths:
+    - apps/dokploy/scripts/oidc-providers.ts
+    requirements:
+    - FR-008
+    - FR-009
+    - NFR-QA-001
+  - local_id: T009
+    title: Add runner unit tests in `apps/dokploy/__test__/oidc-sso/providers/runner.test.ts`
+    jira: MIL-478
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/providers/runner.test.ts
+    requirements:
+    - FR-008
+    - FR-009
+    - NFR-QA-001
+- name: Polish
+  tasks:
+  - local_id: T029
+    title: Run `/security-review` on the branch. Focus on the userinfo change
+    jira: MIL-493
+    parallel: true
+    paths: []
+    requirements:
+    - FR-005
+    - FR-008
+  - local_id: T030
+    title: Run `pnpm typecheck`, `pnpm --filter=@dokploy/server build`
+    jira: MIL-494
+    parallel: false
+    paths:
+    - packages/server/package.json
+    requirements: []
+  - local_id: T031
+    title: Validate `quickstart.md` sections 1–6
+    jira: MIL-494
+    parallel: false
+    paths: []
+    requirements: []
+bugs: []
+orphans:
+  requirements_without_issue: []
+  tasks_without_requirement: []
+  issues_without_local_id: []

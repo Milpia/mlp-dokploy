@@ -1,0 +1,20 @@
+{
+	"schema": "oidc-compat/v1",
+	"provider": "okta",
+	"providerVersion": "saas",
+	"moduleCommit": "f8b772675e4805ce50a10a8f8b4250db65bc8735",
+	"ranAt": "2026-09-26T16:31:27.463Z",
+	"environment": "local",
+	"status": "skipped",
+	"skippedReason": "faltan: OKTA_E2E_ORG_URL, OKTA_E2E_API_TOKEN, OIDC_E2E_SAAS_PASSWORD",
+	"scenarios": {
+		"login-provisioning": "pending",
+		"admin-role": "pending",
+		"access-denied": "pending",
+		"role-change": "pending",
+		"sign-out": "pending",
+		"connection-test-ok": "pending",
+		"connection-test-bad": "pending",
+		"user-management-group": "pending"
+	}
+}

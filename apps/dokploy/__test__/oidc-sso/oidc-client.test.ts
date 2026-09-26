@@ -33,7 +33,12 @@ const fakeLib = (overrides: Record<string, unknown> = {}) => {
 		authorizationCodeGrant: vi.fn(async () => ({
 			id_token: "id.token.value",
 			access_token: "access",
-			claims: () => ({ sub: "sub-1", email: "a@b.c", groups: ["/g"] }),
+			claims: () => ({
+				sub: "sub-1",
+				email: "a@b.c",
+				email_verified: true,
+				groups: ["/g"],
+			}),
 		})),
 		buildEndSessionUrl: vi.fn(
 			(_config: unknown, params: Record<string, string>) =>
@@ -48,12 +53,14 @@ const fakeLib = (overrides: Record<string, unknown> = {}) => {
 				status: 400,
 			});
 		}),
+		tokenRevocation: vi.fn(async () => undefined),
 		randomPKCECodeVerifier: vi.fn(() => "verifier"),
 		calculatePKCECodeChallenge: vi.fn(async () => "challenge"),
 		randomState: vi.fn(() => "state"),
 		randomNonce: vi.fn(() => "nonce"),
 		allowInsecureRequests: vi.fn(),
 		ClientSecretPost: vi.fn(() => "client-auth"),
+		ClientSecretBasic: vi.fn(() => "client-auth-basic"),
 		...overrides,
 	};
 	return lib;
@@ -243,7 +250,12 @@ describe("createOpenIdClient", () => {
 			{ redirect_uri: "https://x/cb" },
 		);
 		expect(result).toEqual({
-			claims: { sub: "sub-1", email: "a@b.c", groups: ["/g"] },
+			claims: {
+				sub: "sub-1",
+				email: "a@b.c",
+				email_verified: true,
+				groups: ["/g"],
+			},
 			idToken: "id.token.value",
 		});
 		expect(lib.fetchUserInfo).not.toHaveBeenCalled();
@@ -296,6 +308,155 @@ describe("createOpenIdClient", () => {
 			"sub-1",
 		);
 		expect(result.claims.groups).toEqual(["/from-ui"]);
+	});
+
+	describe("spec 004 FR-005: filling missing claims from userinfo", () => {
+		const exchange = (
+			idTokenClaims: Record<string, unknown>,
+			overrides: Record<string, unknown> = {},
+			groupsClaim?: string,
+		) => {
+			const lib = fakeLib({
+				authorizationCodeGrant: vi.fn(async () => ({
+					id_token: "t",
+					access_token: "access",
+					claims: () => ({ sub: "sub-1", ...idTokenClaims }),
+				})),
+				...overrides,
+			});
+			const client = createOpenIdClient(lib as never);
+			return {
+				lib,
+				result: client.exchangeCode(settings, {
+					callbackUrl: new URL("https://x/cb?code=c"),
+					redirectUri: "https://x/cb",
+					state: "s",
+					nonce: "n",
+					codeVerifier: "v",
+					...(groupsClaim ? { groupsClaim } : {}),
+				}),
+			};
+		};
+
+		it("fills email and email_verified from userinfo when the ID token lacks them", async () => {
+			const { result } = exchange(
+				{ groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "ui@example.com",
+						email_verified: true,
+					})),
+				},
+			);
+			await expect(result).resolves.toMatchObject({
+				claims: {
+					email: "ui@example.com",
+					email_verified: true,
+					groups: ["g"],
+				},
+			});
+		});
+
+		it("never overwrites a claim present in the ID token", async () => {
+			const { result } = exchange(
+				{ email: "id@example.com", groups: ["from-id-token"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "ui@example.com",
+						email_verified: true,
+						groups: ["from-userinfo"],
+					})),
+				},
+			);
+			await expect(result).resolves.toMatchObject({
+				claims: { email: "id@example.com", groups: ["from-id-token"] },
+			});
+		});
+
+		it("takes email_verified from userinfo only when it describes the ID token's email", async () => {
+			const other = exchange(
+				{ email: "id@example.com", groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "other@example.com",
+						email_verified: true,
+					})),
+				},
+			);
+			const otherClaims = (await other.result).claims;
+			expect(otherClaims.email).toBe("id@example.com");
+			expect(otherClaims.email_verified).toBeUndefined();
+
+			const same = exchange(
+				{ email: "ID@example.com", groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => ({
+						sub: "sub-1",
+						email: "id@example.com",
+						email_verified: true,
+					})),
+				},
+			);
+			expect((await same.result).claims.email_verified).toBe(true);
+		});
+
+		it("NFR-PERF-001: no userinfo call when the ID token has groups, email and email_verified", async () => {
+			const { lib, result } = exchange({
+				email: "a@b.c",
+				email_verified: true,
+				groups: ["g"],
+			});
+			await result;
+			expect(lib.fetchUserInfo).not.toHaveBeenCalled();
+		});
+
+		it("a userinfo subject that differs from the ID token denies the login", async () => {
+			const { result } = exchange(
+				{ groups: ["g"] },
+				{
+					fetchUserInfo: vi.fn(async () => {
+						throw Object.assign(
+							new Error('unexpected "response" body "sub" property value'),
+							{ code: "OAUTH_JSON_ATTRIBUTE_COMPARISON_FAILED" },
+						);
+					}),
+				},
+			);
+			await expect(result).rejects.toMatchObject({
+				code: "sso_invalid_response",
+			});
+		});
+
+		it("a userinfo timeout is a provider failure, never a login without groups", async () => {
+			const { result } = exchange(
+				{ email: "a@b.c", email_verified: true },
+				{
+					fetchUserInfo: vi.fn(async () => {
+						throw timeoutError();
+					}),
+				},
+			);
+			await expect(result).rejects.toSatisfy(
+				(error: unknown) => mapOidcError(error) === "sso_unavailable",
+			);
+		});
+
+		it("FR-006: fills a URL-named groups claim literally", async () => {
+			const claim = "https://dokploy/groups";
+			const { result } = exchange(
+				{ email: "a@b.c", email_verified: true },
+				{
+					fetchUserInfo: vi.fn(async () => ({ sub: "sub-1", [claim]: ["g"] })),
+				},
+				claim,
+			);
+			await expect(result).resolves.toMatchObject({
+				claims: { [claim]: ["g"] },
+			});
+		});
 	});
 
 	it("fails closed when no ID token is returned", async () => {
@@ -461,6 +622,127 @@ describe("testConnection (FR-014)", () => {
 		await expect(client.testConnection(testSettings)).resolves.toMatchObject({
 			ok: false,
 			code,
+		});
+	});
+
+	describe("spec 004 FR-011: providers that check the code before the client", () => {
+		const withRevocation = (overrides: Record<string, unknown> = {}) =>
+			fakeLib({
+				discovery: vi.fn(async () =>
+					fakeConfig({ revocation_endpoint: `${settings.issuerUrl}/revoke` }),
+				),
+				...overrides,
+			});
+
+		it("a wrong secret rejected by the revocation endpoint is invalid_client even when the code test says invalid_grant", async () => {
+			const lib = withRevocation({
+				tokenRevocation: vi.fn(async () => {
+					throw Object.assign(new Error("x"), {
+						error: "invalid_client",
+						status: 401,
+					});
+				}),
+			});
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: false,
+				code: "invalid_client",
+			});
+			expect(lib.tokenRevocation).toHaveBeenCalledWith(
+				expect.anything(),
+				"dokploy-connection-test",
+			);
+		});
+
+		it("an accepted revocation decides, without the code test (its made-up redirect URI makes some providers answer invalid_client)", async () => {
+			const lib = withRevocation({
+				genericGrantRequest: vi.fn(async () => {
+					throw Object.assign(new Error("x"), {
+						error: "invalid_client",
+						status: 400,
+					});
+				}),
+			});
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: true,
+			});
+			expect(lib.genericGrantRequest).not.toHaveBeenCalled();
+		});
+
+		it("an OAuth refusal after client authentication (unsupported_token_type) counts as valid credentials", async () => {
+			const client = createOpenIdClient(
+				withRevocation({
+					tokenRevocation: vi.fn(async () => {
+						throw Object.assign(new Error("x"), {
+							error: "unsupported_token_type",
+							status: 400,
+						});
+					}),
+				}) as never,
+			);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: true,
+			});
+		});
+
+		it("a revocation timeout is reported as timeout", async () => {
+			const client = createOpenIdClient(
+				withRevocation({
+					tokenRevocation: vi.fn(async () => {
+						throw timeoutError();
+					}),
+				}) as never,
+			);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: false,
+				code: "timeout",
+			});
+		});
+
+		it("a revocation refused with the POST method is retried with Basic, which every server must accept (Authelia)", async () => {
+			const lib = withRevocation({
+				tokenRevocation: vi
+					.fn()
+					.mockRejectedValueOnce(
+						Object.assign(new Error("x"), {
+							error: "invalid_client",
+							status: 401,
+						}),
+					)
+					.mockResolvedValueOnce(undefined),
+			});
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: true,
+			});
+			expect(lib.ClientSecretBasic).toHaveBeenCalledWith("secret");
+			expect(lib.tokenRevocation).toHaveBeenCalledTimes(2);
+		});
+
+		it("a wrong secret refused with both methods is invalid_client", async () => {
+			const refused = () =>
+				Promise.reject(
+					Object.assign(new Error("x"), {
+						error: "invalid_client",
+						status: 401,
+					}),
+				);
+			const lib = withRevocation({ tokenRevocation: vi.fn(refused) });
+			const client = createOpenIdClient(lib as never);
+			await expect(client.testConnection(settings)).resolves.toMatchObject({
+				ok: false,
+				code: "invalid_client",
+			});
+			expect(lib.tokenRevocation).toHaveBeenCalledTimes(2);
+		});
+
+		it("without a revocation endpoint only the code test runs", async () => {
+			const lib = fakeLib();
+			const client = createOpenIdClient(lib as never);
+			await client.testConnection(settings);
+			expect(lib.tokenRevocation).not.toHaveBeenCalled();
+			expect(lib.genericGrantRequest).toHaveBeenCalled();
 		});
 	});
 

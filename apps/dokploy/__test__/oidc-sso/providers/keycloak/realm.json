@@ -1,0 +1,120 @@
+{
+	"realm": "dokploy-e2e",
+	"enabled": true,
+	"sslRequired": "none",
+	"registrationAllowed": false,
+	"loginWithEmailAllowed": true,
+	"groups": [
+		{
+			"name": "dokploy-users"
+		},
+		{
+			"name": "dokploy-admins"
+		},
+		{
+			"name": "admins-mgmt"
+		}
+	],
+	"clients": [
+		{
+			"clientId": "dokploy",
+			"name": "Dokploy",
+			"enabled": true,
+			"protocol": "openid-connect",
+			"publicClient": false,
+			"clientAuthenticatorType": "client-secret",
+			"secret": "dokploy-e2e-secret",
+			"standardFlowEnabled": true,
+			"implicitFlowEnabled": false,
+			"directAccessGrantsEnabled": false,
+			"serviceAccountsEnabled": false,
+			"redirectUris": ["http://localhost:39000/api/auth/oidc/callback"],
+			"webOrigins": ["http://localhost:39000"],
+			"attributes": {
+				"pkce.code.challenge.method": "S256",
+				"post.logout.redirect.uris": "http://localhost:39000/"
+			},
+			"protocolMappers": [
+				{
+					"name": "groups",
+					"protocol": "openid-connect",
+					"protocolMapper": "oidc-group-membership-mapper",
+					"consentRequired": false,
+					"config": {
+						"claim.name": "groups",
+						"full.path": "false",
+						"id.token.claim": "true",
+						"access.token.claim": "true",
+						"userinfo.token.claim": "true"
+					}
+				}
+			]
+		}
+	],
+	"users": [
+		{
+			"username": "member",
+			"email": "member@e2e.test",
+			"emailVerified": true,
+			"firstName": "Mia",
+			"lastName": "E2E",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd-e2e!",
+					"temporary": false
+				}
+			],
+			"groups": ["/dokploy-users"]
+		},
+		{
+			"username": "admin",
+			"email": "admin@e2e.test",
+			"emailVerified": true,
+			"firstName": "Ada",
+			"lastName": "E2E",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd-e2e!",
+					"temporary": false
+				}
+			],
+			"groups": ["/dokploy-admins"]
+		},
+		{
+			"username": "outsider",
+			"email": "outsider@e2e.test",
+			"emailVerified": true,
+			"firstName": "Otto",
+			"lastName": "E2E",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd-e2e!",
+					"temporary": false
+				}
+			],
+			"groups": []
+		},
+		{
+			"username": "manager",
+			"email": "manager@e2e.test",
+			"emailVerified": true,
+			"firstName": "Max",
+			"lastName": "E2E",
+			"enabled": true,
+			"credentials": [
+				{
+					"type": "password",
+					"value": "Passw0rd-e2e!",
+					"temporary": false
+				}
+			],
+			"groups": ["/dokploy-admins", "/admins-mgmt"]
+		}
+	]
+}

@@ -38,6 +38,8 @@
 		"docker:push:canary": "./docker/push.sh canary",
 		"version": "echo $(node -p \"require('./package.json').version\")",
 		"test": "vitest --config __test__/vitest.config.ts",
+		"e2e:oidc": "tsx scripts/oidc-providers.ts",
+		"e2e:oidc:matrix": "tsx scripts/oidc-compat-matrix.ts",
 		"generate:openapi": "tsx -r dotenv/config scripts/generate-openapi.ts",
 		"reset-onboarding": "tsx -r dotenv/config scripts/reset-onboarding.ts"
 	},
@@ -179,6 +181,7 @@
 		"esbuild": "0.20.2",
 		"lint-staged": "^15.5.2",
 		"memfs": "^4.17.2",
+		"playwright-core": "1.63.0",
 		"simple-icons": "^16.14.0",
 		"tailwindcss": "^4.3.1",
 		"tsx": "^4.22.4",

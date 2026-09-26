@@ -1,0 +1,54 @@
+# Milpia: verifies the oidc-sso module against the self-hosted OIDC providers
+# every week and on demand (spec 004, NFR-QA-003; Jira MIL-484).
+# Okta and Auth0 are never run here: their credentials are not stored in GitHub.
+name: Milpia OIDC providers
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # Never runs in upstream or in other forks that pull this file in.
+    if: github.repository == 'Milpia/mlp-dokploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [keycloak, authentik, zitadel, fusionauth, authelia]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24.4.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm --filter=dokploy exec playwright-core install --with-deps chromium
+
+      - name: Verify ${{ matrix.provider }}
+        run: pnpm --filter=dokploy run e2e:oidc ${{ matrix.provider }}
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: oidc-result-${{ matrix.provider }}
+          path: specs/004-oidc-provider-compatibility/results/${{ matrix.provider }}.json
+          if-no-files-found: warn

@@ -1,0 +1,44 @@
+# Ephemeral Authentik for the spec 004 battery. Test values only (see ../README.md).
+x-authentik-env: &authentik-env
+  AUTHENTIK_SECRET_KEY: dokploy-e2e-authentik-secret-key-for-tests-only-0123456789
+  AUTHENTIK_POSTGRESQL__HOST: postgresql
+  AUTHENTIK_POSTGRESQL__USER: authentik
+  AUTHENTIK_POSTGRESQL__NAME: authentik
+  AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+  AUTHENTIK_BOOTSTRAP_EMAIL: akadmin@e2e.test
+  AUTHENTIK_BOOTSTRAP_PASSWORD: dokploy-e2e-akadmin
+  AUTHENTIK_BOOTSTRAP_TOKEN: dokploy-e2e-authentik-api-token
+  AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+  AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: authentik
+      POSTGRES_DB: authentik
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authentik"]
+      interval: 2s
+      retries: 30
+  server:
+    image: ghcr.io/goauthentik/server:2026.8.3
+    command: server
+    environment: *authentik-env
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - ./blueprint.yaml:/blueprints/custom/dokploy-e2e.yaml:ro
+    depends_on:
+      postgresql:
+        condition: service_healthy
+  worker:
+    image: ghcr.io/goauthentik/server:2026.8.3
+    command: worker
+    environment: *authentik-env
+    volumes:
+      - ./blueprint.yaml:/blueprints/custom/dokploy-e2e.yaml:ro
+    depends_on:
+      postgresql:
+        condition: service_healthy
