@@ -1,6 +1,6 @@
 {
-  "id": "54af75f6-af1e-4afa-a6a0-eb0171ccfa76",
-  "prevId": "464d1a0a-d60d-4275-877e-c7131f4b555d",
+  "id": "883e22a3-6b77-4b93-9f8c-b0ce9f0dcbdb",
+  "prevId": "719d3b27-c42a-41e4-8b5d-b76b7d8de983",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2685,13 +2685,6 @@
         },
         "isolatedDeploymentsVolume": {
           "name": "isolatedDeploymentsVolume",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "pullImages": {
-          "name": "pullImages",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

@@ -14,7 +14,7 @@ feature:
   issue_type: Story
   task_issue_type: Subtask
   synced_at: '2026-09-25T19:35:23Z'
-  synced_from_sha: 1dd63a34d72916a91498ff766d5c14ec5352bb06
+  synced_from_sha: e95577680790386ed12bf6884181d0f998155f1d
   spec_digest: sha256:3cc8710519c93b7a0dedf7f4e71ef9819fdc60634ea4081f001296f3edc0459a
 links:
 - type: relates

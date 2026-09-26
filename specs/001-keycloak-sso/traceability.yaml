@@ -16,7 +16,7 @@ feature:
   issue_type: Story
   task_issue_type: Subtask
   synced_at: '2026-09-25T15:36:34Z'
-  synced_from_sha: 39293381af3fa931b30a57ade19d0ff64c79738e
+  synced_from_sha: 6df9585ba8849e40238eaaa8e1956d7338bc3468
   spec_digest: sha256:f11f271e80daf5fdf9055d712b5ffb7ea3ebbae8ecf163c46261083c68c05b34
 requirements:
   FR-001:
@@ -37,9 +37,9 @@ requirements:
     - T034
     - T051
     commits:
-    - 313fd6c04
-    - f520262fa
-    - fea0f9919
+    - f3a4a07bc
+    - a7a01e2ba
+    - 8f9efb579
     bugs: []
     status: implemented
   FR-002:
@@ -51,7 +51,7 @@ requirements:
     - T003
     - T012
     commits:
-    - bf2f2d65b
+    - ddd21bec9
     bugs: []
     status: implemented
   FR-003:
@@ -77,8 +77,8 @@ requirements:
     - T042
     - T046
     commits:
-    - 3fa9429f9
-    - f520262fa
+    - 30e62ad83
+    - a7a01e2ba
     bugs: []
     status: implemented
   FR-004:
@@ -107,8 +107,8 @@ requirements:
     - T044
     - T046
     commits:
-    - 3fa9429f9
-    - 7cfcced32
+    - 30e62ad83
+    - e6c239a0b
     bugs: []
     status: implemented
   FR-005:
@@ -130,7 +130,7 @@ requirements:
     - T031
     - T039
     commits:
-    - a0b2ad3b5
+    - 65f0deadc
     bugs: []
     status: implemented
   FR-006:
@@ -159,8 +159,8 @@ requirements:
     - T031
     - T039
     commits:
-    - 8515e2aef
-    - a0b2ad3b5
+    - 75a7c1450
+    - 65f0deadc
     bugs: []
     status: implemented
   FR-007:
@@ -190,9 +190,9 @@ requirements:
     - T031
     - T039
     commits:
-    - 8515e2aef
-    - a0b2ad3b5
-    - b13660f64
+    - 75a7c1450
+    - 65f0deadc
+    - ea55e00c2
     bugs: []
     status: implemented
   FR-007a:
@@ -210,7 +210,7 @@ requirements:
     - T011
     - T012
     commits:
-    - 8515e2aef
+    - 75a7c1450
     bugs: []
     status: implemented
   FR-007b:
@@ -228,9 +228,9 @@ requirements:
     - T011
     - T012
     commits:
-    - 8515e2aef
-    - a055beec5
-    - b13660f64
+    - 75a7c1450
+    - 0ac9712f0
+    - ea55e00c2
     bugs: []
     status: implemented
   FR-007c:
@@ -243,7 +243,7 @@ requirements:
     - T056
     - T060
     commits:
-    - b45d28970
+    - c26205419
     bugs: []
     status: implemented
   FR-008:
@@ -268,8 +268,8 @@ requirements:
     - T020
     - T032
     commits:
-    - 8515e2aef
-    - a055beec5
+    - 75a7c1450
+    - 0ac9712f0
     bugs: []
     status: implemented
   FR-008a:
@@ -289,7 +289,7 @@ requirements:
     - T031
     - T039
     commits:
-    - a0b2ad3b5
+    - 65f0deadc
     bugs: []
     status: implemented
   FR-008b:
@@ -307,7 +307,7 @@ requirements:
     - T011
     - T012
     commits:
-    - 8515e2aef
+    - 75a7c1450
     bugs: []
     status: implemented
   FR-008c:
@@ -329,7 +329,7 @@ requirements:
     - T042
     - T046
     commits:
-    - 3fa9429f9
+    - 30e62ad83
     bugs: []
     status: implemented
   FR-009:
@@ -349,9 +349,9 @@ requirements:
     - T040
     - T044
     commits:
-    - 7cfcced32
-    - a055beec5
-    - b13660f64
+    - e6c239a0b
+    - 0ac9712f0
+    - ea55e00c2
     bugs: []
     status: implemented
   FR-010:
@@ -384,8 +384,8 @@ requirements:
     - T042
     - T046
     commits:
-    - 3fa9429f9
-    - a0b2ad3b5
+    - 30e62ad83
+    - 65f0deadc
     bugs: []
     status: implemented
   FR-011:
@@ -422,10 +422,10 @@ requirements:
     - T031
     - T039
     commits:
-    - 8515e2aef
-    - a0b2ad3b5
-    - c2280dd31
-    - f520262fa
+    - 75a7c1450
+    - 65f0deadc
+    - 2bcfacb5f
+    - a7a01e2ba
     bugs: []
     status: implemented
   FR-012:
@@ -457,8 +457,8 @@ requirements:
     - T045
     - T046
     commits:
-    - 3fa9429f9
-    - 7cfcced32
+    - 30e62ad83
+    - e6c239a0b
     bugs: []
     status: implemented
   FR-012a:
@@ -470,7 +470,7 @@ requirements:
     - T043
     - T045
     commits:
-    - 0bff09923
+    - 66047aa20
     bugs: []
     status: implemented
   FR-013:
@@ -507,10 +507,10 @@ requirements:
     - T044
     - T052
     commits:
-    - 313fd6c04
-    - 7cfcced32
-    - f520262fa
-    - ff87084df
+    - f3a4a07bc
+    - e6c239a0b
+    - a7a01e2ba
+    - 7def99db9
     bugs: []
     status: implemented
   FR-014:
@@ -532,8 +532,8 @@ requirements:
     - T030
     - T032
     commits:
-    - f520262fa
-    - ff87084df
+    - a7a01e2ba
+    - 7def99db9
     bugs: []
     status: implemented
   FR-015:
@@ -556,9 +556,9 @@ requirements:
     - T030
     - T032
     commits:
-    - 313fd6c04
-    - c2280dd31
-    - f520262fa
+    - f3a4a07bc
+    - 2bcfacb5f
+    - a7a01e2ba
     bugs: []
     status: implemented
   FR-016:
@@ -582,7 +582,7 @@ requirements:
     - T042
     - T046
     commits:
-    - 3fa9429f9
+    - 30e62ad83
     bugs: []
     status: implemented
   FR-017:
@@ -599,7 +599,7 @@ requirements:
     - T024
     - T051
     commits:
-    - c2280dd31
+    - 2bcfacb5f
     bugs: []
     status: implemented
   FR-018:
@@ -617,8 +617,8 @@ requirements:
     - T029
     - T030
     commits:
-    - c2280dd31
-    - f520262fa
+    - 2bcfacb5f
+    - a7a01e2ba
     bugs: []
     status: implemented
   FR-019:
@@ -641,8 +641,8 @@ requirements:
     - T014
     - T015
     commits:
-    - 8515e2aef
-    - c2280dd31
+    - 75a7c1450
+    - 2bcfacb5f
     bugs: []
     status: implemented
   FR-020:
@@ -672,9 +672,9 @@ requirements:
     - T042
     - T046
     commits:
-    - 3fa9429f9
-    - c2280dd31
-    - f520262fa
+    - 30e62ad83
+    - 2bcfacb5f
+    - a7a01e2ba
     bugs: []
     status: implemented
   FR-021:
@@ -686,7 +686,7 @@ requirements:
     - T043
     - T045
     commits:
-    - 0bff09923
+    - 66047aa20
     bugs: []
     status: implemented
   FR-022:
@@ -704,11 +704,11 @@ requirements:
     - T058
     - T059
     commits:
-    - aadd1f0e1
-    - c64c6c6ae
-    - caef68ac7
-    - dd3b790bc
-    - f877a6d42
+    - 4a3d8e19f
+    - f6c732702
+    - 2794aa37f
+    - 283c1e009
+    - 895932d7f
     bugs: []
     status: implemented
   FR-023:
@@ -724,9 +724,9 @@ requirements:
     - T057
     - T060
     commits:
-    - 66da27fd8
-    - aadd1f0e1
-    - dd3b790bc
+    - ac3d771a4
+    - 4a3d8e19f
+    - 283c1e009
     bugs: []
     status: implemented
   FR-023a:
@@ -743,8 +743,8 @@ requirements:
     - T057
     - T060
     commits:
-    - 66da27fd8
-    - b45d28970
+    - ac3d771a4
+    - c26205419
     bugs: []
     status: implemented
   FR-024:
@@ -756,8 +756,8 @@ requirements:
     local_tasks:
     - T057
     commits:
-    - 66da27fd8
-    - aadd1f0e1
+    - ac3d771a4
+    - 4a3d8e19f
     bugs: []
     status: implemented
   FR-025:
@@ -771,8 +771,8 @@ requirements:
     - T056
     - T060
     commits:
-    - aadd1f0e1
-    - b45d28970
+    - 4a3d8e19f
+    - c26205419
     bugs: []
     status: implemented
   NFR-SEC-001:
@@ -804,9 +804,9 @@ requirements:
     - T031
     - T039
     commits:
-    - a0b2ad3b5
-    - d81f46db6
-    - ff87084df
+    - 65f0deadc
+    - 4176a5382
+    - 7def99db9
     bugs: []
     status: implemented
   NFR-SEC-002:
@@ -822,7 +822,7 @@ requirements:
     - T018
     - T019
     commits:
-    - ff87084df
+    - 7def99db9
     bugs: []
     status: implemented
   NFR-SEC-003:
@@ -840,7 +840,7 @@ requirements:
     - T011
     - T012
     commits:
-    - 8515e2aef
+    - 75a7c1450
     bugs: []
     status: implemented
   NFR-SEC-004:
@@ -856,7 +856,7 @@ requirements:
     - T018
     - T019
     commits:
-    - ff87084df
+    - 7def99db9
     bugs: []
     status: implemented
   NFR-SEC-005:
@@ -879,8 +879,8 @@ requirements:
     - T031
     - T039
     commits:
-    - a055beec5
-    - a0b2ad3b5
+    - 0ac9712f0
+    - 65f0deadc
     bugs: []
     status: implemented
   NFR-SEC-006:
@@ -900,7 +900,7 @@ requirements:
     - T031
     - T039
     commits:
-    - a0b2ad3b5
+    - 65f0deadc
     bugs: []
     status: implemented
   NFR-SEC-007:
@@ -920,7 +920,7 @@ requirements:
     - T031
     - T039
     commits:
-    - a0b2ad3b5
+    - 65f0deadc
     bugs: []
     status: implemented
   NFR-SEC-008:
@@ -931,7 +931,7 @@ requirements:
     local_tasks:
     - T051
     commits:
-    - fea0f9919
+    - 8f9efb579
     bugs: []
     status: implemented
   NFR-SEC-009:
@@ -955,8 +955,8 @@ requirements:
     - T054
     - T055
     commits:
-    - 1fb91daa6
-    - dd3b790bc
+    - 1efcc57b8
+    - 283c1e009
     bugs: []
     status: implemented
   NFR-PERF-002:
@@ -967,7 +967,7 @@ requirements:
     local_tasks:
     - T047
     commits:
-    - 1fb91daa6
+    - 1efcc57b8
     bugs: []
     status: implemented
   NFR-PERF-003:
@@ -983,7 +983,7 @@ requirements:
     - T018
     - T019
     commits:
-    - ff87084df
+    - 7def99db9
     bugs: []
     status: implemented
   NFR-PERF-004:
@@ -998,7 +998,7 @@ requirements:
     - T018
     - T019
     commits:
-    - ff87084df
+    - 7def99db9
     bugs: []
     status: implemented
   NFR-PERF-005:
@@ -1011,7 +1011,7 @@ requirements:
     - T014
     - T015
     commits:
-    - c2280dd31
+    - 2bcfacb5f
     bugs: []
     status: implemented
   NFR-PERF-006:
@@ -1024,7 +1024,7 @@ requirements:
     - T047
     - T048
     commits:
-    - 1fb91daa6
+    - 1efcc57b8
     bugs: []
     status: implemented
   NFR-QA-001:
@@ -1041,7 +1041,7 @@ requirements:
     - T050
     commits:
     - '837442556'
-    - d81f46db6
+    - 4176a5382
     bugs: []
     status: implemented
   NFR-QA-002:
@@ -1052,7 +1052,7 @@ requirements:
     local_tasks:
     - T048
     commits:
-    - bce5e5466
+    - aad52a387
     bugs: []
     status: implemented
   NFR-QA-003:
@@ -1092,8 +1092,8 @@ requirements:
     - T042
     - T046
     commits:
-    - 3fa9429f9
-    - ff87084df
+    - 30e62ad83
+    - 7def99db9
     bugs: []
     status: implemented
   NFR-QA-005:
@@ -1107,8 +1107,8 @@ requirements:
     - T058
     - T059
     commits:
-    - 16afa1f08
-    - c64c6c6ae
+    - 0a0affd15
+    - f6c732702
     bugs: []
     status: implemented
 success_criteria:

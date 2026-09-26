@@ -12,9 +12,10 @@
 |---|---|---|---|---|
 | `emergency_origin` | boolean | no | `false` | `true` si el intento llegó por el origen de emergencia (research R4). Solo se usa en eventos `emergency_login` |
 
-La migración de Drizzle es aditiva y va después de la última de `canary`
-(`0197_lying_hitman.sql`). Si la spec 002 se mergea antes, esta migración se regenera después de
-la suya (ver la nota sobre el orden de migraciones de MIL-433).
+La migración de Drizzle es aditiva. Tras rehacer el fork sobre el tag `v0.30.7` de Dokploy (decisión del
+owner, 2026-09-26), las tablas de Milpia y esta columna viven en una sola migración,
+`0196_chief_goliath.sql`, justo detrás de la última de `v0.30.7` (`0195`). La historia anterior, con
+las migraciones `0197` y `0198`, queda en el tag `archive/canary-upstream-base`.
 
 ## Decisión de sustitución (tipo de dominio)
 

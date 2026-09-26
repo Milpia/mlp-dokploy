@@ -7,6 +7,7 @@ CREATE TABLE "oidc_sso_auth_event" (
 	"user_id" text,
 	"ip" text,
 	"correlation_id" text NOT NULL,
+	"emergency_origin" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
