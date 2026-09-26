@@ -125,7 +125,8 @@ requirements:
     - T013
     bugs:
     - MIL-497
-    status: implemented
+    - MIL-505
+    status: at_risk
   FR-008:
     text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
     tasks:
@@ -152,7 +153,8 @@ requirements:
     - T009
     bugs:
     - MIL-495
-    status: implemented
+    - MIL-504
+    status: at_risk
   NFR-PERF-001:
     text: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna
       petición.
@@ -506,6 +508,22 @@ bugs:
   detected_in: null
   regression_test: null
   status: closed
+- jira: MIL-504
+  summary: Por el túnel en SSO-only, «Log out» lleva al proveedor caído en vez de al login de emergencia
+  violates:
+  - FR-009
+  breaks: []
+  detected_in: MIL-495
+  regression_test: null
+  status: open
+- jira: MIL-505
+  summary: En modo Button o Disabled, los logins del owner por el túnel no quedan registrados
+  violates:
+  - FR-007
+  breaks: []
+  detected_in: MIL-496
+  regression_test: null
+  status: open
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
