@@ -1,0 +1,19 @@
+{
+	"schema": "oidc-compat/v1",
+	"provider": "fusionauth",
+	"providerVersion": "1.69.2",
+	"moduleCommit": "966079e9a64fffbe3f965df5301b52c0c3916dcf",
+	"ranAt": "2026-09-26T16:01:27.101Z",
+	"environment": "local",
+	"status": "passed",
+	"scenarios": {
+		"login-provisioning": "passed",
+		"admin-role": "passed",
+		"access-denied": "passed",
+		"role-change": "passed",
+		"sign-out": "passed",
+		"connection-test-ok": "passed",
+		"connection-test-bad": "passed",
+		"user-management-group": "passed"
+	}
+}

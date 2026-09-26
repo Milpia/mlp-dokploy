@@ -191,7 +191,7 @@ description: "Task list for 004-oidc-provider-compatibility"
     - the four users, verified and with passwords, and their user grants;
     - a login policy that skips MFA setup.
   - `driver.ts`: the multi-step Login V2 flow, groups claim `urn:zitadel:iam:org:project:roles`, and the extra scope `urn:zitadel:iam:org:projects:roles`.
-- [ ] T024 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/fusionauth/` (research R2):
+- [X] T024 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/fusionauth/` (research R2):
   - `compose.yml`: `fusionauth/fusionauth-app:1.69.2`, postgres, `SEARCH_TYPE=database` and `FUSIONAUTH_APP_KICKSTART_FILE`.
   - `kickstart.json`:
     - an application with roles named like the groups, `oauthConfiguration` (fixed client secret, authorized redirect, logout URL);
