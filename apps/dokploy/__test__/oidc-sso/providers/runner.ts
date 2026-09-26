@@ -1,5 +1,6 @@
 import { execSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { get as httpsGet } from "node:https";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildResult, RESULTS_DIR, writeResult } from "./results";
@@ -24,8 +25,12 @@ export interface RunnerDeps {
 	loadDriver(id: ProviderId): Promise<ProviderDriver>;
 	dockerAvailable(): Promise<boolean>;
 	/** `docker compose -p oidc-e2e-<id> -f <dir>/compose.yml <args>`. */
-	compose(id: ProviderId, args: string[]): Promise<void>;
-	waitReady(url: string, timeoutMs: number): Promise<void>;
+	compose(
+		id: ProviderId,
+		args: string[],
+		env?: Record<string, string>,
+	): Promise<void>;
+	waitReady(url: string, timeoutMs: number, caFile?: string): Promise<void>;
 	/** Runs providers/<id>/seed.ts when it exists. */
 	seed(id: ProviderId): Promise<void>;
 	/** Runs battery.e2e.test.ts for the provider; resolves to Vitest's exit code. */
@@ -65,14 +70,28 @@ const runOne = async (
 	};
 	let exitCode: number;
 	if (driver.kind === "self-hosted") {
-		await deps.compose(id, ["up", "-d"]);
+		const prepared = (await driver.prepare?.()) ?? { env: {} };
 		try {
-			if (driver.readyUrl)
-				await deps.waitReady(driver.readyUrl, READY_TIMEOUT_MS);
-			await deps.seed(id);
-			exitCode = await deps.battery(id, batteryEnv);
+			await deps.compose(id, ["up", "-d"], prepared.env);
+			try {
+				if (driver.readyUrl) {
+					await deps.waitReady(
+						driver.readyUrl,
+						READY_TIMEOUT_MS,
+						prepared.caFile,
+					);
+				}
+				await deps.seed(id);
+				exitCode = await deps.battery(id, {
+					...batteryEnv,
+					...prepared.env,
+					...(prepared.caFile ? { NODE_EXTRA_CA_CERTS: prepared.caFile } : {}),
+				});
+			} finally {
+				await deps.compose(id, ["down", "-v"], prepared.env);
+			}
 		} finally {
-			await deps.compose(id, ["down", "-v"]);
+			await prepared.cleanup?.();
 		}
 	} else {
 		await deps.seed(id);
@@ -170,25 +189,31 @@ export const defaultRunnerDeps = (): RunnerDeps => ({
 			return false;
 		}
 	},
-	compose: async (id, args) => {
-		const code = await run("docker", [
-			"compose",
-			"-p",
-			`oidc-e2e-${id}`,
-			"-f",
-			path.join(PROVIDERS_DIR, id, "compose.yml"),
-			...args,
-		]);
+	compose: async (id, args, env = {}) => {
+		const code = await run(
+			"docker",
+			[
+				"compose",
+				"-p",
+				`oidc-e2e-${id}`,
+				"-f",
+				path.join(PROVIDERS_DIR, id, "compose.yml"),
+				...args,
+			],
+			{ env },
+		);
 		if (code !== 0) {
 			throw new Error(`docker compose ${args.join(" ")} exited with ${code}`);
 		}
 	},
-	waitReady: async (url, timeoutMs) => {
+	waitReady: async (url, timeoutMs, caFile) => {
 		const deadline = Date.now() + timeoutMs;
 		while (Date.now() < deadline) {
-			const ok = await fetch(url)
-				.then((response) => response.ok)
-				.catch(() => false);
+			const ok = caFile
+				? await httpsOk(url, readFileSync(caFile))
+				: await fetch(url)
+						.then((response) => response.ok)
+						.catch(() => false);
 			if (ok) return;
 			await new Promise((resolve) => setTimeout(resolve, 2_000));
 		}
@@ -243,6 +268,16 @@ export const defaultRunnerDeps = (): RunnerDeps => ({
 		),
 	moduleCommit: () => defaultCommit(),
 });
+
+/** fetch cannot trust an extra CA per request; node:https can. */
+const httpsOk = (url: string, ca: Buffer) =>
+	new Promise<boolean>((resolve) => {
+		const request = httpsGet(url, { ca }, (response) => {
+			response.resume();
+			resolve((response.statusCode ?? 500) < 400);
+		});
+		request.on("error", () => resolve(false));
+	});
 
 const defaultCommit = () =>
 	execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();

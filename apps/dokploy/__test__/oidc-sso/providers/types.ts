@@ -68,6 +68,12 @@ export interface ModuleConfig {
 	allowInsecureHttp: boolean;
 }
 
+export interface PreparedEnvironment {
+	env: Record<string, string>;
+	caFile?: string;
+	cleanup?(): Promise<void>;
+}
+
 export interface ProviderDriver {
 	id: ProviderId;
 	kind: "self-hosted" | "saas";
@@ -77,6 +83,11 @@ export interface ProviderDriver {
 	requiredEnv: string[];
 	/** Self-hosted: polled by the runner until it answers, before seeding. */
 	readyUrl?: string;
+	/**
+	 * Self-hosted: per-run files before `compose up` (e.g. Authelia's CA and
+	 * keys). `env` reaches compose and the battery; `caFile` is trusted by Node.
+	 */
+	prepare?(): Promise<PreparedEnvironment>;
 	moduleConfig(): ModuleConfig | Promise<ModuleConfig>;
 	users: Record<TestUserRole, TestUser>;
 	/** For "role-change": put the user in exactly this group at the provider. */

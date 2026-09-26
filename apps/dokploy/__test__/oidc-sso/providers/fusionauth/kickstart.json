@@ -21,9 +21,7 @@
 				},
 				"registration": {
 					"applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
-					"roles": [
-						"admin"
-					]
+					"roles": ["admin"]
 				}
 			}
 		},
@@ -54,10 +52,7 @@
 							"http://localhost:39000/api/auth/oidc/callback"
 						],
 						"logoutURL": "http://localhost:39000/",
-						"enabledGrants": [
-							"authorization_code",
-							"refresh_token"
-						],
+						"enabledGrants": ["authorization_code", "refresh_token"],
 						"requireRegistration": true,
 						"scopeHandlingPolicy": "Compatibility"
 					}
@@ -71,9 +66,7 @@
 				"group": {
 					"name": "dokploy-users"
 				},
-				"roleIds": [
-					"8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0001"
-				]
+				"roleIds": ["8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0001"]
 			}
 		},
 		{
@@ -83,9 +76,7 @@
 				"group": {
 					"name": "dokploy-admins"
 				},
-				"roleIds": [
-					"8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0002"
-				]
+				"roleIds": ["8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0002"]
 			}
 		},
 		{
@@ -95,9 +86,7 @@
 				"group": {
 					"name": "admins-mgmt"
 				},
-				"roleIds": [
-					"8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0003"
-				]
+				"roleIds": ["8f5bb7c4-1a0c-4e0a-9b6e-0e7a1f3c0003"]
 			}
 		},
 		{

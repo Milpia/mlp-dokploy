@@ -1,0 +1,53 @@
+# Authelia for the spec 004 battery. Secrets are fixed test values (see ../README.md).
+# No claims_policy on purpose: groups, email and email_verified only reach
+# Dokploy through userinfo, which exercises spec 004 FR-005.
+server:
+  address: tcp://0.0.0.0:9091
+  tls:
+    certificate: /run-files/server.crt
+    key: /run-files/server.key
+log:
+  level: info
+theme: light
+identity_validation:
+  reset_password:
+    jwt_secret: dokploy-e2e-authelia-reset-password-jwt-secret-0123456789
+authentication_backend:
+  file:
+    path: /run-files/users_database.yml
+    watch: true
+access_control:
+  default_policy: one_factor
+session:
+  secret: dokploy-e2e-authelia-session-secret-0123456789abcdef
+  cookies:
+    - domain: localtest.me
+      authelia_url: https://auth.localtest.me:9091
+storage:
+  encryption_key: dokploy-e2e-authelia-storage-encryption-key-0123456789
+  local:
+    path: /tmp/db.sqlite3
+notifier:
+  filesystem:
+    filename: /tmp/notification.txt
+identity_providers:
+  oidc:
+    hmac_secret: dokploy-e2e-authelia-oidc-hmac-secret-0123456789abcdef
+    jwks:
+      - key_id: dokploy-e2e
+        algorithm: RS256
+        use: sig
+        key: {{ secret "/run-files/oidc.key" | mindent 10 "|" | msquote }}
+    clients:
+      - client_id: dokploy
+        client_name: Dokploy
+        client_secret: $plaintext$dokploy-e2e-secret
+        public: false
+        authorization_policy: one_factor
+        consent_mode: implicit
+        redirect_uris:
+          - http://localhost:39000/api/auth/oidc/callback
+        scopes: [openid, email, profile, groups]
+        grant_types: [authorization_code]
+        response_types: [code]
+        token_endpoint_auth_method: client_secret_post

@@ -200,7 +200,7 @@ description: "Task list for 004-oidc-provider-compatibility"
   - `driver.ts`: the single-form login and groups claim `roles`.
   
   Confirm in `connection-test-ok` that FusionAuth's reply to the made-up code is classified as valid credentials. If not, add a regression test and fix the classification in `oidc/client.ts` (FR-011).
-- [ ] T025 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/authelia/` (research R2 and R4):
+- [X] T025 [P] [US3] Create `apps/dokploy/__test__/oidc-sso/providers/authelia/` (research R2 and R4):
   - `compose.yml`: `authelia/authelia:4.39.28`, published on `127.0.0.1:9091` as `https://auth.localtest.me:9091`.
   - `configuration.yml`:
     - `server.tls` with the per-run CA certificate;

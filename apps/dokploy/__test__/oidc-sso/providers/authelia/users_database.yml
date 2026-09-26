@@ -1,0 +1,22 @@
+# Test users for the spec 004 battery. Password for all: Passw0rd-e2e! (see ../README.md).
+users:
+  member:
+    displayname: Mia E2E
+    password: '$argon2id$v=19$m=65536,t=3,p=4$PO7UdWGLb+zLebfl57BegQ$Wg8PyGlk3WFIiYVH7Ibzwib08Pp/3ZhPCfZlgd8YbRw'
+    email: member@e2e.test
+    groups: [dokploy-users]
+  admin:
+    displayname: Ada E2E
+    password: '$argon2id$v=19$m=65536,t=3,p=4$PO7UdWGLb+zLebfl57BegQ$Wg8PyGlk3WFIiYVH7Ibzwib08Pp/3ZhPCfZlgd8YbRw'
+    email: admin@e2e.test
+    groups: [dokploy-admins]
+  outsider:
+    displayname: Otto E2E
+    password: '$argon2id$v=19$m=65536,t=3,p=4$PO7UdWGLb+zLebfl57BegQ$Wg8PyGlk3WFIiYVH7Ibzwib08Pp/3ZhPCfZlgd8YbRw'
+    email: outsider@e2e.test
+    groups: []
+  manager:
+    displayname: Max E2E
+    password: '$argon2id$v=19$m=65536,t=3,p=4$PO7UdWGLb+zLebfl57BegQ$Wg8PyGlk3WFIiYVH7Ibzwib08Pp/3ZhPCfZlgd8YbRw'
+    email: manager@e2e.test
+    groups: [dokploy-admins, admins-mgmt]

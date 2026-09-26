@@ -1,0 +1,13 @@
+# Ephemeral Authelia for the spec 004 battery. Test values only (see ../README.md).
+# OIDC_E2E_AUTHELIA_DIR is a per-run directory the driver's prepare() fills with
+# the TLS certificate, the OIDC signing key and a writable users database.
+services:
+  authelia:
+    image: authelia/authelia:4.39.28
+    environment:
+      X_AUTHELIA_CONFIG_FILTERS: template
+    ports:
+      - "127.0.0.1:9091:9091"
+    volumes:
+      - ./configuration.yml:/config/configuration.yml:ro
+      - ${OIDC_E2E_AUTHELIA_DIR:?run through the e2e:oidc runner}:/run-files

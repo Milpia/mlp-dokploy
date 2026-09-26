@@ -1,9 +1,9 @@
 {
 	"schema": "oidc-compat/v1",
-	"provider": "fusionauth",
-	"providerVersion": "1.69.2",
+	"provider": "authelia",
+	"providerVersion": "4.39.28",
 	"moduleCommit": "62ef076ed6cd43d750c528285e2ab6898716f327",
-	"ranAt": "2026-09-26T16:09:37.867Z",
+	"ranAt": "2026-09-26T16:07:05.336Z",
 	"environment": "local",
 	"status": "passed",
 	"scenarios": {
@@ -11,7 +11,7 @@
 		"admin-role": "passed",
 		"access-denied": "passed",
 		"role-change": "passed",
-		"sign-out": "passed",
+		"sign-out": "not-applicable",
 		"connection-test-ok": "passed",
 		"connection-test-bad": "passed",
 		"user-management-group": "passed"

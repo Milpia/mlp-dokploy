@@ -74,17 +74,27 @@ describe("provider verification runner (spec 004, SC-005)", () => {
 	it("FR-009: brings the environment up, seeds, runs and always tears down", async () => {
 		const { deps, lines } = setup();
 		await expect(runProviders("keycloak", deps)).resolves.toBe(0);
-		expect(deps.compose).toHaveBeenNthCalledWith(1, "keycloak", ["up", "-d"]);
+		expect(deps.compose).toHaveBeenNthCalledWith(
+			1,
+			"keycloak",
+			["up", "-d"],
+			{},
+		);
 		expect(deps.waitReady).toHaveBeenCalledWith(
 			"http://127.0.0.1/keycloak",
 			300_000,
+			undefined,
 		);
 		expect(deps.seed).toHaveBeenCalledWith("keycloak");
 		expect(deps.battery).toHaveBeenCalledWith("keycloak", {
 			OIDC_E2E_PROVIDER: "keycloak",
 			OIDC_E2E_COMMIT: "abc",
 		});
-		expect(deps.compose).toHaveBeenLastCalledWith("keycloak", ["down", "-v"]);
+		expect(deps.compose).toHaveBeenLastCalledWith(
+			"keycloak",
+			["down", "-v"],
+			{},
+		);
 		expect(lines).toEqual([
 			expect.stringMatching(/^keycloak: passed \(30 s\)/),
 		]);
@@ -100,8 +110,50 @@ describe("provider verification runner (spec 004, SC-005)", () => {
 			},
 		);
 		await expect(runProviders("keycloak", deps)).resolves.toBe(1);
-		expect(deps.compose).toHaveBeenLastCalledWith("keycloak", ["down", "-v"]);
+		expect(deps.compose).toHaveBeenLastCalledWith(
+			"keycloak",
+			["down", "-v"],
+			{},
+		);
 		expect(lines.at(-1)).toMatch(/^keycloak: failed \(vitest crashed\)/);
+	});
+
+	it("FR-009: per-run files reach compose and the battery, the CA is trusted, and cleanup always runs", async () => {
+		const cleanup = vi.fn(async () => {});
+		const { deps } = setup(
+			{
+				authelia: {
+					...selfHosted("authelia"),
+					prepare: async () => ({
+						env: { OIDC_E2E_AUTHELIA_DIR: "/tmp/run" },
+						caFile: "/tmp/run/ca.crt",
+						cleanup,
+					}),
+				},
+			},
+			{
+				battery: vi.fn(async () => {
+					throw new Error("boom");
+				}),
+			},
+		);
+		await expect(runProviders("authelia", deps)).resolves.toBe(1);
+		expect(deps.compose).toHaveBeenNthCalledWith(1, "authelia", ["up", "-d"], {
+			OIDC_E2E_AUTHELIA_DIR: "/tmp/run",
+		});
+		expect(deps.waitReady).toHaveBeenCalledWith(
+			"http://127.0.0.1/authelia",
+			300_000,
+			"/tmp/run/ca.crt",
+		);
+		expect(deps.battery).toHaveBeenCalledWith(
+			"authelia",
+			expect.objectContaining({
+				OIDC_E2E_AUTHELIA_DIR: "/tmp/run",
+				NODE_EXTRA_CA_CERTS: "/tmp/run/ca.crt",
+			}),
+		);
+		expect(cleanup).toHaveBeenCalled();
 	});
 
 	it("SC-005: a SaaS provider without credentials is skipped with exit 0", async () => {
