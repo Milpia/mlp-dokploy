@@ -113,7 +113,7 @@ en los eventos del SSO (quickstart §2, filas 1–5).
   - Each of the 7 `/organization/*` routes is denied with `APIError("FORBIDDEN")` for a lead.
   - Requests without a session are left to better-auth.
   - Other paths are ignored by the matcher.
-- [ ] T031 [P] [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-visibility.test.ts` for the pure helper `userManagementVisibility(upstream, status)` (FR-007, US1 scenario 3, principle IV). It takes upstream's `{ canChangeRole, canEditPermissions, canRemove, canDelete, canInvite }` and the `userManagementStatus` output, and returns the same flags plus `showExpiredNotice`. Truth table:
+- [X] T031 [P] [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/user-management-visibility.test.ts` for the pure helper `userManagementVisibility(upstream, status)` (FR-007, US1 scenario 3, principle IV). It takes upstream's `{ canChangeRole, canEditPermissions, canRemove, canDelete, canInvite }` and the `userManagementStatus` output, and returns the same flags plus `showExpiredNotice`. Truth table:
   - `canManageUsers: true` → upstream flags unchanged, no notice.
   - `canManageUsers: false` with `not_in_group`, `no_sso_login` or `check_failed` → every flag `false`, no notice.
   - `canManageUsers: false` with `grant_expired` → every flag `false`, `showExpiredNotice: true`.
@@ -124,7 +124,7 @@ en los eventos del SSO (quickstart §2, filas 1–5).
 - [X] T016 [US1] Implement `userManagementGuard` (a tRPC middleware that looks up `path` in `TRPC_USER_MANAGEMENT_PATHS`, calls `checkUserManagement`, and derives `targetUserId` from `input.userId` or from `input.memberId`, only on denial) in `apps/dokploy/server/api/middlewares/user-management.ts`. Chain it in `protectedProcedure` in `apps/dokploy/server/api/trpc.ts` (one import and one `.use`, the upstream touch point in plan.md). Pass T013 (FR-004, FR-006).
 - [X] T017 [US1] Implement `createUserManagementHook` in `packages/server/src/oidc-sso/plugin/user-management-hook.ts` using `getSessionFromCtx`, passing `memberIdOrEmail` from the body as the target to resolve, and add it to the `hooks.before` array in `packages/server/src/oidc-sso/plugin/index.ts` next to the SSO-only guard. Pass T015 (FR-004, FR-006).
 - [X] T018 [US1] Add the protected query `userManagementStatus` → `{ canManageUsers, reason, expiresAt }` to `apps/dokploy/server/api/routers/oidc-sso.ts`, following contracts/user-management-guard.md and without recording events. Add tests in `apps/dokploy/__test__/oidc-sso/router.test.ts` (FR-007, FR-015).
-- [ ] T019 [US1] Implement `userManagementVisibility` in `apps/dokploy/components/dashboard/settings/oidc-sso/user-management-visibility.ts` to pass T031, then use it at the upstream touch points in plan.md (FR-007):
+- [X] T019 [US1] Implement `userManagementVisibility` in `apps/dokploy/components/dashboard/settings/oidc-sso/user-management-visibility.ts` to pass T031, then use it at the upstream touch points in plan.md (FR-007):
   - In `apps/dokploy/components/dashboard/settings/users/show-users.tsx`, pass its upstream flags through the helper.
   - In `apps/dokploy/pages/dashboard/settings/users.tsx`, render `ShowInvitations` only when `canInvite` is true, and show a notice with a "Sign in with SSO" action when `showExpiredNotice` is true.
 - [ ] T020 [US1] Extend the e2e in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts` and the realm in `apps/dokploy/__test__/oidc-sso/e2e/realm-dokploy-test.json` (US1 scenarios 1–4):

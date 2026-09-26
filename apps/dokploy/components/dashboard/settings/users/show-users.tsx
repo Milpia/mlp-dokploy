@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { Loader2, MoreHorizontal, Users } from "lucide-react";
 import { toast } from "sonner";
+import { userManagementVisibility } from "@/components/dashboard/settings/oidc-sso/user-management-visibility";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { DialogAction } from "@/components/shared/dialog-action";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ export const ShowUsers = () => {
 
 	const utils = api.useUtils();
 	const { data: session } = api.user.session.useQuery();
+	const { data: userManagement } = api.oidcSso.userManagementStatus.useQuery();
 
 	const FREE_ROLES = ["owner", "admin", "member"];
 	const membersWithCustomRoles = data?.filter(
@@ -116,7 +118,7 @@ export const ShowUsers = () => {
 													// Other users can edit permissions if target is not themselves and target is a member/custom role
 													const isStaticAdminOrOwner =
 														member.role === "owner" || member.role === "admin";
-													const canEditPermissions =
+													const upstreamCanEditPermissions =
 														!isStaticAdminOrOwner &&
 														member.user.id !== session?.user?.id;
 
@@ -124,7 +126,7 @@ export const ShowUsers = () => {
 													// - Owner: Can change anyone's role (except themselves and other owners)
 													// - Admin: Can only change member/custom roles (not other admins or owners)
 													// - Owner role is nontransferable
-													const canChangeRole =
+													const upstreamCanChangeRole =
 														member.role !== "owner" &&
 														member.user.id !== session?.user?.id &&
 														(currentUserRole === "owner" ||
@@ -144,8 +146,20 @@ export const ShowUsers = () => {
 																member.role !== "admin") ||
 															(canDeleteMember && !isStaticAdminOrOwner));
 
-													const canDelete = canRemove && !isCloud;
-													const canUnlink = canRemove && !!isCloud;
+													const {
+														canEditPermissions,
+														canChangeRole,
+														canDelete,
+														canUnlink,
+													} = userManagementVisibility(
+														{
+															canEditPermissions: upstreamCanEditPermissions,
+															canChangeRole: upstreamCanChangeRole,
+															canDelete: canRemove && !isCloud,
+															canUnlink: canRemove && !!isCloud,
+														},
+														userManagement,
+													);
 
 													const hasAnyAction =
 														canEditPermissions ||
