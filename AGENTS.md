@@ -18,6 +18,7 @@ La infraestructura que lo despliega vive en `Milpia/mlp-infrastructure`, y la CL
 - `apps/dokploy`: **Next.js** (pages router, servidor propio) con **tRPC**.
 - `packages/server`: lógica de servidor, **Drizzle ORM** (PostgreSQL) y **better-auth**.
 - Pruebas con **Vitest** (`apps/dokploy/__test__`), lint y formato con **Biome**.
+- Verificación contra proveedores OIDC reales (spec 004): `pnpm --filter=dokploy run e2e:oidc <proveedor|all>` levanta el proveedor en Docker, ejecuta la batería común con Chromium (`playwright-core`) y escribe `specs/004-oidc-provider-compatibility/results/`. `e2e:oidc:matrix` regenera la matriz. Okta y Auth0 solo corren con las variables de sus tenants de prueba; nunca contra entornos de Milpia.
 - Migraciones en `apps/dokploy/drizzle/`, generadas con `pnpm --filter=dokploy run migration:generate`. Solo aditivas (principio II).
 
 ## Flujo de Git
@@ -42,6 +43,7 @@ La infraestructura que lo despliega vive en `Milpia/mlp-infrastructure`, y la CL
   4. Se comprueba el resultado aplicando todas las migraciones sobre una copia de la base de datos de prod o del laboratorio antes del merge.
 - [ ] **Workflows nuevos o cambiados** en `.github/workflows/`. Los que publican en el Docker Hub de Dokploy o usan sus secretos se desactivan en el fork, con `gh workflow disable "<nombre>"`. La imagen de Milpia solo la publica `milpia-image.yml`.
 - [ ] La suite de `oidc-sso` y `pnpm typecheck` pasan sobre el resultado del merge.
+- [ ] `pnpm --filter=dokploy run e2e:oidc all` pasa sobre el resultado del merge, y la matriz regenerada (`e2e:oidc:matrix`) va en el PR. Si un proveedor falla por su propia versión y no por la de upstream, se anota en `specs/004-oidc-provider-compatibility/limitations.md`.
 
 ## Reglas de trabajo: restricciones
 
