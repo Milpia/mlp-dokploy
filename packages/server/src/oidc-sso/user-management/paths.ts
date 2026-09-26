@@ -1,6 +1,6 @@
 import type { UserManagementAction } from "../types";
 
-/** Every tRPC procedure that manages other users (research R1). */
+/** Every tRPC mutation that manages other users (research R1). */
 export const TRPC_USER_MANAGEMENT_PATHS: ReadonlyMap<
 	string,
 	UserManagementAction
@@ -12,6 +12,11 @@ export const TRPC_USER_MANAGEMENT_PATHS: ReadonlyMap<
 	["organization.inviteMember", "invite"],
 	["organization.removeInvitation", "cancel_invitation"],
 	["organization.updateMemberRole", "change_role"],
+	// Role definitions (FR-004). Only the path is matched; the router itself
+	// lives under /proprietary and is never imported.
+	["customRole.create", "manage_roles"],
+	["customRole.update", "manage_roles"],
+	["customRole.remove", "manage_roles"],
 ]);
 
 /** better-auth organization routes that bypass tRPC (research R1). */

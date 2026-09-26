@@ -11,14 +11,16 @@ import { getOidcSsoServices, type OidcSsoServices } from "../services";
 import type { UserManagementAction, UserManagementDenyReason } from "../types";
 
 /** They never name the configured group (contracts/user-management-guard.md). */
-export const USER_MANAGEMENT_MESSAGES: Record<UserManagementDenyReason, string> =
-	{
-		not_in_group: "You are not allowed to manage users.",
-		no_sso_login: "Sign in with SSO to manage users.",
-		grant_expired:
-			"Your permission to manage users expired. Sign in with SSO again.",
-		check_failed: "You are not allowed to manage users.",
-	};
+export const USER_MANAGEMENT_MESSAGES: Record<
+	UserManagementDenyReason,
+	string
+> = {
+	not_in_group: "You are not allowed to manage users.",
+	no_sso_login: "Sign in with SSO to manage users.",
+	grant_expired:
+		"Your permission to manage users expired. Sign in with SSO again.",
+	check_failed: "You are not allowed to manage users.",
+};
 
 export interface TargetRef {
 	userId?: string;
@@ -41,11 +43,15 @@ export interface UserManagementRequest {
 	ip?: string;
 }
 
-export type UserManagementCheck =
-	| { allow: true }
-	| { allow: false; reason: UserManagementDenyReason; message: string };
+type Denial = {
+	allow: false;
+	reason: UserManagementDenyReason;
+	message: string;
+};
 
-const deny = (reason: UserManagementDenyReason): UserManagementCheck => ({
+export type UserManagementCheck = { allow: true } | Denial;
+
+const deny = (reason: UserManagementDenyReason): Denial => ({
 	allow: false,
 	reason,
 	message: USER_MANAGEMENT_MESSAGES[reason],
@@ -89,7 +95,7 @@ export const checkUserManagement = async (
 	const logError =
 		deps.logError ?? ((message, error) => console.error(message, error));
 
-	let result: UserManagementCheck;
+	let result: Denial;
 	try {
 		const config = await deps.services.config.getEffective();
 		const group = config.userManagementGroup;
@@ -133,7 +139,10 @@ export const checkUserManagement = async (
 			...(request.ip ? { ip: request.ip } : {}),
 		});
 	} catch (error) {
-		logError("OIDC SSO: could not record a denied user-management attempt", error);
+		logError(
+			"OIDC SSO: could not record a denied user-management attempt",
+			error,
+		);
 	}
 	return result;
 };

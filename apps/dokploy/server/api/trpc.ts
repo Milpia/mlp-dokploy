@@ -19,6 +19,7 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session, User } from "better-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { userManagementGuard } from "./middlewares/user-management";
 
 type Resource = keyof typeof statements;
 type ActionOf<R extends Resource> = (typeof statements)[R][number];
@@ -82,14 +83,14 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 	return createInnerTRPCContext({
 		req,
 		res,
-		// @ts-ignore
+		// @ts-expect-error
 		session: session
 			? {
 					...session,
 					activeOrganizationId: session.activeOrganizationId || "",
 				}
 			: null,
-		// @ts-ignore
+		// @ts-expect-error
 		user: user
 			? {
 					...user,
@@ -158,19 +159,21 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-	if (!ctx.session || !ctx.user) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
-	}
-	return next({
-		ctx: {
-			// infers the `session` as non-nullable
-			session: ctx.session,
-			user: ctx.user,
-			// session: { ...ctx.session, user: ctx.user },
-		},
-	});
-});
+export const protectedProcedure = t.procedure
+	.use(({ ctx, next }) => {
+		if (!ctx.session || !ctx.user) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
+		return next({
+			ctx: {
+				// infers the `session` as non-nullable
+				session: ctx.session,
+				user: ctx.user,
+				// session: { ...ctx.session, user: ctx.user },
+			},
+		});
+	})
+	.use(userManagementGuard);
 
 export const cliProcedure = t.procedure.use(({ ctx, next }) => {
 	if (

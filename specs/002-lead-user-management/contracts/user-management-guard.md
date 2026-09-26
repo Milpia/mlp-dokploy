@@ -38,6 +38,8 @@ Los mensajes no revelan el nombre del grupo configurado.
 
 ## Punto 1: middleware tRPC
 
+Las tres rutas `customRole.*` se añadieron al implementar (T014): la prueba de deriva las detectó como mutaciones de definiciones de roles (FR-004). Solo se comprueba su ruta; el router vive en `/proprietary` y no se importa.
+
 Se encadena en `protectedProcedure` (`apps/dokploy/server/api/trpc.ts`).
 
 | Path tRPC | `UserManagementAction` |
@@ -49,6 +51,9 @@ Se encadena en `protectedProcedure` (`apps/dokploy/server/api/trpc.ts`).
 | `organization.inviteMember` | `invite` |
 | `organization.removeInvitation` | `cancel_invitation` |
 | `organization.updateMemberRole` | `change_role` |
+| `customRole.create` | `manage_roles` |
+| `customRole.update` | `manage_roles` |
+| `customRole.remove` | `manage_roles` |
 
 Para cualquier otro path, la guarda llama a `next()` sin leer configuración ni BD.
 

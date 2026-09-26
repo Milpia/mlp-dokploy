@@ -57,7 +57,12 @@ describe("checkUserManagement (spec 002)", () => {
 		});
 	});
 
-	it.each([
+	it.each<
+		[
+			"no_sso_login" | "grant_expired",
+			{ groups: string[]; lastSsoLoginAt: Date } | null,
+		]
+	>([
 		["no_sso_login", null],
 		[
 			"grant_expired",
@@ -66,7 +71,7 @@ describe("checkUserManagement (spec 002)", () => {
 				lastSsoLoginAt: new Date(NOW.getTime() - USER_MANAGEMENT_GRANT_TTL_MS),
 			},
 		],
-	] as const)(
+	])(
 		"FR-014/FR-015: denies with the %s message",
 		async (reason, loginState) => {
 			const { deps } = await setup({ loginState });

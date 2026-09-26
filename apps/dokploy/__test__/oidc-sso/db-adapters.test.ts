@@ -405,7 +405,7 @@ describe("drizzleLoginStateStore (spec 002, FR-008)", () => {
 		expect(await drizzleLoginStateStore.find("lead-1")).toBeNull();
 
 		await db.transaction((tx) =>
-			drizzleLoginStateStore.upsert(tx, {
+			drizzleLoginStateStore.upsert(tx as never, {
 				userId: "lead-1",
 				groups: ["leads"],
 				at: now,
@@ -413,7 +413,7 @@ describe("drizzleLoginStateStore (spec 002, FR-008)", () => {
 		);
 		const later = new Date("2026-09-26T13:00:00Z");
 		await db.transaction((tx) =>
-			drizzleLoginStateStore.upsert(tx, {
+			drizzleLoginStateStore.upsert(tx as never, {
 				userId: "lead-1",
 				groups: ["admins", "leads"],
 				at: later,
