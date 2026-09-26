@@ -176,6 +176,23 @@ ve la configuración efectiva.
 
 ---
 
+## Phase 7: Enmienda 2026-09-26 tras el laboratorio (MIL-427)
+
+**Goal**: el túnel sirve en cualquier modo del SSO (MIL-496), el cierre de sesión del menú funciona
+por el túnel (MIL-495), cada rechazo se registra una vez (MIL-497) y la guía describe el rechazo
+real (MIL-498). Ver spec.md, Clarifications › Session 2026-09-26, y research R2, R4 y R9.
+
+- [ ] T021 [P] Update `apps/dokploy/__test__/oidc-sso/emergency-origin-policy.test.ts` and `emergency-origin-request.test.ts` so they fail first: the owner's sign-in, the second factor and both sign-outs are rewritten in `sso-only`, `button` and `disabled` modes; `/oidc/sign-out` is an emergency path; the adapter reads no SSO configuration on any path (FR-004, FR-005, FR-009, NFR-PERF-002; MIL-495, MIL-496).
+- [ ] T022 Remove `ssoOnlyActive` from `decideEmergencyOrigin` in `packages/server/src/oidc-sso/domain/emergency-origin.ts`, add `/oidc/sign-out` to `EMERGENCY_ORIGIN_PATHS`, and stop reading the effective configuration in `packages/server/src/oidc-sso/plugin/emergency-origin.ts`. Pass T021 (FR-004, FR-005, FR-009; MIL-495, MIL-496).
+- [ ] T023 [P] Add failing tests to `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts` with a real better-auth instance: by the tunnel, `/oidc/sign-out` ends the owner's session and answers `{ url: "/" }` in `sso-only` and `button`; from the public origin it still returns the provider's end-session URL. Then implement it in `packages/server/src/oidc-sso/plugin/endpoints.ts` (FR-009; MIL-495).
+- [ ] T024 [P] Add failing tests to `emergency-origin-auth.test.ts` without cookies: a non-owner sign-in by the tunnel is rejected and recorded exactly once, with `emergencyOrigin: true`, in `sso-only` and in `button`; the owner in `button` mode signs in. Then mark the request as `denied` in `plugin/emergency-origin.ts` and skip the second record in `plugin/sso-only-guard.ts` (FR-006, FR-007, SC-004; MIL-497).
+- [ ] T025 [P] Update `specs/001-keycloak-sso/operations.md` §4: the tunnel works in every mode, step 3 (switch to Button or Disabled) keeps the way back in, and the rejection message can be «Invalid origin» or «Single sign-on is required» (SC-001, SC-003; MIL-496, MIL-498).
+- [ ] T026 Run the oidc-sso suite with coverage, `pnpm typecheck`, the `@dokploy/server` production build and `/security-review` on the branch; resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).
+
+After the merge, T020 (MIL-470) is repeated in the lab with the new image: L5 in `sso-only` and in `button`.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

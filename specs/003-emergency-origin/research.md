@@ -67,8 +67,10 @@ Cualquier excepción deja la petición intacta, con lo que falla en cerrado (NFR
    - `/two-factor/verify-totp`
    - `/two-factor/verify-backup-code`
    - `/sign-out`
-5. La configuración efectiva del SSO está activa y en modo `sso-only`. Se lee de la caché del
-   proveedor de configuración.
+   - `/oidc/sign-out` (el cierre de sesión del menú de Dokploy; enmienda 2026-09-26)
+5. *(Retirada en la enmienda del 2026-09-26: ya no se exige el modo SSO-only. Con el proveedor
+   caído, la guía pide pasar a modo botón o desactivar el SSO, y con esta condición el túnel dejaba
+   de aceptar al owner y nadie podía entrar; MIL-496.)*
 6. Solo en `/sign-in/email`: el `email` del cuerpo, recortado y en minúsculas, es el del owner
    (`findOwnerEmail`), igual que en la guarda de la spec 001 (FR-004). El cuerpo se lee de un
    `clone()`, así que la petición original queda intacta.
@@ -77,12 +79,14 @@ Cualquier excepción deja la petición intacta, con lo que falla en cerrado (NFR
 - Las condiciones 3 y 4 hacen que el cambio tenga efecto solo en el mínimo de rutas que pide la
   spec: FR-004, FR-005 y FR-009.
 - Las rutas de segundo factor no llevan email. Solo sirven con la cookie firmada `two_factor`,
-  que better-auth emite tras un `/sign-in/email` correcto, y en SSO-only la guarda de la spec 001
-  solo deja pasar ese login al owner.
+  que better-auth emite tras un `/sign-in/email` correcto. Por el túnel, ese login solo se acepta
+  para el owner (condición 6) en cualquier modo, y las cookies del origen público no se envían al
+  origen del túnel, porque el host es otro.
 - Cerrar sesión solo afecta a la sesión de quien lo pide.
 
-**Riesgo residual**: una cookie `two_factor` de otro usuario, emitida en los 10 minutos anteriores
-a activar SSO-only, podría completarse por el túnel. Hacen falta a la vez las tres cosas:
+**Riesgo residual**: una cookie `two_factor` de otro usuario emitida para el origen del túnel
+(solo posible si alguien con acceso SSH abrió el túnel e inició sesión con ese usuario antes de
+definir la variable) podría completarse por el túnel en los 10 minutos siguientes. Hacen falta a la vez las tres cosas:
 - acceso SSH al servidor;
 - la contraseña de ese usuario;
 - su segundo factor.
@@ -102,6 +106,11 @@ Se acepta y se documenta.
   (su origen no se sustituye). better-auth los rechaza por origen. Para que queden registrados,
   `onRequest` escribe un evento `emergency_login` / `denied` / `not_owner` con
   `emergency_origin = true` cuando la ruta es `/sign-in/email` y solo falla la condición 6.
+- *Enmienda 2026-09-26 (MIL-497):* sin cookies, el router de better-auth no comprueba el origen
+  (`validateOrigin` solo fuerza la comprobación con cookies); la hace después el `formCsrfMiddleware`
+  del endpoint, ya detrás de los hooks. En SSO-only, ese rechazo llegaba antes a la guarda de la
+  spec 001, que lo registraba otra vez sin la marca. Ahora `onRequest` pone la cabecera interna con
+  el valor `denied` cuando ya registró el intento, y la guarda no vuelve a registrarlo.
 
 **Rationale**: todos los intentos por el túnel quedan en los eventos del SSO, como pide la
 condición 4 de infra.
@@ -131,7 +140,7 @@ editable, ni en la interfaz ni en la BD (spec, Assumptions).
 
 | Control | Cómo se cumple |
 |---|---|
-| V3.5 / V4.2.2 Protección CSRF | Se mantiene para todo origen distinto del configurado, y para ese origen fuera de las 4 rutas y de SSO-only |
+| V3.5 / V4.2.2 Protección CSRF | Se mantiene para todo origen distinto del configurado, y para ese origen fuera de las 5 rutas y de los logins que no son del owner |
 | V4.1.5 Fallo cerrado | cualquier error en R3 deja la petición intacta |
 | V7.1 Registro de eventos de autenticación | R4 |
 | V14.5.3 Lista de orígenes permitidos | origen exacto, sin comodines (R5) |
@@ -144,3 +153,17 @@ editable, ni en la interfaz ni en la BD (spec, Assumptions).
   consultas (NFR-PERF-002). Las que coinciden en ruta y origen leen la configuración de la caché y,
   en `/sign-in/email`, el email del owner.
 - **Medición:** un `vitest bench` de `onRequest` con y sin la variable.
+
+## R9. Cierre de sesión por el túnel (enmienda 2026-09-26, MIL-495)
+
+**Decision**: el menú de Dokploy cierra sesión con `POST /api/auth/oidc/sign-out`, no con el
+`/sign-out` de better-auth. Esa ruta entra en la lista de R2. Cuando la petición trae la cabecera
+interna `x-oidc-sso-emergency-origin: 1`, el endpoint borra la sesión y responde `url: "/"` sin
+calcular el fin de sesión del proveedor, que en ese escenario está caído.
+
+**Rationale**: con el origen público, el comportamiento no cambia (FR-010 de la spec 001). Por el
+túnel, redirigir al proveedor dejaría al owner en una página que no responde.
+
+**Alternatives considered**: cambiar el cliente para que use `/sign-out` por el túnel. Rechazada:
+el cliente no sabe si está en el túnel y habría que duplicar la decisión en el navegador.
+

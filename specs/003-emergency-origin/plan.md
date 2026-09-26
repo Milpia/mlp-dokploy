@@ -6,10 +6,14 @@
 
 ## Summary
 
-Con `SSO_OIDC_EMERGENCY_ORIGIN` definido y el modo SSO-only activo, el owner puede completar la
-ruta de emergencia de la spec 001 desde un túnel SSH (`http://localhost:3900`). Esto cubre el
-login, el segundo factor y el cierre de sesión. El resto de peticiones desde ese origen se siguen
-rechazando.
+Con `SSO_OIDC_EMERGENCY_ORIGIN` definido, el owner puede entrar desde un túnel SSH
+(`http://localhost:3900`) en cualquier modo del SSO: la ruta de emergencia de la spec 001 en
+SSO-only, y el login local en modo botón o con el SSO desactivado. Esto cubre el login, el segundo
+factor y el cierre de sesión. El resto de peticiones desde ese origen se siguen rechazando.
+
+**Enmienda 2026-09-26 (MIL-427, MIL-495..498):** el origen deja de depender del modo SSO-only
+(R2, condición 5 retirada), el cierre de sesión del menú (`/oidc/sign-out`) entra en la lista y, por
+el túnel, no redirige al proveedor (R9). Un rechazo del túnel se registra una sola vez (R4).
 
 Enfoque técnico:
 - better-auth comprueba el origen en el router, antes de los hooks de los plugins (research R1).
@@ -58,7 +62,7 @@ simulado por cabecera.
 |---|---|---|
 | I. Frontera de licencia | Revisada. Todo vive en el módulo `oidc-sso`; no se usa nada de `/proprietary` ni se tocan comprobaciones de licencia | ✅ |
 | II. Divergencia mínima | Desactivado por defecto: sin la variable, la lista de orígenes es la de upstream (FR-003). Ningún archivo de upstream salvo la migración generada | ✅ |
-| III. Seguridad | Refuerza la vía de recuperación que exige el principio. CSRF intacto fuera de 4 rutas, del origen exacto y de SSO-only. Fallo cerrado (NFR-SEC-002). Sin estado compartido (NFR-SEC-001). Cabecera interna no falsificable. Registro de intentos (R4). Lista ASVS en R7. Se ejecutará `/security-review` | ✅ (ver Complexity Tracking) |
+| III. Seguridad | Refuerza la vía de recuperación que exige el principio. CSRF intacto fuera de 5 rutas y del origen exacto. Fallo cerrado (NFR-SEC-002). Sin estado compartido (NFR-SEC-001). Cabecera interna no falsificable. Registro de intentos (R4). Lista ASVS en R7. Se ejecutará `/security-review` | ✅ (ver Complexity Tracking) |
 | IV. Calidad y pruebas | Pruebas de los casos que no deben sustituir el origen primero. 100 % de ramas de la política. Un test por escenario de aceptación | ✅ |
 | V. Trazabilidad | Spec Kit completo. Ticket bajo MIL-393 con `/sdd-sync` antes de implementar, así que los commits llevan `Jira:` | ✅ |
 | VI. Rendimiento | NFR-PERF-001/002 con bench (quickstart §3) | ✅ |
@@ -128,5 +132,5 @@ política y construye la petición sustituta.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |---|---|---|
-| El plugin reescribe la cabecera `Origin` de ciertas peticiones antes del control CSRF de better-auth (principio III: toca una protección de seguridad) | better-auth valida el origen en el router, antes de cualquier hook (R1). Es la única forma de aceptar un origen extra solo en 4 rutas, solo en SSO-only y solo para el owner, sin tocar upstream | Ampliar `trustedOrigins` globalmente lo aceptaría en todas las rutas (condición 1 de infra). Editar `resolveTrustedOrigins` en `auth.ts` toca upstream y duplica la lógica de SSO-only y owner. Desactivar CSRF por ruta lo abriría a cualquier origen |
+| El plugin reescribe la cabecera `Origin` de ciertas peticiones antes del control CSRF de better-auth (principio III: toca una protección de seguridad) | better-auth valida el origen en el router, antes de cualquier hook (R1). Es la única forma de aceptar un origen extra solo en 5 rutas y solo para el owner, sin tocar upstream | Ampliar `trustedOrigins` globalmente lo aceptaría en todas las rutas (condición 1 de infra). Editar `resolveTrustedOrigins` en `auth.ts` toca upstream y duplica la lógica del owner. Desactivar CSRF por ruta lo abriría a cualquier origen |
 | El cuerpo de `/sign-in/email` se lee dos veces (un `clone()` en `onRequest`) | Comprobar el email del owner antes del router (FR-004) | Aceptar cualquier email y dejar que la guarda rechace cambiaría el error de los no-owner de «origen» a «SSO obligatorio», y FR-004 pide no aceptar el origen para ellos. El coste es un JSON pequeño, solo en esa ruta y con el origen coincidente |
