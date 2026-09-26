@@ -137,6 +137,41 @@ describe("oidcSso router", () => {
 		);
 	});
 
+	it("spec 003 FR-001: get shows the emergency origin, which update cannot set", async () => {
+		await expect(caller("owner").get()).resolves.toMatchObject({
+			emergencyOrigin: null,
+		});
+
+		built = makeServices({ emergencyOrigin: "http://localhost:3900" });
+		holder.services = built.services;
+		await expect(caller("owner").get()).resolves.toMatchObject({
+			emergencyOrigin: "http://localhost:3900",
+		});
+
+		await caller("owner").update({
+			emergencyOrigin: "http://evil.example.com",
+		} as never);
+		await expect(caller("owner").get()).resolves.toMatchObject({
+			emergencyOrigin: "http://localhost:3900",
+		});
+	});
+
+	it("spec 003 FR-007: listEvents keeps the emergency origin flag", async () => {
+		vi.spyOn(built.services.events, "listRecent").mockResolvedValue([
+			{
+				id: "e1",
+				createdAt: new Date("2026-09-25T10:00:00Z"),
+				type: "emergency_login",
+				outcome: "success",
+				correlationId: "ABC",
+				emergencyOrigin: true,
+			},
+		]);
+		await expect(caller("owner").listEvents({})).resolves.toMatchObject([
+			{ correlationId: "ABC", emergencyOrigin: true },
+		]);
+	});
+
 	it("FR-014: testConnection delegates to the OIDC client", async () => {
 		await expect(caller("owner").testConnection({})).resolves.toEqual({
 			ok: true,

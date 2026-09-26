@@ -1387,6 +1387,13 @@
       "when": 1790348417489,
       "tag": "0197_lying_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 198,
+      "version": "7",
+      "when": 1790365021803,
+      "tag": "0198_secret_mastermind",
+      "breakpoints": true
     }
   ]
 }

@@ -39,6 +39,7 @@ export const oidcSsoAuthEvent = pgTable(
 		userId: text("user_id"),
 		ip: text("ip"),
 		correlationId: text("correlation_id").notNull(),
+		emergencyOrigin: boolean("emergency_origin").notNull().default(false),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
 	(t) => [index("oidcSsoAuthEvent_createdAt_idx").on(t.createdAt)],

@@ -18,6 +18,8 @@ export interface EnvOverrideValues {
 export interface EnvOverrides {
 	values: EnvOverrideValues;
 	errors: string[];
+	/** Not a stored config field: it only exists in the environment (spec 003). */
+	emergencyOrigin?: string;
 }
 
 export const BUTTON_LABEL_MAX_LENGTH = 64;
@@ -39,6 +41,23 @@ export const normalizeIssuerUrl = (value: string): string | null => {
 	}
 	if (url.protocol !== "https:" && url.protocol !== "http:") return null;
 	return url.toString().replace(/\/+$/, "");
+};
+
+/**
+ * better-auth accepts wildcards in trusted origins, so only a value that is
+ * already its own origin is allowed: that rules out paths, queries, trailing
+ * slashes, credentials and patterns in one check.
+ */
+export const parseExactOrigin = (value: string): string | null => {
+	if (value.includes("*")) return null;
+	let url: URL;
+	try {
+		url = new URL(value);
+	} catch {
+		return null;
+	}
+	if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+	return url.origin === value ? value : null;
 };
 
 /**
@@ -138,5 +157,24 @@ export const readEnvOverrides = (
 		}
 	}
 
-	return { values, errors };
+	const emergencyOrigin = read(env, "SSO_OIDC_EMERGENCY_ORIGIN");
+	let parsedEmergencyOrigin: string | undefined;
+	if (emergencyOrigin) {
+		const exact = parseExactOrigin(emergencyOrigin);
+		if (exact) {
+			parsedEmergencyOrigin = exact;
+		} else {
+			errors.push(
+				"SSO_OIDC_EMERGENCY_ORIGIN must be an exact http(s) origin without path or wildcards; ignoring it.",
+			);
+		}
+	}
+
+	return {
+		values,
+		errors,
+		...(parsedEmergencyOrigin
+			? { emergencyOrigin: parsedEmergencyOrigin }
+			: {}),
+	};
 };

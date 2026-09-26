@@ -188,6 +188,7 @@ describe("SSO-only guard with a real better-auth instance", () => {
 			outcome: "success",
 			email: "owner@example.com",
 		});
+		expect(ctx.recorded.at(-1)?.emergencyOrigin).toBeUndefined();
 	});
 
 	it("FR-013: a failed owner emergency sign-in is recorded as denied", async () => {

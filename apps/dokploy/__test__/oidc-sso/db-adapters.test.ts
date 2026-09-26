@@ -170,6 +170,28 @@ describe("drizzleAuthEventStore (FR-013)", () => {
 			(await drizzleAuthEventStore.listRecent(10)).map((e) => e.correlationId),
 		).toEqual(["NEW"]);
 	});
+
+	it("spec 003 FR-007: stores the emergency origin flag, false by default", async () => {
+		await drizzleAuthEventStore.insert({
+			type: "emergency_login",
+			outcome: "success",
+			correlationId: "TUNNEL",
+			emergencyOrigin: true,
+		});
+		await drizzleAuthEventStore.insert({
+			type: "emergency_login",
+			outcome: "success",
+			correlationId: "PUBLIC",
+		});
+
+		const recent = await drizzleAuthEventStore.listRecent(10);
+		expect(recent.find((e) => e.correlationId === "TUNNEL")).toMatchObject({
+			emergencyOrigin: true,
+		});
+		expect(
+			recent.find((e) => e.correlationId === "PUBLIC")?.emergencyOrigin,
+		).toBeUndefined();
+	});
 });
 
 describe("drizzleProvisioningStore (FR-006, FR-007, FR-008)", () => {

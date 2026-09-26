@@ -1,0 +1,477 @@
+# Sincronizado con Jira por sdd-jira-backlog (MIL-393 → MIL-457 + 13 Subtasks, MIL-458..MIL-470).
+schema: sdd-jira/v2
+feature:
+  id: 003-emergency-origin
+  title: Origen permitido para el acceso de emergencia por túnel
+  spec: specs/003-emergency-origin/spec.md
+  plan: specs/003-emergency-origin/plan.md
+  tasks: specs/003-emergency-origin/tasks.md
+  branch: 003-emergency-origin
+  jira_site: pabelandino.atlassian.net
+  jira_project: MIL
+  master_epic: MIL-393
+  story: MIL-457
+  issue_type: Story
+  task_issue_type: Subtask
+  synced_at: '2026-09-25T19:35:23Z'
+  synced_from_sha: 1dd63a34d72916a91498ff766d5c14ec5352bb06
+  spec_digest: sha256:3cc8710519c93b7a0dedf7f4e71ef9819fdc60634ea4081f001296f3edc0459a
+links:
+- type: relates
+  issue: MIL-423
+  note: 'Story de infra de la spec 014: riesgo R4 y prueba L5; la imagen de MIL-425 debe incluir este cambio'
+requirements:
+  FR-001:
+    text: El sistema MUST admitir un único origen de emergencia configurable solo por variable de entorno, sin ajuste
+      en la interfaz.
+    tasks:
+    - MIL-459
+    - MIL-466
+    - MIL-468
+    local_tasks:
+    - T002
+    - T003
+    - T014
+    - T015
+    - T017
+    bugs: []
+    status: planned
+  FR-002:
+    text: El valor MUST ser un origen exacto (esquema `http` o `https`, host y puerto opcional), sin ruta, consulta
+      ni comodines. Un valor que no cumpla MUST ignorarse y registrarse como error de configuración.
+    tasks:
+    - MIL-459
+    - MIL-468
+    local_tasks:
+    - T002
+    - T003
+    - T017
+    bugs: []
+    status: planned
+  FR-003:
+    text: Sin origen de emergencia definido, la lista de orígenes de confianza MUST ser idéntica a la de upstream.
+    tasks:
+    - MIL-460
+    - MIL-466
+    local_tasks:
+    - T004
+    - T005
+    - T014
+    - T015
+    bugs: []
+    status: planned
+  FR-004:
+    text: 'El sistema MUST aceptar el origen de emergencia solo cuando se cumplen a la vez tres condiciones: el
+      modo SSO-only está activo, la petición es el login con email y contraseña, y el email es el del owner. Salvo
+      en los casos de FR-005 y FR-009, MUST NOT aceptarlo en ninguna otra petición.'
+    tasks:
+    - MIL-460
+    - MIL-462
+    - MIL-463
+    - MIL-465
+    local_tasks:
+    - T004
+    - T005
+    - T007
+    - T008
+    - T009
+    - T012
+    - T013
+    bugs: []
+    status: planned
+  FR-005:
+    text: 'Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en la verificación
+      del segundo factor que sigue a un login de emergencia del owner: el código TOTP y el código de respaldo. MUST
+      NOT aceptarlo en el resto de rutas del segundo factor (activarlo, desactivarlo, generar códigos).'
+    tasks:
+    - MIL-460
+    - MIL-462
+    - MIL-463
+    local_tasks:
+    - T004
+    - T005
+    - T007
+    - T008
+    - T009
+    bugs: []
+    status: planned
+  FR-006:
+    text: Los usuarios que no son el owner MUST seguir siendo rechazados en la ruta de emergencia como hoy (spec
+      001, FR-012), vengan del origen que vengan.
+    tasks:
+    - MIL-460
+    - MIL-465
+    local_tasks:
+    - T004
+    - T005
+    - T012
+    - T013
+    bugs: []
+    status: planned
+  FR-007:
+    text: El sistema MUST registrar cada intento de login de emergencia hecho desde el origen de emergencia, correcto
+      o fallido, con el email, la IP, el resultado y una marca que indique que llegó por el origen de emergencia.
+    tasks:
+    - MIL-458
+    - MIL-461
+    - MIL-464
+    - MIL-465
+    local_tasks:
+    - T001
+    - T006
+    - T010
+    - T011
+    - T012
+    - T013
+    bugs: []
+    status: planned
+  FR-008:
+    text: La funcionalidad MUST NOT depender de ningún código bajo licencia enterprise.
+    tasks:
+    - MIL-469
+    - MIL-470
+    local_tasks:
+    - T018
+    - T019
+    - T020
+    bugs: []
+    status: planned
+  FR-009:
+    text: Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en el cierre de sesión,
+      para que el owner termine la sesión de emergencia desde el mismo navegador.
+    tasks:
+    - MIL-460
+    - MIL-462
+    - MIL-463
+    local_tasks:
+    - T004
+    - T005
+    - T007
+    - T008
+    - T009
+    bugs: []
+    status: planned
+  NFR-PERF-001:
+    text: Sin origen de emergencia definido, la funcionalidad MUST NOT añadir consultas ni más de 1 ms (p95) a ninguna
+      petición.
+    tasks:
+    - MIL-467
+    local_tasks:
+    - T016
+    bugs: []
+    status: planned
+  NFR-PERF-002:
+    text: Con el origen definido, las peticiones que no sean de login MUST NOT tener ninguna consulta añadida.
+    tasks:
+    - MIL-467
+    local_tasks:
+    - T016
+    bugs: []
+    status: planned
+  NFR-SEC-001:
+    text: El origen de emergencia MUST añadirse solo a la lista de orígenes de la petición en curso, sin modificar
+      ninguna lista compartida entre peticiones.
+    tasks:
+    - MIL-462
+    - MIL-469
+    local_tasks:
+    - T007
+    - T009
+    - T019
+    bugs: []
+    status: planned
+  NFR-SEC-002:
+    text: Ante cualquier error al comprobar las condiciones de FR-004 (configuración ilegible, owner no encontrado),
+      el sistema MUST NOT añadir el origen.
+    tasks:
+    - MIL-460
+    - MIL-462
+    - MIL-469
+    local_tasks:
+    - T004
+    - T005
+    - T007
+    - T009
+    - T019
+    bugs: []
+    status: planned
+success_criteria:
+  SC-001:
+    text: Con el proveedor de identidad caído, el owner recupera el acceso al panel por túnel en menos de 5 minutos
+      siguiendo la guía de operación.
+    verified_by:
+    - MIL-463
+    - MIL-468
+    - MIL-470
+  SC-002:
+    text: El 100 % de las peticiones desde el origen de emergencia que no sean el login del owner, su segundo factor
+      o el cierre de sesión se rechazan en modo SSO-only.
+    verified_by:
+    - MIL-465
+    - MIL-470
+  SC-003:
+    text: Fuera del modo SSO-only, el 100 % de las peticiones desde el origen de emergencia se rechazan igual que
+      hoy.
+    verified_by:
+    - MIL-465
+    - MIL-470
+  SC-004:
+    text: El 100 % de los intentos de emergencia desde ese origen quedan registrados.
+    verified_by:
+    - MIL-470
+  SC-005:
+    text: Sin la variable, las pruebas actuales de login y de SSO pasan sin modificarse.
+    verified_by:
+    - MIL-466
+    - MIL-470
+user_stories:
+- local_id: US1
+  title: El owner recupera el acceso por túnel con el proveedor de identidad caído
+  priority: P1
+  requirements:
+  - FR-004
+  - FR-005
+  - FR-007
+  - FR-009
+  - NFR-SEC-001
+  - NFR-SEC-002
+  success_criteria:
+  - SC-001
+  tasks:
+  - local_id: T007
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-request.test.ts` for the `onRequest`
+      adapter, using real `Request` objects
+    jira: MIL-462
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/emergency-origin-request.test.ts
+    requirements:
+    - FR-004
+    - FR-005
+    - FR-009
+    - NFR-SEC-001
+    - NFR-SEC-002
+  - local_id: T008
+    title: 'Write failing integration tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts`. Build
+      a real `betterAuth` like `endpoints.test.ts`: `memoryAd'
+    jira: MIL-463
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts
+    requirements:
+    - FR-004
+    - FR-005
+    - FR-009
+  - local_id: T009
+    title: Implement the `onRequest` adapter in `packages/server/src/oidc-sso/plugin/emergency-origin.ts`
+    jira: MIL-462
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/plugin/emergency-origin.ts
+    - packages/server/src/oidc-sso/plugin/index.ts
+    requirements:
+    - FR-004
+    - FR-005
+    - FR-009
+    - NFR-SEC-001
+    - NFR-SEC-002
+  - local_id: T010
+    title: 'Mark successful and failed owner emergency logins with `emergencyOrigin: true` in the `after` hook of
+      `packages/server/src/oidc-sso/plugin/sso-only-guard.ts` wh'
+    jira: MIL-464
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/sso-only-guard.test.ts
+    - packages/server/src/oidc-sso/plugin/sso-only-guard.ts
+    requirements:
+    - FR-007
+  - local_id: T011
+    title: Show «via emergency origin» for events with `emergencyOrigin` in `apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx`,
+      and return the field
+    jira: MIL-464
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/router.test.ts
+    - apps/dokploy/components/dashboard/settings/oidc-sso/sso-auth-events.tsx
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-007
+- local_id: US2
+  title: El origen de emergencia no abre nada más
+  priority: P1
+  requirements:
+  - FR-004
+  - FR-006
+  - FR-007
+  success_criteria:
+  - SC-002
+  - SC-003
+  tasks:
+  - local_id: T012
+    title: Add failing integration tests to `apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts`
+    jira: MIL-465
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-007
+  - local_id: T013
+    title: Record the `not_owner` denial in `packages/server/src/oidc-sso/plugin/emergency-origin.ts` when `decideEmergencyOrigin`
+      returns `recordDenied`. Record email, IP
+    jira: MIL-465
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/plugin/emergency-origin.ts
+    requirements:
+    - FR-004
+    - FR-006
+    - FR-007
+- local_id: US3
+  title: Sin configuración, nada cambia
+  priority: P2
+  requirements:
+  - FR-001
+  - FR-003
+  success_criteria:
+  - SC-005
+  tasks:
+  - local_id: T014
+    title: Add tests
+    jira: MIL-466
+    parallel: true
+    paths: []
+    requirements:
+    - FR-001
+    - FR-003
+  - local_id: T015
+    title: 'Return `emergencyOrigin: string | null` from `oidcSso.get` in `apps/dokploy/server/api/routers/oidc-sso.ts`,
+      read-only. Show it in the emergency section of `app'
+    jira: MIL-466
+    parallel: false
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-001
+    - FR-003
+phase_tasks:
+- name: Setup
+  tasks:
+  - local_id: T001
+    title: Add `emergency_origin` to `oidc_sso_auth_event` in `packages/server/src/db/schema/oidc-sso.ts`
+    jira: MIL-458
+    parallel: false
+    paths:
+    - apps/dokploy/drizzle/
+    - packages/server/src/db/schema/oidc-sso.ts
+    requirements:
+    - FR-007
+- name: Foundational
+  tasks:
+  - local_id: T002
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/config-env.test.ts` for `SSO_OIDC_EMERGENCY_ORIGIN`
+    jira: MIL-459
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/config-env.test.ts
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T003
+    title: Implement `emergencyOrigin` in `packages/server/src/oidc-sso/config/env.ts`
+    jira: MIL-459
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/config/env.ts
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T004
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/emergency-origin-policy.test.ts` for the pure
+      `decideEmergencyOrigin
+    jira: MIL-460
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/emergency-origin-policy.test.ts
+    requirements:
+    - FR-003
+    - FR-004
+    - FR-005
+    - FR-006
+    - FR-009
+    - NFR-SEC-002
+  - local_id: T005
+    title: Implement `decideEmergencyOrigin` and `EMERGENCY_ORIGIN_PATHS` in `packages/server/src/oidc-sso/domain/emergency-origin.ts`
+      to pass T004, with the input and dec
+    jira: MIL-460
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/domain/emergency-origin.ts
+    requirements:
+    - FR-003
+    - FR-004
+    - FR-005
+    - FR-006
+    - FR-009
+    - NFR-SEC-002
+  - local_id: T006
+    title: Add optional `emergencyOrigin` to `AuthEventInput`, to the store and to the `listEvents` output in `packages/server/src/oidc-sso/events/auth-events.ts`,
+      with te
+    jira: MIL-461
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/auth-events.test.ts
+    - packages/server/src/oidc-sso/events/auth-events.ts
+    requirements:
+    - FR-007
+- name: Polish
+  tasks:
+  - local_id: T016
+    title: 'Add `onRequest` benchmarks to `apps/dokploy/__test__/oidc-sso/performance.test.ts` for three cases:
+      no variable; variable set but a different origin; variable s'
+    jira: MIL-467
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/performance.test.ts
+    requirements:
+    - NFR-PERF-001
+    - NFR-PERF-002
+  - local_id: T017
+    title: Document `SSO_OIDC_EMERGENCY_ORIGIN` and the tunnel procedure
+    jira: MIL-468
+    parallel: true
+    paths: []
+    requirements:
+    - FR-001
+    - FR-002
+  - local_id: T018
+    title: Run `pnpm --filter=dokploy test`, `pnpm typecheck` and `pnpm format-and-lint`
+    jira: MIL-470
+    parallel: false
+    paths: []
+    requirements:
+    - FR-008
+  - local_id: T019
+    title: Run `/security-review` on the branch, focused on the `Origin` rewrite
+    jira: MIL-469
+    parallel: false
+    paths: []
+    requirements:
+    - FR-008
+    - NFR-SEC-001
+    - NFR-SEC-002
+  - local_id: T020
+    title: 'Run the quickstart.md manual scenarios 1–10 and record the results in the PR description. Then tell
+      the infra session the PR number, so MIL-425''s image and the '
+    jira: MIL-470
+    parallel: false
+    paths: []
+    requirements:
+    - FR-008
+bugs: []
+orphans:
+  requirements_without_issue: []
+  tasks_without_requirement: []
+  issues_without_local_id: []

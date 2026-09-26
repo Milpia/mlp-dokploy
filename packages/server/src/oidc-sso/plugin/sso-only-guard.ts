@@ -1,5 +1,6 @@
 import { APIError, createAuthMiddleware, getIp } from "better-auth/api";
 import { newCorrelationId } from "../events/auth-events";
+import { EMERGENCY_ORIGIN_HEADER } from "./emergency-origin";
 import type { SsoEndpointDeps } from "./endpoints";
 
 export const SSO_REQUIRED_MESSAGE =
@@ -123,6 +124,9 @@ export const createSsoOnlyGuard = (resolveDeps: () => SsoEndpointDeps) => ({
 				const ip = ctx.request
 					? getIp(ctx.request, ctx.context.options)
 					: undefined;
+				// Only the plugin's onRequest can set this header (spec 003).
+				const viaEmergencyOrigin =
+					ctx.request?.headers.get(EMERGENCY_ORIGIN_HEADER) === "1";
 				await deps.services.events.record({
 					type: "emergency_login",
 					outcome: failed ? "denied" : "success",
@@ -130,6 +134,7 @@ export const createSsoOnlyGuard = (resolveDeps: () => SsoEndpointDeps) => ({
 					correlationId: newCorrelationId(),
 					email,
 					...(ip ? { ip } : {}),
+					...(viaEmergencyOrigin ? { emergencyOrigin: true } : {}),
 				});
 			}),
 		},

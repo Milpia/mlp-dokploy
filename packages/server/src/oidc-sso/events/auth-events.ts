@@ -12,6 +12,8 @@ export interface AuthEventInput {
 	email?: string;
 	userId?: string;
 	ip?: string;
+	/** Set when an emergency login arrived through the emergency origin (spec 003). */
+	emergencyOrigin?: boolean;
 }
 
 export interface AuthEvent extends AuthEventInput {
@@ -52,6 +54,7 @@ export const drizzleAuthEventStore: AuthEventStore = {
 			...(row.email ? { email: row.email } : {}),
 			...(row.userId ? { userId: row.userId } : {}),
 			...(row.ip ? { ip: row.ip } : {}),
+			...(row.emergencyOrigin ? { emergencyOrigin: true } : {}),
 		}));
 	},
 	async deleteOlderThan(cutoff) {
