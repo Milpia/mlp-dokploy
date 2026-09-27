@@ -211,8 +211,9 @@ requirements:
     - T012
     - T020
     - T027
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-509
+    status: at_risk
   FR-013:
     text: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
     tasks:
@@ -707,7 +708,17 @@ phase_tasks:
     paths: []
     requirements:
     - FR-013
-bugs: []
+bugs:
+- jira: MIL-509
+  summary: La pantalla de eventos de SSO no muestra quién intentó gestionar usuarios, la acción ni el usuario
+    afectado
+  violates:
+  - FR-012
+  breaks:
+  - US1-4
+  detected_in: MIL-456
+  regression_test: null
+  status: open
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
