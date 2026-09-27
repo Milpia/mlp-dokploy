@@ -199,7 +199,7 @@ campo aparece bloqueado en la pantalla de SSO (quickstart §2, filas 9–10).
   - Coverage of `packages/server/src/oidc-sso/**` must stay ≥ 90 % lines, with 100 % branches of `domain/user-management.ts` and `user-management/guard.ts`.
   - Confirm with `grep` that nothing under `/proprietary` or `audit(` is imported by the new files.
 - [X] T029 Run `/security-review` on the branch and resolve HIGH/MEDIUM findings before opening the PR (principle III, NFR-SEC-001).
-- [ ] T030 Run the quickstart.md manual scenarios 1–10 against the e2e Keycloak and record the results in the PR description (SC-001, SC-002, SC-003, SC-004, SC-005).
+- [X] T030 Run the quickstart.md manual scenarios 1–10 against the e2e Keycloak and record the results in the PR description (SC-001, SC-002, SC-003, SC-004, SC-005).
 
 ---
 
