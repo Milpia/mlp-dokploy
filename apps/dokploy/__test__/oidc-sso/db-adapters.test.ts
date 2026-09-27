@@ -209,6 +209,29 @@ describe("drizzleAuthEventStore (FR-013)", () => {
 			recent.find((e) => e.correlationId === "PUBLIC")?.emergencyOrigin,
 		).toBeUndefined();
 	});
+
+	it("spec 002 FR-012 (MIL-509): resolves the emails of who tried and of the affected user", async () => {
+		await drizzleAuthEventStore.insert({
+			type: "user_management",
+			outcome: "denied",
+			reason: "not_in_group",
+			correlationId: "UM",
+			userId: OWNER_ID,
+			action: "remove_user",
+			targetUserId: "deleted-user",
+		});
+
+		const event = (await drizzleAuthEventStore.listRecent(10)).find(
+			(e) => e.correlationId === "UM",
+		);
+		expect(event).toMatchObject({
+			action: "remove_user",
+			userId: OWNER_ID,
+			userEmail: "Owner@Example.com",
+			targetUserId: "deleted-user",
+		});
+		expect(event?.targetUserEmail).toBeUndefined();
+	});
 });
 
 describe("drizzleProvisioningStore (FR-006, FR-007, FR-008)", () => {

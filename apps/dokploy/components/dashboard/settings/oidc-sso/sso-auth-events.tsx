@@ -16,13 +16,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { api } from "@/utils/api";
-
-const TYPE_LABELS: Record<string, string> = {
-	sso_login: "SSO sign-in",
-	emergency_login: "Emergency sign-in",
-	config_change: "Configuration change",
-	mode_change: "Mode change",
-};
+import { authEventView } from "./auth-event-view";
 
 const outcomeVariant = (outcome: string) =>
 	outcome === "success" ? "blue" : "red";
@@ -41,8 +35,8 @@ export const SsoAuthEvents = () => {
 						Recent authentication events
 					</CardTitle>
 					<CardDescription>
-						Last 50 SSO sign-ins, emergency sign-ins and configuration changes.
-						Events are kept for 90 days.
+						Last 50 SSO sign-ins, emergency sign-ins, configuration changes and
+						denied user-management attempts. Events are kept for 90 days.
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="py-6 border-t">
@@ -64,37 +58,44 @@ export const SsoAuthEvents = () => {
 									<TableHead>Result</TableHead>
 									<TableHead>Detail</TableHead>
 									<TableHead>User</TableHead>
+									<TableHead>Action</TableHead>
+									<TableHead>Affected user</TableHead>
 									<TableHead>Reference</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{events.map((event) => (
-									<TableRow key={event.id}>
-										<TableCell className="whitespace-nowrap">
-											{new Date(event.createdAt).toLocaleString()}
-										</TableCell>
-										<TableCell>
-											{TYPE_LABELS[event.type] ?? event.type}
-											{event.emergencyOrigin && (
-												<Badge variant="outline" className="ml-2">
-													via emergency origin
+								{events.map((event) => {
+									const view = authEventView(event);
+									return (
+										<TableRow key={event.id}>
+											<TableCell className="whitespace-nowrap">
+												{new Date(event.createdAt).toLocaleString()}
+											</TableCell>
+											<TableCell>
+												{view.type}
+												{event.emergencyOrigin && (
+													<Badge variant="outline" className="ml-2">
+														via emergency origin
+													</Badge>
+												)}
+											</TableCell>
+											<TableCell>
+												<Badge variant={outcomeVariant(event.outcome)}>
+													{event.outcome}
 												</Badge>
-											)}
-										</TableCell>
-										<TableCell>
-											<Badge variant={outcomeVariant(event.outcome)}>
-												{event.outcome}
-											</Badge>
-										</TableCell>
-										<TableCell className="font-mono text-xs">
-											{event.reason ?? ""}
-										</TableCell>
-										<TableCell>{event.email ?? ""}</TableCell>
-										<TableCell className="font-mono text-xs">
-											{event.correlationId}
-										</TableCell>
-									</TableRow>
-								))}
+											</TableCell>
+											<TableCell className="font-mono text-xs">
+												{event.reason ?? ""}
+											</TableCell>
+											<TableCell>{view.who}</TableCell>
+											<TableCell>{view.action}</TableCell>
+											<TableCell>{view.target}</TableCell>
+											<TableCell className="font-mono text-xs">
+												{event.correlationId}
+											</TableCell>
+										</TableRow>
+									);
+								})}
 							</TableBody>
 						</Table>
 					)}

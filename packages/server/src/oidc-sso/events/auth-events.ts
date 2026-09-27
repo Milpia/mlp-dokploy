@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { db } from "@dokploy/server/db";
-import { oidcSsoAuthEvent } from "@dokploy/server/db/schema";
-import { desc, lt } from "drizzle-orm";
+import { oidcSsoAuthEvent, user } from "@dokploy/server/db/schema";
+import { desc, inArray, lt } from "drizzle-orm";
 import type {
 	AuthEventOutcome,
 	AuthEventType,
@@ -26,6 +26,9 @@ export interface AuthEventInput {
 export interface AuthEvent extends AuthEventInput {
 	id: string;
 	createdAt: Date;
+	/** Resolved on read; absent when the user no longer exists. */
+	userEmail?: string;
+	targetUserEmail?: string;
 }
 
 export interface AuthEventStore {
@@ -51,6 +54,23 @@ export const drizzleAuthEventStore: AuthEventStore = {
 			.from(oidcSsoAuthEvent)
 			.orderBy(desc(oidcSsoAuthEvent.createdAt))
 			.limit(limit);
+		const ids = [
+			...new Set(
+				rows.flatMap((row) =>
+					[row.userId, row.targetUserId].filter((id): id is string => !!id),
+				),
+			),
+		];
+		const emails = new Map(
+			ids.length === 0
+				? []
+				: (
+						await db
+							.select({ id: user.id, email: user.email })
+							.from(user)
+							.where(inArray(user.id, ids))
+					).map((u) => [u.id, u.email]),
+		);
 		return rows.map((row) => ({
 			id: row.id,
 			createdAt: row.createdAt,
@@ -64,6 +84,12 @@ export const drizzleAuthEventStore: AuthEventStore = {
 			...(row.emergencyOrigin ? { emergencyOrigin: true } : {}),
 			...(row.action ? { action: row.action as UserManagementAction } : {}),
 			...(row.targetUserId ? { targetUserId: row.targetUserId } : {}),
+			...(row.userId && emails.has(row.userId)
+				? { userEmail: emails.get(row.userId) }
+				: {}),
+			...(row.targetUserId && emails.has(row.targetUserId)
+				? { targetUserEmail: emails.get(row.targetUserId) }
+				: {}),
 		}));
 	},
 	async deleteOlderThan(cutoff) {
