@@ -139,9 +139,9 @@ describe("oidcSso router", () => {
 	});
 
 	it("listEvents returns recent events for the owner", async () => {
-		await expect(caller("owner").listEvents({ limit: 10 })).resolves.toEqual(
-			[],
-		);
+		await expect(
+			caller("owner").listEvents({ page: 1, pageSize: 10 }),
+		).resolves.toEqual({ items: [], total: 0, page: 1, pageSize: 10 });
 	});
 
 	it("spec 003 FR-001: get shows the emergency origin, which update cannot set", async () => {
@@ -164,19 +164,24 @@ describe("oidcSso router", () => {
 	});
 
 	it("spec 003 FR-007: listEvents keeps the emergency origin flag", async () => {
-		vi.spyOn(built.services.events, "listRecent").mockResolvedValue([
-			{
-				id: "e1",
-				createdAt: new Date("2026-09-25T10:00:00Z"),
-				type: "emergency_login",
-				outcome: "success",
-				correlationId: "ABC",
-				emergencyOrigin: true,
-			},
-		]);
-		await expect(caller("owner").listEvents({})).resolves.toMatchObject([
-			{ correlationId: "ABC", emergencyOrigin: true },
-		]);
+		vi.spyOn(built.services.events, "listPage").mockResolvedValue({
+			items: [
+				{
+					id: "e1",
+					createdAt: new Date("2026-09-25T10:00:00Z"),
+					type: "emergency_login",
+					outcome: "success",
+					correlationId: "ABC",
+					emergencyOrigin: true,
+				},
+			],
+			total: 1,
+			page: 1,
+			pageSize: 20,
+		});
+		await expect(caller("owner").listEvents({})).resolves.toMatchObject({
+			items: [{ correlationId: "ABC", emergencyOrigin: true }],
+		});
 	});
 
 	it("FR-014: testConnection delegates to the OIDC client", async () => {

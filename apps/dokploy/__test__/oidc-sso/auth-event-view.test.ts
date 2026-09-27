@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { authEventView } from "@/components/dashboard/settings/oidc-sso/auth-event-view";
+import {
+	authEventView,
+	eventPagination,
+} from "@/components/dashboard/settings/oidc-sso/auth-event-view";
 
 describe("authEventView (spec 002 FR-012, US1 scenario 4, MIL-509)", () => {
 	it("shows who tried, the action and the affected user of a denied user-management attempt", () => {
@@ -55,6 +58,36 @@ describe("authEventView (spec 002 FR-012, US1 scenario 4, MIL-509)", () => {
 			who: "a@example.com",
 			action: "",
 			target: "",
+		});
+	});
+});
+
+describe("eventPagination (spec 001 FR-013, events dialog)", () => {
+	it("describes a middle page", () => {
+		expect(eventPagination(45, 2, 20)).toEqual({
+			pageCount: 3,
+			from: 21,
+			to: 40,
+			canPrevious: true,
+			canNext: true,
+		});
+	});
+
+	it("ends the last page at the total", () => {
+		expect(eventPagination(45, 3, 20)).toMatchObject({
+			from: 41,
+			to: 45,
+			canNext: false,
+		});
+	});
+
+	it("has a single page and nothing to move to when empty", () => {
+		expect(eventPagination(0, 1, 20)).toEqual({
+			pageCount: 1,
+			from: 0,
+			to: 0,
+			canPrevious: false,
+			canNext: false,
 		});
 	});
 });

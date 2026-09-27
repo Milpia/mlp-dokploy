@@ -34,7 +34,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { api, type RouterOutputs } from "@/utils/api";
 import { DEFAULT_PRESET, PROVIDER_PRESETS } from "./provider-presets";
-import { SsoAuthEvents } from "./sso-auth-events";
+import { SsoAuthEventsDialog } from "./sso-auth-events";
 
 type ConfigView = RouterOutputs["oidcSso"]["get"];
 type Field = keyof ConfigView["sources"];
@@ -182,16 +182,20 @@ export const OidcSsoSettings = () => {
 		<div className="w-full flex flex-col gap-4">
 			<Card className="h-full bg-sidebar p-2.5 rounded-xl w-full">
 				<div className="rounded-xl bg-background shadow-md">
-					<CardHeader>
-						<CardTitle className="text-xl flex flex-row gap-2">
-							<KeyRound className="size-6 text-muted-foreground self-center" />
-							Single sign-on (OIDC)
-						</CardTitle>
-						<CardDescription>
-							Let your team sign in with your identity provider (Keycloak, Okta,
-							Authentik, Zitadel, Authelia or any OpenID Connect provider),
-							either with a button on the login page or as the only way in.
-						</CardDescription>
+					<CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between space-y-0">
+						<div className="space-y-1.5">
+							<CardTitle className="text-xl flex flex-row gap-2">
+								<KeyRound className="size-6 text-muted-foreground self-center" />
+								Single sign-on (OIDC)
+							</CardTitle>
+							<CardDescription>
+								Let your team sign in with your identity provider (Keycloak,
+								Okta, Authentik, Zitadel, Authelia or any OpenID Connect
+								provider), either with a button on the login page or as the only
+								way in.
+							</CardDescription>
+						</div>
+						<SsoAuthEventsDialog />
 					</CardHeader>
 					<CardContent className="space-y-4 py-6 border-t">
 						{view.active ? (
@@ -602,7 +606,6 @@ export const OidcSsoSettings = () => {
 					</CardContent>
 				</div>
 			</Card>
-			<SsoAuthEvents />
 		</div>
 	);
 };

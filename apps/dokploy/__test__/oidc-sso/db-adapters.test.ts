@@ -232,6 +232,14 @@ describe("drizzleAuthEventStore (FR-013)", () => {
 		});
 		expect(event?.targetUserEmail).toBeUndefined();
 	});
+
+	it("pages with an offset and counts every event", async () => {
+		const total = await drizzleAuthEventStore.count();
+		const all = await drizzleAuthEventStore.listRecent(100);
+		expect(all).toHaveLength(total);
+		const second = await drizzleAuthEventStore.listRecent(1, 1);
+		expect(second.map((e) => e.id)).toEqual([all[1]?.id]);
+	});
 });
 
 describe("drizzleProvisioningStore (FR-006, FR-007, FR-008)", () => {
