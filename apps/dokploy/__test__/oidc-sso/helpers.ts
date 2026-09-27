@@ -77,6 +77,7 @@ export const fakeEvents = () => {
 			recorded.push(event);
 		},
 		listRecent: async () => [],
+		count: async () => 0,
 		deleteOlderThan: async () => {},
 	});
 	return { recorder, recorded };

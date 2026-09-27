@@ -8,10 +8,12 @@ import { describe, expect, it, vi } from "vitest";
 const store = (): AuthEventStore & {
 	insert: ReturnType<typeof vi.fn>;
 	listRecent: ReturnType<typeof vi.fn>;
+	count: ReturnType<typeof vi.fn>;
 	deleteOlderThan: ReturnType<typeof vi.fn>;
 } => ({
 	insert: vi.fn(async () => {}),
 	listRecent: vi.fn(async () => []),
+	count: vi.fn(async () => 0),
 	deleteOlderThan: vi.fn(async () => {}),
 });
 
@@ -73,6 +75,25 @@ describe("AuthEventRecorder (FR-013)", () => {
 		await recorder.listRecent(0);
 		await recorder.listRecent();
 		expect(s.listRecent.mock.calls).toEqual([[100], [1], [50]]);
+	});
+
+	it("pages newest first and returns the total", async () => {
+		const s = store();
+		s.count.mockResolvedValue(45);
+		const recorder = new AuthEventRecorder(s);
+		await expect(recorder.listPage(3, 20)).resolves.toEqual({
+			items: [],
+			total: 45,
+			page: 3,
+			pageSize: 20,
+		});
+		await recorder.listPage();
+		await recorder.listPage(0, 500);
+		expect(s.listRecent.mock.calls).toEqual([
+			[20, 40],
+			[20, 0],
+			[100, 0],
+		]);
 	});
 });
 

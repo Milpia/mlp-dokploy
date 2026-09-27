@@ -35,6 +35,21 @@ export interface AuthEventView {
 	target: string;
 }
 
+export const eventPagination = (
+	total: number,
+	page: number,
+	pageSize: number,
+) => {
+	const pageCount = Math.max(Math.ceil(total / pageSize), 1);
+	return {
+		pageCount,
+		from: total === 0 ? 0 : (page - 1) * pageSize + 1,
+		to: Math.min(page * pageSize, total),
+		canPrevious: page > 1,
+		canNext: page < pageCount,
+	};
+};
+
 /**
  * The raw id is the fallback when the user was deleted after the event,
  * so the owner can still correlate it with the database (spec 002 FR-012).

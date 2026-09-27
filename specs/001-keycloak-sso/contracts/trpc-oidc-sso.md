@@ -72,6 +72,10 @@ TestFailure = "invalid_url" | "insecure_http" | "unreachable" | "timeout"
 ## `listEvents` (owner query)
 
 ```ts
-input: { limit?: number (1..100, default 50) }
-output: Array<{ createdAt, type, outcome, reason?, email?, correlationId }>
+input: { page?: number (≥ 1, default 1), pageSize?: number (1..100, default 20) }
+output: {
+  items: Array<{ id, createdAt, type, outcome, reason?, email?, correlationId,
+                 emergencyOrigin?, userId?, userEmail?, action?, targetUserId?, targetUserEmail? }>,
+  total: number, page: number, pageSize: number
+}
 ```

@@ -111,8 +111,13 @@ export const oidcSsoRouter = createTRPCRouter({
 		.mutation(({ input }) => testSsoConnection(getOidcSsoServices(), input)),
 
 	listEvents: ownerProcedure
-		.input(z.object({ limit: z.number().int().min(1).max(100).optional() }))
+		.input(
+			z.object({
+				page: z.number().int().min(1).optional(),
+				pageSize: z.number().int().min(1).max(100).optional(),
+			}),
+		)
 		.query(({ input }) =>
-			getOidcSsoServices().events.listRecent(input.limit ?? 50),
+			getOidcSsoServices().events.listPage(input.page, input.pageSize),
 		),
 });

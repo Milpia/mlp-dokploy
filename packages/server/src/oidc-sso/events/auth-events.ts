@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { db } from "@dokploy/server/db";
 import { oidcSsoAuthEvent, user } from "@dokploy/server/db/schema";
-import { desc, inArray, lt } from "drizzle-orm";
+import { count, desc, inArray, lt } from "drizzle-orm";
 import type {
 	AuthEventOutcome,
 	AuthEventType,
@@ -33,8 +33,16 @@ export interface AuthEvent extends AuthEventInput {
 
 export interface AuthEventStore {
 	insert(event: AuthEventInput): Promise<void>;
-	listRecent(limit: number): Promise<AuthEvent[]>;
+	listRecent(limit: number, offset?: number): Promise<AuthEvent[]>;
+	count(): Promise<number>;
 	deleteOlderThan(cutoff: Date): Promise<void>;
+}
+
+export interface AuthEventPage {
+	items: AuthEvent[];
+	total: number;
+	page: number;
+	pageSize: number;
 }
 
 const RETENTION_DAYS = 90;
@@ -48,12 +56,13 @@ export const drizzleAuthEventStore: AuthEventStore = {
 	async insert(event) {
 		await db.insert(oidcSsoAuthEvent).values(event);
 	},
-	async listRecent(limit) {
+	async listRecent(limit, offset = 0) {
 		const rows = await db
 			.select()
 			.from(oidcSsoAuthEvent)
-			.orderBy(desc(oidcSsoAuthEvent.createdAt))
-			.limit(limit);
+			.orderBy(desc(oidcSsoAuthEvent.createdAt), desc(oidcSsoAuthEvent.id))
+			.limit(limit)
+			.offset(offset);
 		const ids = [
 			...new Set(
 				rows.flatMap((row) =>
@@ -91,6 +100,10 @@ export const drizzleAuthEventStore: AuthEventStore = {
 				? { targetUserEmail: emails.get(row.targetUserId) }
 				: {}),
 		}));
+	},
+	async count() {
+		const [row] = await db.select({ total: count() }).from(oidcSsoAuthEvent);
+		return row?.total ?? 0;
 	},
 	async deleteOlderThan(cutoff) {
 		await db
@@ -133,6 +146,16 @@ export class AuthEventRecorder {
 
 	listRecent(limit = 50): Promise<AuthEvent[]> {
 		return this.store.listRecent(Math.min(Math.max(limit, 1), 100));
+	}
+
+	async listPage(page = 1, pageSize = 20): Promise<AuthEventPage> {
+		const size = Math.min(Math.max(pageSize, 1), 100);
+		const current = Math.max(page, 1);
+		const [items, total] = await Promise.all([
+			this.store.listRecent(size, (current - 1) * size),
+			this.store.count(),
+		]);
+		return { items, total, page: current, pageSize: size };
 	}
 
 	private async pruneIfDue(): Promise<void> {
