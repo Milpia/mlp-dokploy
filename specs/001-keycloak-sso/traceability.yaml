@@ -487,6 +487,7 @@ requirements:
     - MIL-407
     - MIL-408
     - MIL-409
+    - MIL-510
     local_tasks:
     - T004
     - T005
@@ -506,6 +507,7 @@ requirements:
     - T043
     - T044
     - T052
+    - T061
     commits:
     - f3a4a07bc
     - e6c239a0b
@@ -1740,6 +1742,12 @@ phase_tasks:
     requirements:
     - FR-023
     - FR-023a
+  - local_id: T061
+    title: Move the authentication events out of the SSO settings card into a paginated dialog
+    jira: MIL-510
+    parallel: false
+    requirements:
+    - FR-013
 bugs:
 - jira: MIL-421
   summary: La prueba de conexión da por válido un secreto incorrecto con Keycloak (resuelto)

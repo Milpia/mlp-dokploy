@@ -237,6 +237,7 @@ registrados.
 - [X] T058 [P] Update `specs/001-oidc-sso/operations.md` with per-provider setup (client, redirect URI, groups/roles claim, logout support) [FR-022]
 - [X] T059 Update plan, research, data model, contracts and quickstart to the generic naming, re-run lint, typecheck, tests, coverage and traceability [FR-022]
 - [X] T060 Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`, RFC 6749 scope validation, appended to `openid email profile` in the authorization request [FR-023a, FR-023] (formerly T055a)
+- [X] T061 Move the authentication events out of the SSO settings card into a paginated dialog: `listEvents` takes `{ page, pageSize }` and returns `{ items, total, page, pageSize }`; the settings card shows first, with an «Authentication events» button [FR-013] (owner request, 2026-09-27)
 
 ---
 
