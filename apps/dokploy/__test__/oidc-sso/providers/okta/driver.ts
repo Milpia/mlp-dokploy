@@ -51,11 +51,11 @@ export const driver: ProviderDriver = {
 	moduleConfig: () => {
 		const client = loadClient("okta");
 		return {
-			issuerUrl: saasEnv("OKTA_E2E_ORG_URL").replace(/\/+$/, ""),
+			issuerUrl: `${saasEnv("OKTA_E2E_ORG_URL").replace(/\/+$/, "")}/oauth2/default`,
 			clientId: client.clientId,
 			clientSecret: client.clientSecret,
 			groupsClaim: "groups",
-			extraScopes: "groups",
+			extraScopes: "",
 			allowInsecureHttp: false,
 			...groupSettings,
 		};
@@ -88,5 +88,10 @@ export const driver: ProviderDriver = {
 		await page.click('input[type="submit"], button[type="submit"]');
 		await page.fill('input[name="credentials.passcode"]', user.password);
 		await page.click('input[type="submit"], button[type="submit"]');
+		// Optional authenticators (email) are offered once; skip them.
+		const skip = page.getByRole("link", { name: /skip|set up later/i });
+		if (await skip.isVisible({ timeout: 5_000 }).catch(() => false)) {
+			await skip.click();
+		}
 	},
 };

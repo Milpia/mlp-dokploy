@@ -8,12 +8,16 @@ Se escribe a mano (FR-014). `pnpm --filter=dokploy run e2e:oidc:matrix` incorpor
 
 ## Okta
 
-- **No verificado: sin tenant de pruebas.** La semilla y el conductor existen, pero no se han ejecutado. El campo del filtro de grupos del servidor de autorización de la organización en la API está marcado como [verificar].
+- Verificado contra un tenant Integrator Free, con el authorization server `default`. El servidor de la organización no tiene API para su claim de grupos, así que solo se configura en la consola.
+- El issuer es la URL de la organización sin `-admin`.
+- El servidor `default` necesita una política de acceso que incluya el cliente; sin ella, Okta responde «You are not allowed to access this app».
+- Las organizaciones nuevas exigen Okta Verify. La semilla deja Okta Verify como opcional solo para el grupo de prueba y asigna a la app una política de un factor. Okta no permite prohibirlo del todo mientras sea el único segundo factor para iniciar sesión.
 
 ## Auth0
 
-- **No verificado: sin tenant de pruebas.** La semilla y el conductor existen, pero no se han ejecutado.
 - Auth0 no tiene claim de grupos: los roles llegan por una Action Post-Login a un claim con namespace (`https://dokploy/groups`).
+- Tras desplegar o enlazar la Action, Auth0 tarda unos segundos en aplicarla.
+- La Management API del plan gratuito limita mucho las peticiones; la semilla reintenta ante el 429.
 - El fin de sesión RP-initiated depende de una opción del tenant. Sin ella, Dokploy muestra su pantalla de sesión cerrada.
 
 ## Authentik
