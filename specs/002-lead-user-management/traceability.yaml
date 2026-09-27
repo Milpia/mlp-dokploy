@@ -213,7 +213,7 @@ requirements:
     - T027
     bugs:
     - MIL-509
-    status: at_risk
+    status: implemented
   FR-013:
     text: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
     tasks:
@@ -224,7 +224,7 @@ requirements:
     - T029
     - T030
     bugs: []
-    status: in_progress
+    status: implemented
   FR-014:
     text: Cuando el grupo de gestión de usuarios está configurado, un admin que nunca ha entrado por SSO MUST NOT
       poder gestionar usuarios hasta que un login por SSO confirme que pertenece al grupo. El owner queda exento
@@ -717,8 +717,12 @@ bugs:
   breaks:
   - US1-4
   detected_in: MIL-456
-  regression_test: null
-  status: open
+  regression_test:
+  - 'apps/dokploy/__test__/oidc-sso/auth-event-view.test.ts::authEventView (spec 002 FR-012, US1 scenario 4,
+    MIL-509)'
+  - 'apps/dokploy/__test__/oidc-sso/db-adapters.test.ts::spec 002 FR-012 (MIL-509): resolves the emails of who
+    tried and of the affected user'
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
