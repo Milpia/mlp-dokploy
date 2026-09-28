@@ -14,9 +14,9 @@ feature:
   story: MIL-514
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-28T02:12:56Z'
-  synced_from_sha: 52851c398f6ec83805b848c95cd3b9c4c7e6f8e2
-  spec_digest: sha256:3ba1974e66b1d5028a4948b5e68dc818b1efedc54b9f9d9c1915130bc510373f
+  synced_at: '2026-09-28T03:59:54Z'
+  synced_from_sha: 5ec916345fe85e4191094eee32d8786ae4150150
+  spec_digest: sha256:5acd56b1f38f3126f5bc2d9b2a458fbc06e90a96126047de5322edea47e3ef51
 links:
 - type: relates
   issue: MIL-423
@@ -37,7 +37,7 @@ requirements:
     - T007
     - T021
     bugs: []
-    status: planned
+    status: implemented
   FR-002:
     text: 'El owner MUST poder definir, con la misma precedencia, un **alcance por grupo**: una lista de proyectos
       por nombre para cada grupo y, opcionalmente, los entornos de esos proyectos a los que accede o los que excluye,
@@ -51,7 +51,7 @@ requirements:
     - T009
     - T019
     bugs: []
-    status: planned
+    status: implemented
   FR-003:
     text: En cada login por SSO de un usuario con rol `member` que pertenece a uno o más grupos con perfil o alcance
       configurado, el sistema MUST sustituir sus permisos individuales y su alcance por los que resultan de sus
@@ -69,7 +69,7 @@ requirements:
     - T015
     - T016
     bugs: []
-    status: planned
+    status: implemented
   FR-004:
     text: Si un usuario con rol `member` deja de pertenecer a todo grupo con perfil o alcance, el sistema MUST quitarle
       en su siguiente login por SSO los permisos y el alcance que recibió de los grupos, dejándolo sin ninguno.
@@ -82,7 +82,7 @@ requirements:
     - T012
     - T028
     bugs: []
-    status: planned
+    status: implemented
   FR-005:
     text: 'El sistema MUST NOT cambiar los permisos ni el alcance de un member que nunca recibió un perfil de grupo
       y no pertenece a ningún grupo con perfil: su configuración manual sigue siendo la de upstream.'
@@ -94,7 +94,7 @@ requirements:
     - T012
     - T029
     bugs: []
-    status: planned
+    status: implemented
   FR-006:
     text: Si el usuario pertenece a varios grupos con perfil, el sistema MUST aplicar la unión de sus permisos y
       de sus alcances.
@@ -104,7 +104,7 @@ requirements:
     - T003
     - T004
     bugs: []
-    status: planned
+    status: implemented
   FR-007:
     text: 'El perfil y el alcance MUST aplicarse solo a usuarios con rol `member`. El owner nunca cambia (spec 001)
       y un admin no recibe perfil: si un usuario pertenece al grupo de administración y a un grupo con perfil, gana
@@ -117,7 +117,7 @@ requirements:
     - T012
     - T028
     bugs: []
-    status: planned
+    status: implemented
   FR-008:
     text: Un perfil MUST poder otorgar solo los permisos individuales que ya existen para member en upstream (crear
       o borrar proyectos, servicios y entornos; acceso a Docker, a la API, a las SSH keys, a los proveedores Git
@@ -134,7 +134,7 @@ requirements:
     - T004
     - T017
     bugs: []
-    status: planned
+    status: implemented
   FR-009:
     text: El sistema MUST rechazar una configuración con un permiso desconocido, un grupo vacío o un formato inválido,
       con un mensaje que diga qué falla, y MUST NOT aplicar perfiles a medias. Si la configuración del entorno es
@@ -150,7 +150,7 @@ requirements:
     - T007
     - T021
     bugs: []
-    status: planned
+    status: implemented
   FR-010:
     text: Las comprobaciones de permisos y de alcance MUST cumplirse en el servidor, también en peticiones que no
       vienen de la interfaz, con las mismas reglas que upstream aplica hoy a un member con esos permisos y ese alcance.
@@ -160,7 +160,7 @@ requirements:
     - T017
     - T018
     bugs: []
-    status: planned
+    status: implemented
   FR-011:
     text: La lista de usuarios MUST indicar, para un member con perfil de grupo, que sus permisos y su alcance vienen
       de sus grupos y que un cambio manual se perderá en su siguiente login por SSO.
@@ -172,7 +172,7 @@ requirements:
     - T022
     - T023
     bugs: []
-    status: planned
+    status: implemented
   FR-012:
     text: Los cambios de perfiles y alcances en la pantalla de SSO MUST registrarse en los eventos del SSO como
       cambios de configuración, igual que el resto de ajustes.
@@ -181,7 +181,7 @@ requirements:
     local_tasks:
     - T006
     bugs: []
-    status: planned
+    status: implemented
   FR-013:
     text: Sin perfiles ni alcances configurados, el sistema MUST comportarse exactamente como hoy.
     tasks:
@@ -192,7 +192,7 @@ requirements:
     - T012
     - T029
     bugs: []
-    status: planned
+    status: implemented
   FR-014:
     text: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
       Si el usuario tiene un rol personalizado, el sistema MUST NOT aplicarle perfil.
@@ -202,7 +202,7 @@ requirements:
     - T010
     - T012
     bugs: []
-    status: planned
+    status: implemented
   FR-015:
     text: Los nombres de grupo, los permisos de cada perfil y el alcance MUST vivir en la configuración; el código
       MUST NOT fijar ninguno.
@@ -213,7 +213,7 @@ requirements:
     - T032
     - T033
     bugs: []
-    status: planned
+    status: implemented
   FR-016:
     text: El alcance MUST poder excluir entornos por nombre, para que un grupo opere sus proyectos fuera de producción.
       En esta spec, un entorno excluido no es visible para el grupo. Ver producción en solo lectura llegará con
@@ -226,7 +226,7 @@ requirements:
     - T009
     - T016
     bugs: []
-    status: planned
+    status: implemented
   FR-017:
     text: El perfil y el alcance que un member recibe de sus grupos MUST caducar 8 horas después de su último login
       por SSO. Pasado ese plazo, el sistema MUST dejar de aplicarlos (el member queda sin esos permisos ni ese alcance)
@@ -249,7 +249,7 @@ requirements:
     - T027
     - T028
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-001:
     text: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
     tasks:
@@ -257,7 +257,7 @@ requirements:
     local_tasks:
     - T031
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-002:
     text: Comprobar la caducidad (FR-017) MUST añadir como máximo 5 ms (p95) a cada petición de un member con perfil
       de grupo, y MUST NOT añadir consultas ni tiempo a las peticiones del owner, de los admins ni de los members
@@ -269,7 +269,7 @@ requirements:
     - T024
     - T031
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-001:
     text: Cualquier error al calcular el perfil o el alcance durante el login (configuración ilegible, fallo de
       base de datos) MUST resolverse dejando al usuario sin los permisos y el alcance del perfil, nunca con permisos
@@ -280,7 +280,7 @@ requirements:
     - T013
     - T015
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-002:
     text: Un member MUST NOT poder ampliar su propio perfil ni su alcance por ninguna vía.
     tasks:
@@ -288,28 +288,33 @@ requirements:
     local_tasks:
     - T017
     bugs: []
-    status: planned
+    status: implemented
 success_criteria:
   SC-001:
     text: Un developer nuevo puede desplegar un servicio de uno de sus proyectos en su primer login por SSO, con
       0 pasos manuales de un admin.
-    verified_by: []
+    verified_by:
+    - MIL-534
   SC-002:
     text: El 100 % de las acciones fuera del perfil de developer (crear o borrar proyectos, servicios o entornos,
       Docker, Traefik, SSH keys, proveedores Git, gestión de usuarios, proyectos fuera de su alcance) se rechazan,
       tanto desde la interfaz como por llamada directa.
-    verified_by: []
+    verified_by:
+    - MIL-534
   SC-003:
     text: Al sacar a una persona del grupo, pierde el perfil y el alcance en su siguiente login por SSO o, como
       mucho, 8 horas después de su último login por SSO, en el 100 % de los casos.
-    verified_by: []
+    verified_by:
+    - MIL-534
   SC-004:
     text: 'Una instancia que actualiza sin configurar perfiles no cambia de comportamiento: las pruebas actuales
       de permisos pasan sin modificarse y ningún permiso manual existente cambia.'
-    verified_by: []
+    verified_by:
+    - MIL-534
   SC-005:
     text: El login por SSO de un developer tarda como mucho 50 ms más (p95) que el de un member sin perfil.
-    verified_by: []
+    verified_by:
+    - MIL-534
 user_stories:
 - local_id: US1
   title: Un developer entra y trabaja en sus proyectos sin esperar a un admin

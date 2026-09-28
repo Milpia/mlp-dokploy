@@ -218,7 +218,8 @@ Todavía no se aplican en el login.
   - how to read `groupProfilesCheck`
 - [X] T033 Run `/security-review` on the branch and fix its findings (constitution III, research R11)
 - [X] T034 Run `pnpm typecheck`, `npx biome check` on the touched files, the server declaration build (`pnpm --filter=@dokploy/server run build`, then `git checkout packages/server/package.json`) and the full `oidc-sso` suite
-- [ ] T035 Run the quickstart manual scenarios 1–13 in the lab with the canary image and record the results in the lab PR (SC-001–SC-004). Then tell infra to add `developers` to `SSO_OIDC_ACCESS_GROUP` and `deploy_access_groups`
+- [X] T035 Run the quickstart manual scenarios 1–13 in the lab with the canary image and record the results in the lab PR (SC-001–SC-004). Then tell infra to add `developers` to `SSO_OIDC_ACCESS_GROUP` and `deploy_access_groups`
+  - result (2026-09-28): 13/13 pass on canary 5ec9163 (mlp-deploy-lab PR #25, b5af3d1). The only difference: `qa` was in the access group during the test, to give scenario 10 a user with access and no profile
 
 ---
 
