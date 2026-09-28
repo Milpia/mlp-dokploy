@@ -615,6 +615,7 @@ describe.skipIf(!enabled)(
 			now: Date,
 		): MemberProfileExpiryDeps => ({
 			services: ctx.deps.services,
+			findRole: async () => "member",
 			findProfile: async (userId) => {
 				const grant = ctx.grants.get(userId);
 				return grant

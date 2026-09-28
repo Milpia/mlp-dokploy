@@ -116,6 +116,8 @@ Una instancia que actualiza el fork sin configurar perfiles ni alcances se compo
 - Un proyecto de la lista no tiene un entorno con el nombre excluido: el alcance cubre todos sus entornos.
 - Un admin cambia a mano los permisos de un developer: el cambio dura hasta su siguiente login por SSO, donde el grupo vuelve a mandar (US3-3).
 - Un member que entra con la cuenta local (sin SSO) no recibe perfil: los perfiles solo se aplican en el login por SSO.
+- El owner vacía `groupProfiles` (o la variable deja de ser válida): se vuelve al comportamiento de upstream (FR-013). Los permisos y proyectos que los members ya tenían se quedan como si un admin los hubiera puesto a mano: no caducan ni se revocan solos. La lista de usuarios sigue marcándolos con «SSO: <grupos>» para que un admin los revise, y no los muestra como caducados.
+- Un member abre la terminal, los logs o las estadísticas de un contenedor por WebSocket sin pasar por el resto del panel: la caducidad de FR-017 también se comprueba ahí, antes de autorizar la conexión.
 - Se cambia el grupo de acceso sin incluir a `developers`: no pueden entrar, con o sin perfil (spec 001).
 
 ## Requirements *(mandatory)*

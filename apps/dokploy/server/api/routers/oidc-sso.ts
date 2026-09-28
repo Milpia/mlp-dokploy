@@ -76,6 +76,9 @@ const requestIp = (req: { headers: Record<string, unknown> } | undefined) => {
 	return typeof value === "string" ? value.split(",")[0]?.trim() : undefined;
 };
 
+const profilesActive = async () =>
+	!!(await getOidcSsoServices().config.getEffective()).groupProfiles;
+
 const PRECONDITION_CODES = new Set([
 	"incomplete",
 	"unverified",
@@ -101,7 +104,11 @@ export const oidcSsoRouter = createTRPCRouter({
 	memberProfileStatus: protectedProcedure.query(async ({ ctx }) =>
 		IS_CLOUD
 			? toStatus(null, new Date())
-			: toStatus(await findProfileWithLogin(ctx.user.id), new Date()),
+			: toStatus(
+					await findProfileWithLogin(ctx.user.id),
+					new Date(),
+					await profilesActive(),
+				),
 	),
 
 	// Admins see which members' permissions come from their groups (FR-011).
@@ -113,6 +120,7 @@ export const oidcSsoRouter = createTRPCRouter({
 		return toSummaries(
 			await listProfilesWithLogin(ctx.session.activeOrganizationId),
 			new Date(),
+			await profilesActive(),
 		);
 	}),
 

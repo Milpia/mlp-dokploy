@@ -15,6 +15,7 @@ export const MEMBER_PROFILE_EXPIRED_MESSAGE =
 
 export interface MemberProfileExpiryDeps {
 	services: Pick<OidcSsoServices, "config" | "events">;
+	findRole(userId: string, organizationId: string): Promise<string | null>;
 	findProfile(userId: string): Promise<ProfileWithLogin | null>;
 	listProfiledUserIds(): Promise<string[]>;
 	/** Runs the expiry writes in one transaction. */
@@ -93,9 +94,34 @@ export const defaultMemberProfileExpiryDeps = (
 	services: MemberProfileExpiryDeps["services"],
 ): MemberProfileExpiryDeps => ({
 	services,
+	findRole: (userId, organizationId) =>
+		drizzleMemberProfileStore().findRole(userId, organizationId),
 	findProfile: findProfileWithLogin,
 	listProfiledUserIds,
 	expire: (fn) =>
 		db.transaction((tx) => fn(drizzleMemberProfileStore(tx as never))),
 	now: () => new Date(),
 });
+
+/**
+ * For requests that do not go through tRPC, where the role is not in the
+ * context (WebSocket upgrades). Everyone outside the cache skips without a
+ * query, as in the tRPC guard.
+ */
+export const checkMemberProfileExpiryForUser = async (
+	userId: string,
+	organizationId: string,
+	deps: MemberProfileExpiryDeps,
+): Promise<ExpiryResult> => {
+	const now = deps.now().getTime();
+	if (!memberProfileCache.isStale(now) && !memberProfileCache.has(userId)) {
+		return { ok: true, outcome: "skipped" };
+	}
+	try {
+		const role = await deps.findRole(userId, organizationId);
+		return checkMemberProfileExpiry({ id: userId, role }, deps);
+	} catch (error) {
+		console.error("OIDC SSO: group profile expiry check failed", error);
+		return { ok: false };
+	}
+};

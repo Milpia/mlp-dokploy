@@ -216,7 +216,7 @@ Todavía no se aplican en el login.
 - [X] T032 [P] Document the feature in `specs/001-keycloak-sso/operations.md`:
   - a «Perfiles por grupo» section with the format of `SSO_OIDC_GROUP_PROFILES`, the Milpia example, the 8-hour expiry and the `profile_expired`/`profile_failed` events;
   - how to read `groupProfilesCheck`
-- [ ] T033 Run `/security-review` on the branch and fix its findings (constitution III, research R11)
+- [X] T033 Run `/security-review` on the branch and fix its findings (constitution III, research R11)
 - [ ] T034 Run `pnpm typecheck`, `npx biome check` on the touched files, the server declaration build (`pnpm --filter=@dokploy/server run build`, then `git checkout packages/server/package.json`) and the full `oidc-sso` suite
 - [ ] T035 Run the quickstart manual scenarios 1–13 in the lab with the canary image and record the results in the lab PR (SC-001–SC-004). Then tell infra to add `developers` to `SSO_OIDC_ACCESS_GROUP` and `deploy_access_groups`
 

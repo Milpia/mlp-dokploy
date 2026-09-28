@@ -2,6 +2,7 @@ import { SSO_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-managemen
 import { memberProfileCache } from "@dokploy/server/oidc-sso/member-profile/cache";
 import {
 	checkMemberProfileExpiry,
+	checkMemberProfileExpiryForUser,
 	type MemberProfileExpiryDeps,
 } from "@dokploy/server/oidc-sso/member-profile/expiry";
 import type { ProfileWithLogin } from "@dokploy/server/oidc-sso/member-profile/status";
@@ -34,10 +35,12 @@ const build = ({
 	});
 	const store = { expire: vi.fn(async () => {}) };
 	const deps: MemberProfileExpiryDeps & {
+		findRole: ReturnType<typeof vi.fn>;
 		findProfile: ReturnType<typeof vi.fn>;
 		listProfiledUserIds: ReturnType<typeof vi.fn>;
 	} = {
 		services,
+		findRole: vi.fn(async () => "member"),
 		findProfile: vi.fn(async () => profile),
 		listProfiledUserIds: vi.fn(async () => profiledIds),
 		expire: vi.fn(async (fn) => fn(store as unknown as MemberProfileStore)),
@@ -159,5 +162,39 @@ describe("checkMemberProfileExpiry (spec 005, FR-017, contracts/trpc-and-guard.m
 		});
 		expect(deps.listProfiledUserIds).not.toHaveBeenCalled();
 		expect(deps.findProfile).not.toHaveBeenCalled();
+	});
+});
+
+describe("checkMemberProfileExpiryForUser (spec 005, WebSocket upgrades)", () => {
+	it("skips without any read when the cache is fresh and the user is not in it", async () => {
+		const { deps } = build({ profiledIds: ["someone-else"] });
+		await checkMemberProfileExpiry(member, deps);
+		deps.findProfile.mockClear();
+		await expect(
+			checkMemberProfileExpiryForUser("dev-2", "org", deps),
+		).resolves.toEqual({ ok: true, outcome: "skipped" });
+		expect(deps.findRole).not.toHaveBeenCalled();
+		expect(deps.findProfile).not.toHaveBeenCalled();
+	});
+
+	it("FR-017: looks up the role and expires a profile 8 hours old", async () => {
+		const { deps, store } = build({
+			profile: row(new Date(NOW.getTime() - SSO_GRANT_TTL_MS)),
+		});
+		await expect(
+			checkMemberProfileExpiryForUser("dev-1", "org", deps),
+		).resolves.toEqual({ ok: true, outcome: "expired" });
+		expect(deps.findRole).toHaveBeenCalledWith("dev-1", "org");
+		expect(store.expire).toHaveBeenCalled();
+	});
+
+	it("NFR-SEC-001: a failed role lookup fails closed", async () => {
+		const { deps } = build();
+		deps.findRole.mockRejectedValueOnce(new Error("db down"));
+		const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+		await expect(
+			checkMemberProfileExpiryForUser("dev-1", "org", deps),
+		).resolves.toEqual({ ok: false });
+		errors.mockRestore();
 	});
 });

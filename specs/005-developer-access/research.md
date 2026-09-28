@@ -115,7 +115,11 @@ Los nombres que no coinciden con nada se ignoran (spec, casos límite). Una quer
 - Comprobar la caducidad dentro de `checkPermission` de upstream: toca un archivo central y no cubre los filtros de los routers.
 - Una tarea programada que revoque cada hora: el plazo real pasaría a ser de hasta 9 h.
 
-**Límite conocido**: las conexiones WebSocket ya abiertas (logs en vivo, terminal) no pasan por tRPC. Siguen hasta que se cierran, y la siguiente petición del panel ya aplica la revocación. El panel hace peticiones tRPC continuamente, así que el margen es de segundos.
+**WebSockets** (hallazgo de `/security-review`, T033): las conexiones de terminal, logs y estadísticas de contenedores no pasan por tRPC y autorizan contra `member.accessedServices`. Sin más, alguien que conserve su cookie y solo abra WebSockets no vería nunca la revocación. Por eso `canAccessDockerOverWss` (`apps/dokploy/server/wss/authorize.ts`) llama a `checkMemberProfileExpiryForUser` antes de autorizar: con la misma caché, solo busca el rol de los usuarios con perfil. Si falla, deniega.
+
+**Límite conocido**: una conexión WebSocket ya abierta no se corta al caducar el perfil. Sigue hasta que se cierra, y la siguiente conexión o petición ya se deniega.
+
+**Perfiles desactivados** (T033): si `groupProfiles` queda vacío o inválido, no se aplica ni se revoca nada (FR-013). Los permisos ya escritos quedan como manuales. `memberProfiles` y `memberProfileStatus` solo marcan un perfil como caducado si de verdad se revocó (`expired_at`), para no hacer creer a un admin que el acceso ya se quitó.
 
 ## R7. Aviso en el panel
 

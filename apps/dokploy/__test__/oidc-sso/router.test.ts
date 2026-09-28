@@ -407,3 +407,30 @@ describe("oidcSso router · group profiles (spec 005)", () => {
 		});
 	});
 });
+
+describe("oidcSso router · group profiles switched off (spec 005)", () => {
+	it("does not report a profile as expired while the profiles are disabled", async () => {
+		holder.services = makeServices({
+			config: { ...activeConfig, groupProfiles: null },
+		}).services;
+		profiles.rows = [
+			{
+				userId: "member-id",
+				organizationId: "org",
+				groups: ["developers"],
+				appliedAt: new Date(Date.now() - 9 * 60 * 60 * 1000),
+				expiredAt: null,
+				lastSsoLoginAt: new Date(Date.now() - 9 * 60 * 60 * 1000),
+			},
+		];
+		expect((await caller("admin").memberProfiles())["member-id"]?.expired).toBe(
+			false,
+		);
+		await expect(caller("member").memberProfileStatus()).resolves.toMatchObject(
+			{
+				managed: true,
+				expired: false,
+			},
+		);
+	});
+});

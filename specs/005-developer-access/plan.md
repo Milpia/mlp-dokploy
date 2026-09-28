@@ -74,6 +74,8 @@ e2e con Keycloak de la spec 001 para US1, US2 y US4.
 | `apps/dokploy/components/dashboard/settings/users/show-users.tsx` | montar la insignia «SSO: <grupos>» | FR-011 |
 | `apps/dokploy/components/dashboard/settings/users/add-permissions.tsx` | montar el aviso de que los cambios se sobrescriben | FR-011 |
 | `apps/dokploy/pages/dashboard/projects.tsx` | montar el aviso de perfil caducado | FR-017 |
+| `apps/dokploy/server/wss/authorize.ts` | llamar a `checkMemberProfileExpiryForUser` antes de autorizar un WebSocket de contenedor | FR-017: las WebSockets no pasan por tRPC (hallazgo de T033) |
+| `apps/dokploy/__test__/wss/authorize.test.ts` | simular el módulo de caducidad | sus tests prueban la autorización de upstream; la caducidad se prueba en `__test__/oidc-sso` |
 | `apps/dokploy/drizzle/*` | migración generada | obligatoria para la tabla y la columna nuevas |
 
 ## Project Structure

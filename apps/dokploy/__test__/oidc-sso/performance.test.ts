@@ -346,6 +346,7 @@ describe("performance · group profiles (spec 005)", () => {
 		const listProfiledUserIds = vi.fn(async () => ["dev"]);
 		const deps = {
 			services,
+			findRole: vi.fn(async () => "member"),
 			findProfile,
 			listProfiledUserIds,
 			expire: vi.fn(async () => {}),

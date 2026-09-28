@@ -30,16 +30,19 @@ export interface MemberProfileSummary {
 
 /**
  * Expired once the guard revoked it, or once 8 hours passed since the last
- * SSO login even if the guard has not run yet (spec 005, FR-017).
+ * SSO login even if the guard has not run yet (spec 005, FR-017). With the
+ * profiles switched off nothing expires, so only a real revocation counts.
  */
-const isExpired = (row: ProfileWithLogin, now: Date) =>
+const isExpired = (row: ProfileWithLogin, now: Date, profilesActive: boolean) =>
 	row.expiredAt !== null ||
-	!row.lastSsoLoginAt ||
-	now.getTime() - row.lastSsoLoginAt.getTime() >= SSO_GRANT_TTL_MS;
+	(profilesActive &&
+		(!row.lastSsoLoginAt ||
+			now.getTime() - row.lastSsoLoginAt.getTime() >= SSO_GRANT_TTL_MS));
 
 export const toStatus = (
 	row: ProfileWithLogin | null,
 	now: Date,
+	profilesActive = true,
 ): MemberProfileStatus => {
 	if (!row) {
 		return { managed: false, groups: [], expiresAt: null, expired: false };
@@ -50,13 +53,14 @@ export const toStatus = (
 		expiresAt: row.lastSsoLoginAt
 			? new Date(row.lastSsoLoginAt.getTime() + SSO_GRANT_TTL_MS).toISOString()
 			: null,
-		expired: isExpired(row, now),
+		expired: isExpired(row, now, profilesActive),
 	};
 };
 
 export const toSummaries = (
 	rows: ProfileWithLogin[],
 	now: Date,
+	profilesActive = true,
 ): Record<string, MemberProfileSummary> =>
 	Object.fromEntries(
 		rows.map((row) => [
@@ -64,7 +68,7 @@ export const toSummaries = (
 			{
 				groups: row.groups,
 				appliedAt: row.appliedAt.toISOString(),
-				expired: isExpired(row, now),
+				expired: isExpired(row, now, profilesActive),
 			},
 		]),
 	);
