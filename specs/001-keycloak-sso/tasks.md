@@ -238,6 +238,7 @@ registrados.
 - [X] T059 Update plan, research, data model, contracts and quickstart to the generic naming, re-run lint, typecheck, tests, coverage and traceability [FR-022]
 - [X] T060 Add configurable extra scopes: `extraScopes` column (default empty), `SSO_OIDC_EXTRA_SCOPES`, RFC 6749 scope validation, appended to `openid email profile` in the authorization request [FR-023a, FR-023] (formerly T055a)
 - [X] T061 Move the authentication events out of the SSO settings card into a paginated dialog: `listEvents` takes `{ page, pageSize }` and returns `{ items, total, page, pageSize }`; the settings card shows first, with an «Authentication events» button [FR-013] (owner request, 2026-09-27)
+- [X] T062 Write one container log line per denied or failed auth event (`OIDC SSO event type=… outcome=… reason=… ref=…`, ids only, no email); successful events are not logged and a failing log sink never breaks a login [NFR-QA-004, FR-013]
 
 ---
 
