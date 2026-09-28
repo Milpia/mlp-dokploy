@@ -116,7 +116,9 @@ Todavía no se aplican en el login.
   - if `applyGroupProfile` throws, nothing is committed and the login fails as `sso_unavailable`, recording a `sso_login`/`error`/`profile_failed` event with its reference
 - [ ] T014 [US1] Call `applyGroupProfile` inside the transaction of `provisionIdentity` in `packages/server/src/oidc-sso/identity/provisioning.ts`, after `ensureMembership` and `recordLoginState`, with the final role. Add it to `ProvisioningTx`
 - [ ] T015 [US1] Pass the effective `groupProfiles` from `services.config.getEffective()` in `packages/server/src/oidc-sso/plugin/login-flow.ts`, and record the `profile_failed` event on failure (R9)
-- [ ] T016 [US1] Add e2e scenarios to `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`: a `developers` user sees exactly `alpha` and `beta` with `staging` and deploys a service there (quickstart 1–2, SC-001)
+- [ ] T016 [US1] Extend the e2e seed and add scenarios in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`:
+  - seed: `developers` users `dev1` and `dev2` in the Keycloak realm; projects `alpha` and `beta` (environments `production` and `staging`) and `gamma` (`production`), with one application in each environment; `SSO_OIDC_GROUP_PROFILES` as in quickstart;
+  - scenario: `dev1` sees exactly `alpha` and `beta` with `staging` and deploys a service there (quickstart 1–2, SC-001)
 
 **Checkpoint**: US1 funciona por sí sola. Es el MVP.
 
@@ -133,6 +135,7 @@ Todavía no se aplican en el login.
   - `docker.read`, `traefikFiles.read`, `sshKeys.read`, `gitProviders.read` and `api.read`;
   - a service of a project outside the scope;
   - a service of the excluded `production` environment
+  - widening its own profile or scope (NFR-SEC-002): `user.assignPermissions` on itself (rejected by the spec 002 guard) and `oidcSso.update` (rejected by `ownerProcedure`)
 - [ ] T018 [US2] Add e2e direct-call denials with the developer's cookie to `keycloak.e2e.test.ts`: create a project, list Docker containers and operate a service of `gamma` by id (quickstart 3–4)
 
 **Checkpoint**: US1 y US2 cumplen SC-001 y SC-002.
