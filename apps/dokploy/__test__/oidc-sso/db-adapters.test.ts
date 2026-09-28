@@ -35,6 +35,9 @@ const { ownerHasEnterpriseLicense, getOidcSsoServices } = await import(
 const { drizzleResolveTarget, defaultUserManagementGuardDeps } = await import(
 	"@dokploy/server/oidc-sso/user-management/guard"
 );
+const { drizzleMemberProfileStore, listProfiledUserIds } = await import(
+	"@dokploy/server/oidc-sso/member-profile/store"
+);
 
 type Db = import("drizzle-orm/pglite").PgliteDatabase<typeof schema>;
 let db: Db;
@@ -239,6 +242,102 @@ describe("drizzleAuthEventStore (FR-013)", () => {
 		expect(all).toHaveLength(total);
 		const second = await drizzleAuthEventStore.listRecent(1, 1);
 		expect(second.map((e) => e.id)).toEqual([all[1]?.id]);
+	});
+});
+
+describe("drizzleMemberProfileStore (spec 005, R3)", () => {
+	const DEV_ID = "dev-profile-user";
+	const scope = {
+		projectIds: ["p1"],
+		environmentIds: ["e1"],
+		serviceIds: ["s1", "s2"],
+	};
+
+	const memberRow = async () => {
+		const [row] = await db
+			.select()
+			.from(schema.member)
+			.where((await import("drizzle-orm")).eq(schema.member.userId, DEV_ID));
+		return row;
+	};
+
+	it("grants, expires and revokes without touching role or other lists", async () => {
+		const now = new Date("2026-09-28T12:00:00Z");
+		await db.insert(schema.user).values({
+			id: DEV_ID,
+			email: "profile-store@example.com",
+			emailVerified: true,
+			updatedAt: now,
+		});
+		await db.insert(schema.member).values({
+			userId: DEV_ID,
+			organizationId: ORG_ID,
+			role: "member",
+			createdAt: now,
+			canAccessToDocker: true,
+			accessedServers: ["server-1"],
+		});
+		const store = drizzleMemberProfileStore(db as never);
+
+		await expect(store.findRole(DEV_ID, ORG_ID)).resolves.toBe("member");
+		await expect(store.findProfile(DEV_ID)).resolves.toBeNull();
+
+		await store.grant({
+			userId: DEV_ID,
+			organizationId: ORG_ID,
+			groups: ["developers"],
+			permissions: ["canCreateServices"],
+			scope,
+			at: now,
+		});
+		expect(await memberRow()).toMatchObject({
+			role: "member",
+			canCreateServices: true,
+			canAccessToDocker: false,
+			accessedProjects: ["p1"],
+			accessedEnvironments: ["e1"],
+			accessedServices: ["s1", "s2"],
+			accessedServers: ["server-1"],
+		});
+		await expect(store.findProfile(DEV_ID)).resolves.toEqual({
+			groups: ["developers"],
+			appliedAt: now,
+			expiredAt: null,
+		});
+		await expect(listProfiledUserIds()).resolves.toContain(DEV_ID);
+
+		const later = new Date("2026-09-28T21:00:00Z");
+		await store.expire({ userId: DEV_ID, organizationId: ORG_ID, at: later });
+		expect(await memberRow()).toMatchObject({
+			canCreateServices: false,
+			accessedProjects: [],
+			accessedServices: [],
+		});
+		await expect(store.findProfile(DEV_ID)).resolves.toMatchObject({
+			expiredAt: later,
+		});
+
+		await store.grant({
+			userId: DEV_ID,
+			organizationId: ORG_ID,
+			groups: ["developers"],
+			permissions: [],
+			scope,
+			at: later,
+		});
+		await expect(store.findProfile(DEV_ID)).resolves.toMatchObject({
+			expiredAt: null,
+		});
+
+		await store.revoke({ userId: DEV_ID, organizationId: ORG_ID });
+		expect(await memberRow()).toMatchObject({
+			role: "member",
+			accessedProjects: [],
+			accessedEnvironments: [],
+			accessedServices: [],
+			accessedServers: ["server-1"],
+		});
+		await expect(store.findProfile(DEV_ID)).resolves.toBeNull();
 	});
 });
 

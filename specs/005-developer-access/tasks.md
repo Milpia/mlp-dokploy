@@ -87,18 +87,18 @@ alcance y la decisión de R3. Todas las historias dependen de esta fase.
   - other organizations never included;
   - the union across several profiles
 - [X] T009 Implement `packages/server/src/oidc-sso/member-profile/scope.ts` (`resolveScope`, port `ScopeCatalog`) and its Drizzle adapter until T008 passes. Add `checkGroupProfiles(profiles, organizationId)` that returns `missingProjects` and `ambiguousProjects` per group (R5)
-- [ ] T010 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` for `applyGroupProfile({ userId, organizationId, finalRole, groups, profiles, now })` with fake stores. Cover the full table of research R3 plus R8:
+- [X] T010 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` for `applyGroupProfile({ userId, organizationId, finalRole, groups, profiles, now })` with fake stores. Cover the full table of research R3 plus R8:
   - member in a profiled group overwrites all 11 flags (not-granted → `false`) and the three lists, and upserts the row with `expired_at = null`;
   - member with a row and no profiled group clears flags and lists and deletes the row;
   - member without a row and no profiled group: no write;
   - admin or owner with a row: clear and delete;
   - custom role: no write;
   - no `groupProfiles` configured: no write at all
-- [ ] T011 Implement `packages/server/src/oidc-sso/member-profile/store.ts` (`MemberProfileStore`, Drizzle adapter over `member` and `oidc_sso_member_profile`) with PGlite tests in `db-adapters.test.ts`:
+- [X] T011 Implement `packages/server/src/oidc-sso/member-profile/store.ts` (`MemberProfileStore`, Drizzle adapter over `member` and `oidc_sso_member_profile`) with PGlite tests in `db-adapters.test.ts`:
   - flags and lists written and cleared;
   - the row upserted, marked expired and deleted;
   - `accessedGitProviders`, `accessedServers` and `role` never touched
-- [ ] T012 Implement `packages/server/src/oidc-sso/member-profile/apply.ts` until T010 passes
+- [X] T012 Implement `packages/server/src/oidc-sso/member-profile/apply.ts` until T010 passes
 
 **Checkpoint**: la configuración se valida y se guarda, y el alcance y la decisión de R3 se calculan.
 Todavía no se aplican en el login.
