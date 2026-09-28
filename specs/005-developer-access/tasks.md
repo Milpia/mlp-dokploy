@@ -213,7 +213,7 @@ Todavía no se aplican en el login.
 - [X] T031 [P] Add benches in `apps/dokploy/__test__/oidc-sso/performance.test.ts`:
   - `applyGroupProfile` with 200 projects and 500 services: p95 ≤ 50 ms (NFR-PERF-001);
   - `memberProfileGuard` for a member with a profile: p95 ≤ 5 ms, and zero queries for admin and for a member without a profile (NFR-PERF-002)
-- [ ] T032 [P] Document the feature in `specs/001-keycloak-sso/operations.md`:
+- [X] T032 [P] Document the feature in `specs/001-keycloak-sso/operations.md`:
   - a «Perfiles por grupo» section with the format of `SSO_OIDC_GROUP_PROFILES`, the Milpia example, the 8-hour expiry and the `profile_expired`/`profile_failed` events;
   - how to read `groupProfilesCheck`
 - [ ] T033 Run `/security-review` on the branch and fix its findings (constitution III, research R11)
