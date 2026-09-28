@@ -210,7 +210,7 @@ Todavía no se aplican en el login.
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T031 [P] Add benches in `apps/dokploy/__test__/oidc-sso/performance.test.ts`:
+- [X] T031 [P] Add benches in `apps/dokploy/__test__/oidc-sso/performance.test.ts`:
   - `applyGroupProfile` with 200 projects and 500 services: p95 ≤ 50 ms (NFR-PERF-001);
   - `memberProfileGuard` for a member with a profile: p95 ≤ 5 ms, and zero queries for admin and for a member without a profile (NFR-PERF-002)
 - [ ] T032 [P] Document the feature in `specs/001-keycloak-sso/operations.md`:
