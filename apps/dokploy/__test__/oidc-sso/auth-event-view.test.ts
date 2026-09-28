@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
 	authEventView,
+	DEFAULT_EVENT_PAGE_SIZE,
+	EVENT_PAGE_SIZES,
 	eventPagination,
 } from "@/components/dashboard/settings/oidc-sso/auth-event-view";
 
@@ -89,5 +91,34 @@ describe("eventPagination (spec 001 FR-013, events dialog)", () => {
 			canPrevious: false,
 			canNext: false,
 		});
+	});
+});
+
+describe("events page size (spec 001 FR-013, T063, MIL-512)", () => {
+	it("offers 10, 20 and 50 rows and starts at 10", () => {
+		expect(EVENT_PAGE_SIZES).toEqual([10, 20, 50]);
+		expect(DEFAULT_EVENT_PAGE_SIZE).toBe(10);
+	});
+
+	it("splits 14 events into two pages at the default size", () => {
+		expect(eventPagination(14, 1, DEFAULT_EVENT_PAGE_SIZE)).toEqual({
+			pageCount: 2,
+			from: 1,
+			to: 10,
+			canPrevious: false,
+			canNext: true,
+		});
+		expect(eventPagination(14, 2, DEFAULT_EVENT_PAGE_SIZE)).toMatchObject({
+			from: 11,
+			to: 14,
+			canNext: false,
+		});
+	});
+
+	it.each([
+		[20, 1],
+		[50, 1],
+	])("fits 14 events in one page of %i", (size, pages) => {
+		expect(eventPagination(14, 1, size).pageCount).toBe(pages);
 	});
 });

@@ -35,6 +35,9 @@ export interface AuthEventView {
 	target: string;
 }
 
+export const EVENT_PAGE_SIZES = [10, 20, 50] as const;
+export const DEFAULT_EVENT_PAGE_SIZE = 10;
+
 export const eventPagination = (
 	total: number,
 	page: number,
