@@ -19,6 +19,11 @@ import type {
 	ProvisioningTx,
 } from "@dokploy/server/oidc-sso/identity/provisioning";
 import { applyGroupProfile } from "@dokploy/server/oidc-sso/member-profile/apply";
+import { memberProfileCache } from "@dokploy/server/oidc-sso/member-profile/cache";
+import {
+	checkMemberProfileExpiry,
+	type MemberProfileExpiryDeps,
+} from "@dokploy/server/oidc-sso/member-profile/expiry";
 import { createOpenIdClient } from "@dokploy/server/oidc-sso/oidc/client";
 import type { SsoEndpointDeps } from "@dokploy/server/oidc-sso/plugin/endpoints";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
@@ -179,7 +184,13 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 		const user = tables.user.find((u) => u.email === email);
 		return user ? roles.get(user.id as string) : undefined;
 	};
-	return { provisioning, roleOf, loginStates, grants: memberProfiles.grants };
+	return {
+		provisioning,
+		roleOf,
+		loginStates,
+		grants: memberProfiles.grants,
+		memberProfileStore: memberProfiles.store,
+	};
 };
 
 const setup = (overrides: Partial<StoredConfig> = {}) => {
@@ -210,7 +221,7 @@ const setup = (overrides: Partial<StoredConfig> = {}) => {
 		member: [] as Row[],
 		invitation: [] as Row[],
 	};
-	const { provisioning, roleOf, loginStates, grants } =
+	const { provisioning, roleOf, loginStates, grants, memberProfileStore } =
 		memoryProvisioningStore(tables);
 	const deps: SsoEndpointDeps = {
 		services: {
@@ -259,6 +270,8 @@ const setup = (overrides: Partial<StoredConfig> = {}) => {
 		repository,
 		roleOf,
 		grants,
+		loginStates,
+		memberProfileStore,
 		events: events.recorded,
 	};
 };
@@ -595,6 +608,80 @@ describe.skipIf(!enabled)(
 				"s-alpha-staging",
 				"s-beta-staging",
 			]);
+		});
+
+		const expiryDeps = (
+			ctx: ReturnType<typeof setup>,
+			now: Date,
+		): MemberProfileExpiryDeps => ({
+			services: ctx.deps.services,
+			findProfile: async (userId) => {
+				const grant = ctx.grants.get(userId);
+				return grant
+					? {
+							userId,
+							organizationId: "org",
+							groups: grant.groups,
+							appliedAt: grant.appliedAt,
+							expiredAt: grant.expiredAt,
+							lastSsoLoginAt:
+								ctx.loginStates.get(userId)?.lastSsoLoginAt ?? null,
+						}
+					: null;
+			},
+			listProfiledUserIds: async () => [...ctx.grants.keys()],
+			expire: (fn) => fn(ctx.memberProfileStore),
+			now: () => now,
+		});
+
+		it("US4-4/FR-017: 8 hours after the SSO login the scope is cleared, and a new login restores it", async () => {
+			memberProfileCache.reset();
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			const later = new Date(Date.now() + SSO_GRANT_TTL_MS + 1000);
+			await expect(
+				checkMemberProfileExpiry(
+					{ id: userId, role: "member" },
+					expiryDeps(ctx, later),
+				),
+			).resolves.toEqual({ ok: true, outcome: "expired" });
+			expect(ctx.grants.get(userId)?.scope.projectIds).toEqual([]);
+			expect(ctx.events.at(-1)).toMatchObject({
+				type: "member_profile",
+				reason: "profile_expired",
+			});
+
+			await signIn(ctx, "dev1");
+			expect(ctx.grants.get(userId)?.expiredAt).toBeNull();
+			expect(ctx.grants.get(userId)?.scope.projectIds.sort()).toEqual([
+				"p-alpha",
+				"p-beta",
+			]);
+		});
+
+		it("US4-1/FR-004: when developers no longer has a profile, dev1's next login revokes it", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			expect(ctx.grants.has(userId)).toBe(true);
+			await ctx.repository.save({
+				groupProfiles: JSON.stringify({
+					qa: { permissions: [], projects: ["alpha"] },
+				}),
+			});
+			ctx.deps.services.config.invalidate();
+			await signIn(ctx, "dev1");
+			expect(ctx.grants.has(userId)).toBe(false);
+		});
+
+		it("US4-2/FR-007: when dev1's group becomes an admin group, the profile is dropped", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			expect(ctx.grants.has(userId)).toBe(true);
+			await ctx.repository.save({ adminGroup: "admins,leads,developers" });
+			ctx.deps.services.config.invalidate();
+			await signIn(ctx, "dev1");
+			expect(ctx.roleOf("dev1@example.com")).toBe("admin");
+			expect(ctx.grants.has(userId)).toBe(false);
 		});
 
 		it("FR-007: lead1 is admin and gets no profile", async () => {
