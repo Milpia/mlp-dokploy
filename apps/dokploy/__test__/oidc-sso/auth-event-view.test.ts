@@ -64,6 +64,25 @@ describe("authEventView (spec 002 FR-012, US1 scenario 4, MIL-509)", () => {
 	});
 });
 
+describe("authEventView of read-only denials (spec 006, FR-011)", () => {
+	it("shows the procedure as the action and the resource as the target", () => {
+		expect(
+			authEventView({
+				type: "member_profile",
+				userId: "qa-1",
+				userEmail: "qa1@example.com",
+				action: "application.deploy",
+				resourceId: "app-1",
+			}),
+		).toEqual({
+			type: "Group profile",
+			who: "qa1@example.com",
+			action: "application.deploy",
+			target: "app-1",
+		});
+	});
+});
+
 describe("eventPagination (spec 001 FR-013, events dialog)", () => {
 	it("describes a middle page", () => {
 		expect(eventPagination(45, 2, 20)).toEqual({

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
 import { organization } from "./account";
@@ -47,6 +48,8 @@ export const oidcSsoAuthEvent = pgTable(
 		action: text("action"),
 		// No foreign key, like userId: the event outlives the affected user.
 		targetUserId: text("target_user_id"),
+		// Service, environment or project behind a read-only denial (spec 006).
+		resourceId: text("resource_id"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
 	(t) => [index("oidcSsoAuthEvent_createdAt_idx").on(t.createdAt)],
@@ -77,5 +80,18 @@ export const oidcSsoMemberProfile = pgTable("oidc_sso_member_profile", {
 	groups: text("groups").array().notNull(),
 	appliedAt: timestamp("applied_at").notNull(),
 	expiredAt: timestamp("expired_at"),
+	// Read-only scope of spec 006, resolved at login so requests never query it.
+	readOnlyEnvironmentIds: text("read_only_environment_ids")
+		.array()
+		.notNull()
+		.default(sql`ARRAY[]::text[]`),
+	readOnlyServiceIds: text("read_only_service_ids")
+		.array()
+		.notNull()
+		.default(sql`ARRAY[]::text[]`),
+	readOnlyProjectIds: text("read_only_project_ids")
+		.array()
+		.notNull()
+		.default(sql`ARRAY[]::text[]`),
 	updatedAt: timestamp("updated_at").notNull(),
 });

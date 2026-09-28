@@ -5,6 +5,8 @@ import {
 } from "@dokploy/server/db/schema";
 import { eq } from "drizzle-orm";
 import { SSO_GRANT_TTL_MS } from "../domain/user-management";
+import type { ReadOnlyScope } from "../types";
+import type { ReadOnlySets } from "./cache";
 
 export interface ProfileWithLogin {
 	userId: string;
@@ -20,7 +22,21 @@ export interface MemberProfileStatus {
 	groups: string[];
 	expiresAt: string | null;
 	expired: boolean;
+	/** What the interface marks as read-only (spec 006, FR-010). */
+	readOnly: ReadOnlyScope;
 }
+
+export const NO_READ_ONLY_STATUS: ReadOnlyScope = {
+	environmentIds: [],
+	serviceIds: [],
+	projectIds: [],
+};
+
+export const readOnlyStatus = (sets: ReadOnlySets): ReadOnlyScope => ({
+	environmentIds: [...sets.environmentIds],
+	serviceIds: [...sets.serviceIds],
+	projectIds: [...sets.projectIds],
+});
 
 export interface MemberProfileSummary {
 	groups: string[];
@@ -45,7 +61,13 @@ export const toStatus = (
 	profilesActive = true,
 ): MemberProfileStatus => {
 	if (!row) {
-		return { managed: false, groups: [], expiresAt: null, expired: false };
+		return {
+			managed: false,
+			groups: [],
+			expiresAt: null,
+			expired: false,
+			readOnly: NO_READ_ONLY_STATUS,
+		};
 	}
 	return {
 		managed: true,
@@ -54,6 +76,7 @@ export const toStatus = (
 			? new Date(row.lastSsoLoginAt.getTime() + SSO_GRANT_TTL_MS).toISOString()
 			: null,
 		expired: isExpired(row, now, profilesActive),
+		readOnly: NO_READ_ONLY_STATUS,
 	};
 };
 

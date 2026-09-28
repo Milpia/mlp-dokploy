@@ -21,6 +21,7 @@ import { ShowExternalRedisCredentials } from "@/components/dashboard/redis/gener
 import { ShowGeneralRedis } from "@/components/dashboard/redis/general/show-general-redis";
 import { ShowInternalRedisCredentials } from "@/components/dashboard/redis/general/show-internal-redis-credentials";
 import { UpdateRedis } from "@/components/dashboard/redis/update-redis";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { RedisIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -230,19 +231,22 @@ const Redis = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent serviceId={redisId} value="general">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralRedis redisId={redisId} />
 											<ShowInternalRedisCredentials redisId={redisId} />
 											<ShowExternalRedisCredentials redisId={redisId} />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.envVars.read && (
-										<TabsContent value="environment">
+										<ReadOnlyTabsContent
+											serviceId={redisId}
+											value="environment"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowEnvironment id={redisId} type="redis" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.monitoring.read && (
 										<TabsContent value="monitoring">
@@ -303,14 +307,14 @@ const Redis = (
 										</TabsContent>
 									)}
 									{permissions?.service.create && (
-										<TabsContent value="advanced">
+										<ReadOnlyTabsContent serviceId={redisId} value="advanced">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowDatabaseAdvancedSettings
 													id={redisId}
 													type="redis"
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 								</Tabs>
 							)}

@@ -1,8 +1,10 @@
 import {
 	type EnvironmentFilter,
 	type GroupProfile,
+	MAX_READ_ONLY_ENVIRONMENTS,
 	MEMBER_PERMISSIONS,
 	type MemberPermission,
+	type ReadOnlyEnvironments,
 } from "../types";
 import { isInGroup } from "./claims";
 
@@ -20,7 +22,11 @@ export type GroupProfilesResult =
 export interface MergedProfile {
 	groups: string[];
 	permissions: MemberPermission[];
-	scopes: Array<{ projects: string[]; environments?: EnvironmentFilter }>;
+	scopes: Array<{
+		projects: string[];
+		environments?: EnvironmentFilter;
+		readOnly?: ReadOnlyEnvironments;
+	}>;
 }
 
 class ProfileError extends Error {}
@@ -100,20 +106,72 @@ const parsePermissions = (value: unknown, path: string): MemberPermission[] => {
 	];
 };
 
+// Names outside the group's own filter would silently never apply, which for
+// a read-only list means an environment the owner meant to protect stays
+// writable (spec 006, FR-014).
+const parseReadOnly = (
+	value: unknown,
+	environments: EnvironmentFilter | undefined,
+	path: string,
+): ReadOnlyEnvironments | undefined => {
+	if (value === undefined || value === false) return undefined;
+	if (value === true) return true;
+	if (!Array.isArray(value) || value.length === 0) {
+		throw new ProfileError(
+			`${path}: must be true, false or a list of environment names`,
+		);
+	}
+	const names = nameList(value, path, MAX_READ_ONLY_ENVIRONMENTS);
+	names.forEach((name, index) => {
+		if (names.indexOf(name) !== index) {
+			throw new ProfileError(
+				`${path}[${index}]: duplicate environment ${JSON.stringify(name)}`,
+			);
+		}
+		if (environments && "exclude" in environments) {
+			if (environments.exclude.includes(name)) {
+				throw new ProfileError(
+					`${path}[${index}]: environment ${JSON.stringify(name)} is excluded from the group scope`,
+				);
+			}
+		} else if (environments && !environments.include.includes(name)) {
+			throw new ProfileError(
+				`${path}[${index}]: environment ${JSON.stringify(name)} is not in the group include list`,
+			);
+		}
+	});
+	return names;
+};
+
 const parseProfile = (group: string, value: unknown): GroupProfile => {
 	if (!isRecord(value)) {
 		throw new ProfileError(`${group}: must be an object`);
 	}
-	onlyKeys(value, ["permissions", "projects", "environments"], group);
+	onlyKeys(
+		value,
+		["permissions", "projects", "environments", "readOnly"],
+		group,
+	);
 	const environments = parseEnvironments(
 		value.environments,
 		`${group}.environments`,
 	);
+	const permissions = parsePermissions(
+		value.permissions,
+		`${group}.permissions`,
+	);
+	const projects = nameList(value.projects, `${group}.projects`, MAX_PROJECTS);
+	const readOnly = parseReadOnly(
+		value.readOnly,
+		environments,
+		`${group}.readOnly`,
+	);
 	return {
 		group,
-		permissions: parsePermissions(value.permissions, `${group}.permissions`),
-		projects: nameList(value.projects, `${group}.projects`, MAX_PROJECTS),
+		permissions,
+		projects,
 		...(environments ? { environments } : {}),
+		...(readOnly ? { readOnly } : {}),
 	};
 };
 
@@ -193,9 +251,10 @@ export const mergeProfiles = (
 		permissions: MEMBER_PERMISSIONS.filter((permission) =>
 			matched.some((profile) => profile.permissions.includes(permission)),
 		),
-		scopes: matched.map(({ projects, environments }) => ({
+		scopes: matched.map(({ projects, environments, readOnly }) => ({
 			projects,
 			...(environments ? { environments } : {}),
+			...(readOnly ? { readOnly } : {}),
 		})),
 	};
 };

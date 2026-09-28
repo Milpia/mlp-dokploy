@@ -4,6 +4,7 @@ const TYPE_LABELS: Record<string, string> = {
 	config_change: "Configuration change",
 	mode_change: "Mode change",
 	user_management: "User management",
+	member_profile: "Group profile",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -26,6 +27,7 @@ export interface AuthEventRow {
 	action?: string;
 	targetUserId?: string;
 	targetUserEmail?: string;
+	resourceId?: string;
 }
 
 export interface AuthEventView {
@@ -61,5 +63,5 @@ export const authEventView = (event: AuthEventRow): AuthEventView => ({
 	type: TYPE_LABELS[event.type] ?? event.type,
 	who: event.email ?? event.userEmail ?? event.userId ?? "",
 	action: event.action ? (ACTION_LABELS[event.action] ?? event.action) : "",
-	target: event.targetUserEmail ?? event.targetUserId ?? "",
+	target: event.targetUserEmail ?? event.targetUserId ?? event.resourceId ?? "",
 });

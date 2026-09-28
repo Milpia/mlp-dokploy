@@ -22,6 +22,7 @@ import { ShowInternalMongoCredentials } from "@/components/dashboard/mongo/gener
 import { UpdateMongo } from "@/components/dashboard/mongo/update-mongo";
 import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
 import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { MongodbIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -232,19 +233,22 @@ const Mongo = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent serviceId={mongoId} value="general">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralMongo mongoId={mongoId} />
 											<ShowInternalMongoCredentials mongoId={mongoId} />
 											<ShowExternalMongoCredentials mongoId={mongoId} />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.envVars.read && (
-										<TabsContent value="environment">
+										<ReadOnlyTabsContent
+											serviceId={mongoId}
+											value="environment"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowEnvironment id={mongoId} type="mongo" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.monitoring.read && (
 										<TabsContent value="monitoring">
@@ -304,7 +308,7 @@ const Mongo = (
 											</div>
 										</TabsContent>
 									)}
-									<TabsContent value="backups">
+									<ReadOnlyTabsContent serviceId={mongoId} value="backups">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowBackups
 												id={mongoId}
@@ -312,16 +316,16 @@ const Mongo = (
 												backupType="database"
 											/>
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.service.create && (
-										<TabsContent value="advanced">
+										<ReadOnlyTabsContent serviceId={mongoId} value="advanced">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowDatabaseAdvancedSettings
 													id={mongoId}
 													type="mongo"
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 								</Tabs>
 							)}

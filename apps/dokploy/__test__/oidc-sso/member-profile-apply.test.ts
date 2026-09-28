@@ -74,10 +74,39 @@ describe("applyGroupProfile (spec 005, research R3 and R8)", () => {
 				projectIds: ["p-alpha"],
 				environmentIds: ["e-staging"],
 				serviceIds: ["s-app"],
+				readOnly: { environmentIds: [], serviceIds: [], projectIds: [] },
 			},
 			at: NOW,
 		});
 		expect(s.revoke).not.toHaveBeenCalled();
+	});
+
+	it("spec 006 FR-008: the grant carries the read-only scope of this login", async () => {
+		const s = store("member", existingProfile);
+		await apply(
+			s,
+			["developers"],
+			[{ ...developers, environments: undefined, readOnly: ["production"] }],
+		);
+		expect(s.grant.mock.calls[0]?.[0].scope.readOnly).toEqual({
+			environmentIds: ["e-prod"],
+			serviceIds: ["s-app"],
+			projectIds: ["p-alpha"],
+		});
+	});
+
+	it("spec 006 FR-008: a login after readOnly is removed leaves the lists empty", async () => {
+		const s = store("member", existingProfile);
+		await apply(
+			s,
+			["developers"],
+			[{ ...developers, environments: undefined }],
+		);
+		expect(s.grant.mock.calls[0]?.[0].scope.readOnly).toEqual({
+			environmentIds: [],
+			serviceIds: [],
+			projectIds: [],
+		});
 	});
 
 	it("FR-003: a later login overwrites an existing profile", async () => {

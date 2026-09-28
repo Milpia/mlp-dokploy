@@ -5,6 +5,14 @@ import {
 	defaultMemberProfileExpiryDeps,
 } from "@dokploy/server/oidc-sso/member-profile/expiry";
 import {
+	checkContainerBinding,
+	checkDeploymentLogAccess,
+	checkServerTerminal,
+	defaultContainerBindingDeps,
+	defaultDeploymentLogDeps,
+	defaultServerTerminalDeps,
+} from "@dokploy/server/oidc-sso/read-only/wss";
+import {
 	checkServiceAccess,
 	findMemberByUserId,
 	hasPermission,
@@ -85,6 +93,13 @@ export const canAccessTerminalOverWss = async (
 ): Promise<boolean> => {
 	if (!user || !session?.activeOrganizationId) return false;
 
+	// A server shell reaches every environment on it (spec 006, FR-004a).
+	const readOnly = await checkServerTerminal(
+		{ userId: user.id, organizationId: session.activeOrganizationId },
+		defaultServerTerminalDeps(getOidcSsoServices()),
+	);
+	if (!readOnly.ok) return false;
+
 	if (serverId && serverId !== "local") {
 		const accessible = await getAccessibleServerIds({
 			userId: user.id,
@@ -106,4 +121,43 @@ export const canAccessTerminalOverWss = async (
 	} catch {
 		return false;
 	}
+};
+
+// Runs after canAccessDockerOverWss: the container must belong to the service
+// named in the connection (spec 006, FR-004b).
+export const canUseContainerOverWss = async (
+	user: WssUser,
+	session: WssSession,
+	request: {
+		serviceId: string | null;
+		containerId: string;
+		serverId: string | null;
+		mode: "terminal" | "logs";
+	},
+): Promise<boolean> => {
+	if (!user || !session?.activeOrganizationId) return false;
+	const result = await checkContainerBinding(
+		{
+			userId: user.id,
+			organizationId: session.activeOrganizationId,
+			...request,
+		},
+		defaultContainerBindingDeps(getOidcSsoServices()),
+	);
+	return result.ok;
+};
+
+// A member with a group profile may only follow deployments of their scope
+// (spec 006, FR-004c).
+export const canReadDeploymentLogOverWss = async (
+	user: WssUser,
+	session: WssSession,
+	logPath: string,
+): Promise<boolean> => {
+	if (!user || !session?.activeOrganizationId) return false;
+	const result = await checkDeploymentLogAccess(
+		{ userId: user.id, organizationId: session.activeOrganizationId, logPath },
+		defaultDeploymentLogDeps(getOidcSsoServices()),
+	);
+	return result.ok;
 };

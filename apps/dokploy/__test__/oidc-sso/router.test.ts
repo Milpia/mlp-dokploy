@@ -33,6 +33,18 @@ vi.mock("@dokploy/server/oidc-sso/member-profile/status", async (original) => ({
 	listProfilesWithLogin: async () => profiles.rows,
 }));
 
+vi.mock(
+	"@dokploy/server/oidc-sso/member-profile/read-only-scope",
+	async (original) => ({
+		...(await original<object>()),
+		getReadOnlyScope: async () => ({
+			environmentIds: new Set(["env-prod"]),
+			serviceIds: new Set(["app-prod"]),
+			projectIds: new Set(["project-1"]),
+		}),
+	}),
+);
+
 vi.mock("@dokploy/server/oidc-sso/member-profile/scope", async (original) => ({
 	...(await original<object>()),
 	drizzleScopeCatalog: {
@@ -371,6 +383,7 @@ describe("oidcSso router · group profiles (spec 005)", () => {
 					missingProjects: ["delta"],
 					ambiguousProjects: ["beta"],
 					projectsResolved: 3,
+					missingReadOnlyEnvironments: [],
 				},
 			],
 		});
@@ -404,7 +417,20 @@ describe("oidcSso router · group profiles (spec 005)", () => {
 			groups: [],
 			expiresAt: null,
 			expired: false,
+			readOnly: { environmentIds: [], serviceIds: [], projectIds: [] },
 		});
+	});
+
+	it("spec 006 FR-010: memberProfileStatus tells a member which services are read-only", async () => {
+		await expect(caller("member").memberProfileStatus()).resolves.toMatchObject(
+			{
+				readOnly: {
+					environmentIds: ["env-prod"],
+					serviceIds: ["app-prod"],
+					projectIds: ["project-1"],
+				},
+			},
+		);
 	});
 });
 

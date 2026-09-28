@@ -159,8 +159,10 @@ requirements:
     local_tasks:
     - T017
     - T018
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-545
+    - MIL-546
+    status: at_risk
   FR-011:
     text: La lista de usuarios MUST indicar, para un member con perfil de grupo, que sus permisos y su alcance vienen
       de sus grupos y que un cambio manual se perderá en su siguiente login por SSO.
@@ -248,8 +250,9 @@ requirements:
     - T026
     - T027
     - T028
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-546
+    status: at_risk
   NFR-PERF-001:
     text: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
     tasks:
@@ -704,15 +707,23 @@ phase_tasks:
     - SC-003
     - SC-004
 bugs:
-- jira: MIL-535
-  summary: Un developer ve los proveedores Git compartidos con la organización aunque su perfil no los incluya
-  violates: []
-  breaks: []
-  labels:
-  - spec-gap
-  detected_in: MIL-534
-  regression_test: null
-  status: open
+- jira: MIL-545
+  summary: La terminal y los logs de contenedor por WebSocket no respetan el alcance del member
+  violates:
+  - FR-010
+  breaks:
+  - SC-002
+  detected_in: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/read-only-wss.test.ts::MIL-545: container of another service is refused'
+- jira: MIL-546
+  summary: Los logs de despliegue en directo no respetan el alcance ni la caducidad del member
+  violates:
+  - FR-010
+  - FR-017
+  breaks:
+  - SC-002
+  detected_in: MIL-533
+  regression_test: 'apps/dokploy/__test__/oidc-sso/read-only-wss.test.ts::MIL-546: deployment log outside the scope is refused'
 orphans:
   requirements_without_issue: []
   tasks_without_requirement:

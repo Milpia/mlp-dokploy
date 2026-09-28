@@ -367,3 +367,110 @@ describe("performance · group profiles (spec 005)", () => {
 		expect(listProfiledUserIds).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe("performance · read-only (spec 006)", () => {
+	const scope = {
+		environmentIds: new Set(["env-prod"]),
+		serviceIds: new Set(["app-prod"]),
+		projectIds: new Set(["project-1"]),
+	};
+
+	it("NFR-PERF-001/FR-012: owners, admins, unprofiled members and members without read-only cause no reads", async () => {
+		const { checkReadOnlyCall } = await import(
+			"@dokploy/server/oidc-sso/read-only/guard"
+		);
+		const empty = {
+			environmentIds: new Set<string>(),
+			serviceIds: new Set<string>(),
+			projectIds: new Set<string>(),
+		};
+		const getScope = vi.fn(async (userId: string) =>
+			userId === "no-read-only" ? empty : scope,
+		);
+		const ownerOf = vi.fn(async () => null);
+		const deps = {
+			isProfiled: (userId: string) => userId !== "unprofiled",
+			getScope,
+			ownerOf,
+			record: vi.fn(async () => {}),
+		};
+		const call = (id: string, role: string) =>
+			checkReadOnlyCall(
+				{
+					user: { id, role },
+					path: "domain.delete",
+					type: "mutation",
+					getRawInput: async () => ({ domainId: "d" }),
+				},
+				deps,
+			);
+		await call("owner", "owner");
+		await call("admin", "admin");
+		await call("unprofiled", "member");
+		expect(getScope).not.toHaveBeenCalled();
+		await call("no-read-only", "member");
+		expect(ownerOf).not.toHaveBeenCalled();
+	});
+
+	it("NFR-PERF-001: a mutation with a direct rule costs at most 1 ms p95", async () => {
+		const { checkReadOnlyCall } = await import(
+			"@dokploy/server/oidc-sso/read-only/guard"
+		);
+		const deps = {
+			isProfiled: () => true,
+			getScope: async () => scope,
+			ownerOf: async () => null,
+			record: async () => {},
+		};
+		const samples: number[] = [];
+		for (let i = 0; i < 500; i++) {
+			const t0 = performance.now();
+			await checkReadOnlyCall(
+				{
+					user: { id: "dev", role: "member" },
+					path: "application.deploy",
+					type: "mutation",
+					getRawInput: async () => ({ applicationId: `app-${i}` }),
+				},
+				deps,
+			);
+			samples.push(performance.now() - t0);
+		}
+		expect(p95(samples)).toBeLessThanOrEqual(1);
+	});
+
+	it("NFR-PERF-001: masking a project.all response with 200 projects and 500 services takes at most 5 ms p95", async () => {
+		const { redact } = await import(
+			"@dokploy/server/oidc-sso/read-only/redact"
+		);
+		const response = Array.from({ length: 200 }, (_, p) => ({
+			projectId: `project-${p}`,
+			name: `project-${p}`,
+			env: "SHARED=1\nOTHER=2",
+			environments: ["production", "staging"].map((name) => ({
+				environmentId:
+					name === "production" && p === 0 ? "env-prod" : `env-${p}-${name}`,
+				name,
+				env: "E=1",
+				applications: Array.from(
+					{ length: name === "staging" && p < 100 ? 2 : 1 },
+					(_, a) => ({
+						applicationId: `app-${p}-${name}-${a}`,
+						environmentId: `env-${p}-${name}`,
+						name: "web",
+						env: "A=1\nB=2\nC=3",
+						refreshToken: "t",
+						createdAt: "2026-09-28",
+					}),
+				),
+			})),
+		}));
+		const samples: number[] = [];
+		for (let i = 0; i < 50; i++) {
+			const t0 = performance.now();
+			redact(response, scope);
+			samples.push(performance.now() - t0);
+		}
+		expect(p95(samples)).toBeLessThanOrEqual(5);
+	});
+});

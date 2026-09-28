@@ -5,6 +5,7 @@ import { encodeBase64 } from "@dokploy/server/utils/docker/utils";
 import { readValidDirectory } from "@dokploy/server/wss/utils";
 import { Client } from "ssh2";
 import { WebSocketServer } from "ws";
+import { canReadDeploymentLogOverWss } from "./authorize";
 
 export const setupDeploymentLogsWebSocketServer = (
 	server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
@@ -48,6 +49,11 @@ export const setupDeploymentLogsWebSocketServer = (
 
 		if (!user || !session) {
 			ws.close();
+			return;
+		}
+
+		if (!(await canReadDeploymentLogOverWss(user, session, logPath))) {
+			ws.close(4003, "Not authorized");
 			return;
 		}
 

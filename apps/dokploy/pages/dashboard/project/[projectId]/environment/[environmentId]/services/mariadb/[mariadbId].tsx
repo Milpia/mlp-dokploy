@@ -22,6 +22,7 @@ import { ShowInternalMariadbCredentials } from "@/components/dashboard/mariadb/g
 import { UpdateMariadb } from "@/components/dashboard/mariadb/update-mariadb";
 import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
 import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { MariadbIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -232,19 +233,22 @@ const Mariadb = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent serviceId={mariadbId} value="general">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralMariadb mariadbId={mariadbId} />
 											<ShowInternalMariadbCredentials mariadbId={mariadbId} />
 											<ShowExternalMariadbCredentials mariadbId={mariadbId} />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.envVars.read && (
-										<TabsContent value="environment">
+										<ReadOnlyTabsContent
+											serviceId={mariadbId}
+											value="environment"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowEnvironment id={mariadbId} type="mariadb" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.monitoring.read && (
 										<TabsContent value="monitoring">
@@ -304,20 +308,20 @@ const Mariadb = (
 											</div>
 										</TabsContent>
 									)}
-									<TabsContent value="backups">
+									<ReadOnlyTabsContent serviceId={mariadbId} value="backups">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowBackups id={mariadbId} databaseType="mariadb" />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.service.create && (
-										<TabsContent value="advanced">
+										<ReadOnlyTabsContent serviceId={mariadbId} value="advanced">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowDatabaseAdvancedSettings
 													id={mariadbId}
 													type="mariadb"
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 								</Tabs>
 							)}

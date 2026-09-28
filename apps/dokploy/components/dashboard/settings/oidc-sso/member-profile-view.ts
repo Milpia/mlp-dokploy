@@ -6,6 +6,7 @@ export interface MemberProfileSummary {
 export interface MemberProfileStatus {
 	managed: boolean;
 	expired: boolean;
+	readOnly?: { serviceIds: string[] };
 }
 
 /** Label next to the role in the users list (spec 005, FR-011). */
@@ -29,3 +30,16 @@ export const overwriteNotice = (
 export const showExpiredNotice = (
 	status: MemberProfileStatus | undefined,
 ): boolean => !!status?.managed && status.expired;
+
+/**
+ * Whether a service page shows the read-only badge and disables its change
+ * actions (spec 006, FR-010). The server enforces it anyway (FR-005); an
+ * expired profile has no scope left to show.
+ */
+export const isReadOnlyService = (
+	status: MemberProfileStatus | undefined,
+	serviceId: string,
+): boolean =>
+	!!status?.managed &&
+	!status.expired &&
+	(status.readOnly?.serviceIds.includes(serviceId) ?? false);

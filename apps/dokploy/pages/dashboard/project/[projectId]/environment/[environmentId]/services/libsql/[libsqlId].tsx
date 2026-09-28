@@ -22,6 +22,7 @@ import { ShowInternalLibsqlCredentials } from "@/components/dashboard/libsql/gen
 import { UpdateLibsql } from "@/components/dashboard/libsql/update-libsql";
 import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
 import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { LibsqlIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -207,18 +208,18 @@ const Libsql = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent serviceId={libsqlId} value="general">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralLibsql libsqlId={libsqlId} />
 											<ShowInternalLibsqlCredentials libsqlId={libsqlId} />
 											<ShowExternalLibsqlCredentials libsqlId={libsqlId} />
 										</div>
-									</TabsContent>
-									<TabsContent value="environment">
+									</ReadOnlyTabsContent>
+									<ReadOnlyTabsContent serviceId={libsqlId} value="environment">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowEnvironment id={libsqlId} type="libsql" />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									<TabsContent value="monitoring">
 										<div className="pt-2.5">
 											<div className="flex flex-col gap-4 border rounded-lg p-6">
@@ -273,7 +274,7 @@ const Libsql = (
 											/>
 										</div>
 									</TabsContent>
-									<TabsContent value="backups">
+									<ReadOnlyTabsContent serviceId={libsqlId} value="backups">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowBackups
 												id={libsqlId}
@@ -281,15 +282,15 @@ const Libsql = (
 												backupType="database"
 											/>
 										</div>
-									</TabsContent>
-									<TabsContent value="advanced">
+									</ReadOnlyTabsContent>
+									<ReadOnlyTabsContent serviceId={libsqlId} value="advanced">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowDatabaseAdvancedSettings
 												id={libsqlId}
 												type="libsql"
 											/>
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 								</Tabs>
 							)}
 						</CardContent>

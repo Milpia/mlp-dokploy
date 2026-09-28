@@ -15,6 +15,7 @@ import {
 	GROUP_PROFILES_MAX_BYTES,
 	parseGroupProfiles,
 } from "@dokploy/server/oidc-sso/domain/group-profiles";
+import { getReadOnlyScope } from "@dokploy/server/oidc-sso/member-profile/read-only-scope";
 import {
 	checkGroupProfiles,
 	drizzleScopeCatalog,
@@ -22,6 +23,7 @@ import {
 import {
 	findProfileWithLogin,
 	listProfilesWithLogin,
+	readOnlyStatus,
 	toStatus,
 	toSummaries,
 } from "@dokploy/server/oidc-sso/member-profile/status";
@@ -101,15 +103,21 @@ export const oidcSsoRouter = createTRPCRouter({
 	),
 
 	// Any signed-in user asks about their own group profile (spec 005, FR-017).
-	memberProfileStatus: protectedProcedure.query(async ({ ctx }) =>
-		IS_CLOUD
-			? toStatus(null, new Date())
-			: toStatus(
-					await findProfileWithLogin(ctx.user.id),
-					new Date(),
-					await profilesActive(),
-				),
-	),
+	memberProfileStatus: protectedProcedure.query(async ({ ctx }) => {
+		if (IS_CLOUD) return toStatus(null, new Date());
+		const status = toStatus(
+			await findProfileWithLogin(ctx.user.id),
+			new Date(),
+			await profilesActive(),
+		);
+		// From the read-only cache, without a new query (spec 006, FR-010).
+		return status.managed && !status.expired
+			? {
+					...status,
+					readOnly: readOnlyStatus(await getReadOnlyScope(ctx.user.id)),
+				}
+			: status;
+	}),
 
 	// Admins see which members' permissions come from their groups (FR-011).
 	memberProfiles: protectedProcedure.query(async ({ ctx }) => {

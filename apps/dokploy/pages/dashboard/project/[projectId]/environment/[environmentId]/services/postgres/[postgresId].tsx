@@ -22,6 +22,7 @@ import { ShowExternalPostgresCredentials } from "@/components/dashboard/postgres
 import { ShowGeneralPostgres } from "@/components/dashboard/postgres/general/show-general-postgres";
 import { ShowInternalPostgresCredentials } from "@/components/dashboard/postgres/general/show-internal-postgres-credentials";
 import { UpdatePostgres } from "@/components/dashboard/postgres/update-postgres";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { PostgresqlIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -233,7 +234,7 @@ const Postgresql = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent serviceId={postgresId} value="general">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralPostgres postgresId={postgresId} />
 											<ShowInternalPostgresCredentials
@@ -243,13 +244,16 @@ const Postgresql = (
 												postgresId={postgresId}
 											/>
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.envVars.read && (
-										<TabsContent value="environment">
+										<ReadOnlyTabsContent
+											serviceId={postgresId}
+											value="environment"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowEnvironment id={postgresId} type="postgres" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.monitoring.read && (
 										<TabsContent value="monitoring">
@@ -289,7 +293,7 @@ const Postgresql = (
 											</div>
 										</TabsContent>
 									)}
-									<TabsContent value="backups">
+									<ReadOnlyTabsContent serviceId={postgresId} value="backups">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowBackups
 												id={postgresId}
@@ -297,16 +301,19 @@ const Postgresql = (
 												backupType="database"
 											/>
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.service.create && (
-										<TabsContent value="advanced">
+										<ReadOnlyTabsContent
+											serviceId={postgresId}
+											value="advanced"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowDatabaseAdvancedSettings
 													id={postgresId}
 													type="postgres"
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 								</Tabs>
 							)}

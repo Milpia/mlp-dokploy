@@ -19,7 +19,10 @@ import type {
 	ProvisioningTx,
 } from "@dokploy/server/oidc-sso/identity/provisioning";
 import { applyGroupProfile } from "@dokploy/server/oidc-sso/member-profile/apply";
-import { memberProfileCache } from "@dokploy/server/oidc-sso/member-profile/cache";
+import {
+	memberProfileCache,
+	type ReadOnlySets,
+} from "@dokploy/server/oidc-sso/member-profile/cache";
 import {
 	checkMemberProfileExpiry,
 	type MemberProfileExpiryDeps,
@@ -27,6 +30,8 @@ import {
 import { createOpenIdClient } from "@dokploy/server/oidc-sso/oidc/client";
 import type { SsoEndpointDeps } from "@dokploy/server/oidc-sso/plugin/endpoints";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
+import { checkReadOnlyCall } from "@dokploy/server/oidc-sso/read-only/guard";
+import { redact } from "@dokploy/server/oidc-sso/read-only/redact";
 import type { StoredConfig } from "@dokploy/server/oidc-sso/types";
 import {
 	USER_MANAGEMENT_MESSAGES,
@@ -690,6 +695,145 @@ describe.skipIf(!enabled)(
 			const { userId } = await signIn(ctx, "lead1");
 			expect(ctx.roleOf("lead1@example.com")).toBe("admin");
 			expect(ctx.grants.has(userId)).toBe(false);
+		});
+	},
+);
+
+describe.skipIf(!enabled)(
+	"Keycloak end-to-end: read-only environments (spec 006)",
+	() => {
+		const spec006Config = {
+			accessGroup: "admins,leads,developers,qa",
+			adminGroup: "admins,leads",
+			groupProfiles: JSON.stringify({
+				developers: {
+					permissions: [],
+					projects: ["alpha", "beta"],
+					readOnly: ["production"],
+				},
+				qa: {
+					permissions: [],
+					projects: ["alpha"],
+					environments: { exclude: ["production"] },
+					readOnly: true,
+				},
+			}),
+		};
+
+		const readOnlyOf = (
+			ctx: ReturnType<typeof setup>,
+			userId: string,
+		): ReadOnlySets => {
+			const readOnly = ctx.grants.get(userId)?.scope.readOnly;
+			return {
+				environmentIds: new Set(readOnly?.environmentIds),
+				serviceIds: new Set(readOnly?.serviceIds),
+				projectIds: new Set(readOnly?.projectIds),
+			};
+		};
+
+		const guardFor = (scope: ReadOnlySets) => ({
+			isProfiled: () => true,
+			getScope: async () => scope,
+			ownerOf: async () => null,
+			record: async () => {},
+		});
+
+		it("US1-1/SC-001: qa1 enters with alpha staging read-only and no production", async () => {
+			const ctx = setup(spec006Config);
+			const { userId } = await signIn(ctx, "qa1");
+			expect(ctx.roleOf("qa1@example.com")).toBe("member");
+			const grant = ctx.grants.get(userId);
+			expect(grant?.scope.environmentIds).toEqual(["e-alpha-staging"]);
+			expect(grant?.scope.readOnly).toEqual({
+				environmentIds: ["e-alpha-staging"],
+				serviceIds: ["s-alpha-staging"],
+				projectIds: ["p-alpha"],
+			});
+		});
+
+		it("US1-2/US1-3/FR-006: qa1 cannot deploy and sees the variables masked", async () => {
+			const ctx = setup(spec006Config);
+			const { userId } = await signIn(ctx, "qa1");
+			const scope = readOnlyOf(ctx, userId);
+			const user = { id: userId, role: "member" };
+			await expect(
+				checkReadOnlyCall(
+					{
+						user,
+						path: "application.deploy",
+						type: "mutation",
+						getRawInput: async () => ({ applicationId: "s-alpha-staging" }),
+					},
+					guardFor(scope),
+				),
+			).resolves.toEqual({ kind: "deny", resourceId: "s-alpha-staging" });
+
+			const verdict = await checkReadOnlyCall(
+				{
+					user,
+					path: "application.one",
+					type: "query",
+					getRawInput: async () => ({ applicationId: "s-alpha-staging" }),
+				},
+				guardFor(scope),
+			);
+			expect(verdict.kind).toBe("allow");
+			expect(
+				redact(
+					{
+						applicationId: "s-alpha-staging",
+						environmentId: "e-alpha-staging",
+						env: "DB_PASSWORD=secret",
+					},
+					scope,
+				),
+			).toMatchObject({ env: "DB_PASSWORD=••••••••" });
+		});
+
+		it("US2-1/US2-3/SC-003: dev1 operates staging and sees production read-only", async () => {
+			const ctx = setup(spec006Config);
+			const { userId } = await signIn(ctx, "dev1");
+			const grant = ctx.grants.get(userId);
+			expect(grant?.scope.environmentIds.sort()).toEqual([
+				"e-alpha-prod",
+				"e-alpha-staging",
+				"e-beta-prod",
+				"e-beta-staging",
+			]);
+			expect(grant?.scope.readOnly.environmentIds.sort()).toEqual([
+				"e-alpha-prod",
+				"e-beta-prod",
+			]);
+			const scope = readOnlyOf(ctx, userId);
+			const deploy = (applicationId: string) =>
+				checkReadOnlyCall(
+					{
+						user: { id: userId, role: "member" },
+						path: "application.deploy",
+						type: "mutation",
+						getRawInput: async () => ({ applicationId }),
+					},
+					guardFor(scope),
+				);
+			await expect(deploy("s-alpha-staging")).resolves.toMatchObject({
+				kind: "allow",
+			});
+			await expect(deploy("s-alpha-prod")).resolves.toEqual({
+				kind: "deny",
+				resourceId: "s-alpha-prod",
+			});
+		});
+
+		it("FR-007: devqa1, in developers and qa, keeps staging with full access", async () => {
+			const ctx = setup(spec006Config);
+			const { userId } = await signIn(ctx, "devqa1");
+			const grant = ctx.grants.get(userId);
+			expect(grant?.groups.sort()).toEqual(["developers", "qa"]);
+			expect(grant?.scope.readOnly.environmentIds.sort()).toEqual([
+				"e-alpha-prod",
+				"e-beta-prod",
+			]);
 		});
 	},
 );
