@@ -231,3 +231,39 @@ describe("spec 004 FR-006: groups claim from the environment", () => {
 		expect(result.errors).toEqual([]);
 	});
 });
+
+describe("SSO_OIDC_GROUP_PROFILES (spec 005)", () => {
+	const valid = JSON.stringify({
+		developers: {
+			permissions: [],
+			projects: ["alpha"],
+			environments: { exclude: ["production"] },
+		},
+	});
+
+	it("FR-001: reads a valid configuration unchanged", () => {
+		const result = readEnvOverrides({ SSO_OIDC_GROUP_PROFILES: valid }, noFile);
+		expect(result.values.groupProfiles).toBe(valid);
+		expect(result.errors).toEqual([]);
+	});
+
+	it("FR-013: an empty value counts as undefined", () => {
+		const result = readEnvOverrides({ SSO_OIDC_GROUP_PROFILES: "  " }, noFile);
+		expect(result.values).not.toHaveProperty("groupProfiles");
+	});
+
+	it("FR-009: an invalid value disables the profiles instead of falling back to the stored ones", () => {
+		const result = readEnvOverrides(
+			{
+				SSO_OIDC_GROUP_PROFILES: JSON.stringify({
+					developers: { permissions: ["canDeploy"], projects: [] },
+				}),
+			},
+			noFile,
+		);
+		expect(result.values.groupProfiles).toBeNull();
+		expect(result.errors).toEqual([
+			'SSO_OIDC_GROUP_PROFILES is invalid (developers.permissions[0]: unknown permission "canDeploy"); group profiles are disabled.',
+		]);
+	});
+});

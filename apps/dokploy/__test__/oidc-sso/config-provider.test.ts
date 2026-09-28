@@ -116,6 +116,37 @@ describe("buildEffectiveConfig", () => {
 		expect(config.sources.userManagementGroup).toBe("db");
 	});
 
+	it("spec 005 FR-001: group profiles from env win and are env-sourced", () => {
+		const config = buildEffectiveConfig(
+			{
+				...complete,
+				groupProfiles: '{"stored":{"permissions":[],"projects":[]}}',
+			},
+			{
+				values: { groupProfiles: '{"env":{"permissions":[],"projects":[]}}' },
+				errors: [],
+			},
+			flags,
+		);
+		expect(config.groupProfiles).toBe(
+			'{"env":{"permissions":[],"projects":[]}}',
+		);
+		expect(config.sources.groupProfiles).toBe("env");
+	});
+
+	it("spec 005 FR-009: an invalid env value (null) disables them even with a stored value", () => {
+		const config = buildEffectiveConfig(
+			{
+				...complete,
+				groupProfiles: '{"stored":{"permissions":[],"projects":[]}}',
+			},
+			{ values: { groupProfiles: null }, errors: ["invalid"] },
+			flags,
+		);
+		expect(config.groupProfiles).toBeNull();
+		expect(config.sources.groupProfiles).toBe("env");
+	});
+
 	it("FR-011: sso-only without a verified issuer degrades to button", () => {
 		const config = buildEffectiveConfig(
 			{ ...complete, mode: "sso-only" },

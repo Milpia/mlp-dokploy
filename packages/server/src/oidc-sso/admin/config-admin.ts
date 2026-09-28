@@ -1,6 +1,7 @@
 import { normalizeIssuerUrl } from "../config/env";
 import type { ConfigPatch } from "../config/repository";
 import { DEFAULT_GROUPS_CLAIM } from "../domain/claims";
+import { parseGroupProfiles } from "../domain/group-profiles";
 import { canTransitionMode } from "../domain/mode-transition";
 import { parseScopes } from "../domain/scopes";
 import { newCorrelationId } from "../events/auth-events";
@@ -18,6 +19,7 @@ export type ConfigUpdateErrorCode =
 	| "env_locked"
 	| "invalid_issuer"
 	| "invalid_scope"
+	| "invalid_group_profiles"
 	| "insecure_http"
 	| "incomplete"
 	| "unverified"
@@ -42,6 +44,7 @@ export interface ConfigUpdateInput {
 	accessGroup?: string | null;
 	adminGroup?: string | null;
 	userManagementGroup?: string | null;
+	groupProfiles?: string | null;
 	groupsClaim?: string;
 	extraScopes?: string;
 	buttonLabel?: string;
@@ -58,6 +61,7 @@ export interface ConfigView {
 	accessGroup: string | null;
 	adminGroup: string | null;
 	userManagementGroup: string | null;
+	groupProfiles: string | null;
 	groupsClaim: string;
 	extraScopes: string;
 	buttonLabel: string;
@@ -93,6 +97,7 @@ const toView = (
 	accessGroup: effective.accessGroup,
 	adminGroup: effective.adminGroup,
 	userManagementGroup: effective.userManagementGroup,
+	groupProfiles: effective.groupProfiles,
 	groupsClaim: effective.groupsClaim,
 	extraScopes: effective.extraScopes,
 	buttonLabel: effective.buttonLabel,
@@ -162,6 +167,9 @@ export const updateSsoConfig = async (
 		...(input.userManagementGroup !== undefined
 			? { userManagementGroup: blankToNull(input.userManagementGroup) }
 			: {}),
+		...(input.groupProfiles !== undefined
+			? { groupProfiles: blankToNull(input.groupProfiles) }
+			: {}),
 		...(input.groupsClaim !== undefined
 			? { groupsClaim: input.groupsClaim.trim() || DEFAULT_GROUPS_CLAIM }
 			: {}),
@@ -201,6 +209,13 @@ export const updateSsoConfig = async (
 			);
 		}
 		requested.extraScopes = scopes.join(" ");
+	}
+
+	if (typeof requested.groupProfiles === "string") {
+		const parsed = parseGroupProfiles(requested.groupProfiles);
+		if (!parsed.ok) {
+			throw new ConfigUpdateError("invalid_group_profiles", parsed.error);
+		}
 	}
 
 	if (typeof requested.issuerUrl === "string") {

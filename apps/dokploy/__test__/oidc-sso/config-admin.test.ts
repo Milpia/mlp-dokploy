@@ -301,3 +301,60 @@ describe("getPublicConfig", () => {
 		});
 	});
 });
+
+describe("updateSsoConfig · groupProfiles (spec 005)", () => {
+	const profiles = JSON.stringify({
+		developers: { permissions: [], projects: ["alpha"] },
+	});
+
+	it("FR-001/FR-012: saves valid profiles and records the field name only", async () => {
+		const { services, repository, recorded } = makeServices();
+		const view = await updateSsoConfig(
+			services,
+			{ groupProfiles: profiles },
+			actor,
+		);
+		expect(repository.save).toHaveBeenCalledWith(
+			expect.objectContaining({ groupProfiles: profiles }),
+		);
+		expect(view.groupProfiles).toBe(profiles);
+		expect(recorded.map((e) => [e.type, e.reason])).toEqual([
+			["config_change", "groupProfiles"],
+		]);
+		expect(JSON.stringify(recorded)).not.toContain("alpha");
+	});
+
+	it("FR-013: a blank value clears them", async () => {
+		const { services, repository } = makeServices();
+		await updateSsoConfig(services, { groupProfiles: "  " }, actor);
+		expect(repository.save).toHaveBeenCalledWith(
+			expect.objectContaining({ groupProfiles: null }),
+		);
+	});
+
+	it("FR-009: rejects invalid profiles with the validation message", async () => {
+		const { services, repository } = makeServices();
+		const promise = updateSsoConfig(
+			services,
+			{
+				groupProfiles: JSON.stringify({
+					developers: { permissions: ["canDeploy"], projects: [] },
+				}),
+			},
+			actor,
+		);
+		await expectError(promise, "invalid_group_profiles");
+		await expect(promise).rejects.toThrow(/unknown permission "canDeploy"/);
+		expect(repository.save).not.toHaveBeenCalled();
+	});
+
+	it("FR-001: refuses to change env-sourced profiles", async () => {
+		const { services } = makeServices({
+			env: { values: { groupProfiles: profiles }, errors: [] },
+		});
+		await expectError(
+			updateSsoConfig(services, { groupProfiles: "{}" }, actor),
+			"env_locked",
+		);
+	});
+});

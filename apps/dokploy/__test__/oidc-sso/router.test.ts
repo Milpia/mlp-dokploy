@@ -233,6 +233,27 @@ describe("oidcSso router", () => {
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 
+	it("spec 005 FR-001/FR-009: get returns group profiles; update rejects invalid ones as BAD_REQUEST", async () => {
+		const profiles = JSON.stringify({
+			developers: { permissions: [], projects: ["alpha"] },
+		});
+		await caller("owner").update({ groupProfiles: profiles });
+		await expect(caller("owner").get()).resolves.toMatchObject({
+			groupProfiles: profiles,
+			sources: { groupProfiles: "db" },
+		});
+		await expect(
+			caller("owner").update({
+				groupProfiles: JSON.stringify({
+					developers: { permissions: ["canDeploy"], projects: [] },
+				}),
+			}),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+		await expect(
+			caller("owner").update({ groupProfiles: "x".repeat(16_385) }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
 	it("spec 002 FR-002: a group set from the environment cannot be changed", async () => {
 		built = makeServices({
 			env: { values: { userManagementGroup: "admins" }, errors: [] },

@@ -11,6 +11,7 @@ import {
 	testSsoConnection,
 	updateSsoConfig,
 } from "@dokploy/server/oidc-sso/admin/config-admin";
+import { GROUP_PROFILES_MAX_BYTES } from "@dokploy/server/oidc-sso/domain/group-profiles";
 import {
 	defaultUserManagementGuardDeps,
 	getUserManagementStatus,
@@ -50,6 +51,7 @@ const updateInput = connectionInput.extend({
 	accessGroup: optionalText,
 	adminGroup: optionalText,
 	userManagementGroup: optionalText,
+	groupProfiles: z.string().max(GROUP_PROFILES_MAX_BYTES).nullable().optional(),
 	groupsClaim: z.string().max(256).optional(),
 	extraScopes: z.string().max(1024).optional(),
 	buttonLabel: z.string().trim().min(1).max(BUTTON_LABEL_MAX_LENGTH).optional(),

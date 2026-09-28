@@ -67,7 +67,7 @@ alcance y la decisión de R3. Todas las historias dependen de esta fase.
   - merge: union of permissions (OR) and of projects, with environments kept per group; groups compared after the same normalization as `normalizeLoginGroups`
 - [X] T004 Implement `packages/server/src/oidc-sso/domain/group-profiles.ts` (pure, zod) until T003 passes. Errors carry a path such as `developers.permissions[0]: unknown permission "canDeploy"`. On any error the whole set is rejected (FR-009)
 - [X] T005 [P] Rename `USER_MANAGEMENT_GRANT_TTL_MS` to `SSO_GRANT_TTL_MS` in `packages/server/src/oidc-sso/domain/user-management.ts` and update its imports. Spec 002 tests must pass unchanged in behaviour
-- [ ] T006 Write failing tests, then add `groupProfiles` to the configuration (FR-001, FR-009, FR-012, R4):
+- [X] T006 Write failing tests, then add `groupProfiles` to the configuration (FR-001, FR-009, FR-012, R4):
   - tests in `config-env.test.ts`, `config-provider.test.ts` and `config-admin.test.ts`:
     - `SSO_OIDC_GROUP_PROFILES` wins over the stored value and is reported with source `env`;
     - blank means unset;
@@ -75,7 +75,7 @@ alcance y la decisión de R3. Todas las historias dependen de esta fase.
     - an update of an env-set field throws `env_locked`;
     - a saved change produces a `config_change` event that lists `groupProfiles`;
   - implementation in `config/env.ts`, `config/repository.ts`, `config/provider.ts` and `admin/config-admin.ts`, validating with `parseGroupProfiles`
-- [ ] T007 Extend `apps/dokploy/server/api/routers/oidc-sso.ts` (contracts/trpc-and-guard.md):
+- [X] T007 Extend `apps/dokploy/server/api/routers/oidc-sso.ts` (contracts/trpc-and-guard.md):
   - `update` accepts `groupProfiles: z.string().max(16384).nullable().optional()`; invalid content returns `BAD_REQUEST` with the validation message;
   - `get` returns `groupProfiles` with its source;
   - tests in `router.test.ts`

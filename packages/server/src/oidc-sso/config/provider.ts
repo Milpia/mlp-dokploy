@@ -18,6 +18,7 @@ const CONFIG_FIELDS: ConfigField[] = [
 	"accessGroup",
 	"adminGroup",
 	"userManagementGroup",
+	"groupProfiles",
 	"groupsClaim",
 	"extraScopes",
 	"buttonLabel",

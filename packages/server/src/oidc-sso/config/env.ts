@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { parseGroupProfiles } from "../domain/group-profiles";
 import { parseScopes } from "../domain/scopes";
 import { SSO_MODES, type SsoMode } from "../types";
 
@@ -10,6 +11,8 @@ export interface EnvOverrideValues {
 	accessGroup?: string;
 	adminGroup?: string;
 	userManagementGroup?: string;
+	/** null: set but invalid, which disables the profiles (spec 005, FR-009). */
+	groupProfiles?: string | null;
 	groupsClaim?: string;
 	extraScopes?: string;
 	buttonLabel?: string;
@@ -129,6 +132,21 @@ export const readEnvOverrides = (
 		} else {
 			errors.push(
 				`SSO_OIDC_USER_MANAGEMENT_GROUP must be at most ${GROUP_LIST_MAX_LENGTH} characters; ignoring it.`,
+			);
+		}
+	}
+
+	const groupProfiles = read(env, "SSO_OIDC_GROUP_PROFILES");
+	if (groupProfiles) {
+		const parsed = parseGroupProfiles(groupProfiles);
+		if (parsed.ok) {
+			values.groupProfiles = groupProfiles;
+		} else {
+			// Falling back to the stored value would apply profiles nobody set in
+			// the environment, so an invalid value disables them instead.
+			values.groupProfiles = null;
+			errors.push(
+				`SSO_OIDC_GROUP_PROFILES is invalid (${parsed.error}); group profiles are disabled.`,
 			);
 		}
 	}
