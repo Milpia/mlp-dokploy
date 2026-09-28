@@ -198,11 +198,13 @@ Todavía no se aplican en el login.
 
 **Independent Test**: quickstart §2, escenarios 10 y 13.
 
-- [ ] T029 [US5] Add tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` and `member-profile-expiry.test.ts`:
+- [X] T029 [US5] Add tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` and `member-profile-expiry.test.ts`:
   - without `groupProfiles`, a member with manual permissions logs in by SSO and nothing changes;
   - the guard makes no reads;
   - a member without a profile row in a configured instance keeps manual permissions (FR-005, FR-013, SC-004)
-- [ ] T030 [US5] Run the whole test suite of `apps/dokploy` and confirm that the existing permission tests pass without changes (SC-004)
+  - covered by: `member-profile-apply.test.ts` («FR-013: without configured profiles nothing is read or written», «FR-005: a member without a profile and outside the groups is untouched»), `member-profile-expiry.test.ts` («FR-013/US5: without group profiles configured nothing is read») and `provisioning.test.ts` («FR-013: without profiles nothing is applied»)
+- [X] T030 [US5] Run the whole test suite of `apps/dokploy` and confirm that the existing permission tests pass without changes (SC-004)
+  - result (2026-09-28): 148 files and 1606 tests pass. The only failures are 3 tests of `__test__/deploy/application.real.test.ts` (real git clone and nixpacks build), which fail the same way on `canary` without spec 005: they depend on the local environment
 
 ---
 
