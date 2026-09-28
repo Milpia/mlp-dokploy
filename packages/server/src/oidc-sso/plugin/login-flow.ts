@@ -1,4 +1,5 @@
 import { extractIdentity, type SsoIdentity } from "../domain/claims";
+import { parseGroupProfiles } from "../domain/group-profiles";
 import { sanitizeReturnTo } from "../domain/return-to";
 import { parseScopes } from "../domain/scopes";
 import { newCorrelationId } from "../events/auth-events";
@@ -6,7 +7,7 @@ import type {
 	ProvisioningStore,
 	ProvisionResult,
 } from "../identity/provisioning";
-import { provisionIdentity } from "../identity/provisioning";
+import { GroupProfileError, provisionIdentity } from "../identity/provisioning";
 import { mapOidcError, type OidcSettings } from "../oidc/client";
 import type { OidcSsoServices } from "../services";
 import type { DenyReason, EffectiveConfig, LoginErrorCode } from "../types";
@@ -45,6 +46,13 @@ const denialCode = (reason: DenyReason): LoginErrorCode => {
 	// The fix is the account link, not the groups (MIL-508).
 	if (reason === "identity_conflict") return "sso_identity_mismatch";
 	return "sso_access_denied";
+};
+
+// Values are validated on save and on read from the environment, so a
+// parse failure here only means "no profiles".
+const activeGroupProfiles = (config: EffectiveConfig) => {
+	const parsed = parseGroupProfiles(config.groupProfiles);
+	return parsed.ok ? parsed.profiles : [];
 };
 
 const logFailure = (correlationId: string, stage: string, error: unknown) => {
@@ -162,8 +170,13 @@ export const completeLogin = async (
 			idToken,
 			accessGroup: config.accessGroup,
 			adminGroup: config.adminGroup,
+			groupProfiles: activeGroupProfiles(config),
 		});
 	} catch (error) {
+		if (error instanceof GroupProfileError) {
+			logFailure(correlationId, "group profile", error.cause);
+			return fail("sso_unavailable", "error", "profile_failed", identity);
+		}
 		logFailure(correlationId, "provisioning", error);
 		return fail("sso_unavailable", "error", "provisioning_failed", identity);
 	}

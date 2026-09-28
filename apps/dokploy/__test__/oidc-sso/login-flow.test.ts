@@ -1,3 +1,4 @@
+import { GroupProfileError } from "@dokploy/server/oidc-sso/identity/provisioning";
 import {
 	completeLogin,
 	resolveSignOutTarget,
@@ -256,6 +257,23 @@ describe("completeLogin", () => {
 		await expect(
 			completeLogin(deps, { tx, callbackUrl: callback(), redirectUri }),
 		).resolves.toMatchObject({ code: "sso_unavailable" });
+	});
+
+	it("spec 005 NFR-SEC-001: a group profile failure denies the login and is recorded as profile_failed", async () => {
+		const store = fakeProvisioningStore({
+			transaction: vi.fn(async () => {
+				throw new GroupProfileError(new Error("db down"));
+			}),
+		});
+		const { deps, recorded } = makeDeps({ store });
+		await expect(
+			completeLogin(deps, { tx, callbackUrl: callback(), redirectUri }),
+		).resolves.toMatchObject({ code: "sso_unavailable" });
+		expect(recorded.at(-1)).toMatchObject({
+			type: "sso_login",
+			outcome: "error",
+			reason: "profile_failed",
+		});
 	});
 
 	it("FR-011: the owner's successful login verifies the issuer", async () => {

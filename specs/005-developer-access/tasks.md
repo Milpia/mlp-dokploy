@@ -111,11 +111,11 @@ Todavía no se aplican en el login.
 
 **Independent Test**: quickstart §2, escenarios 1 y 2.
 
-- [ ] T013 [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/provisioning.test.ts` (US1-1, NFR-SEC-001):
+- [X] T013 [US1] Write failing tests in `apps/dokploy/__test__/oidc-sso/provisioning.test.ts` (US1-1, NFR-SEC-001):
   - a first SSO login of a `developers` member writes flags, scope and the profile row in the same transaction as `ensureMembership` and `recordLoginState`;
   - if `applyGroupProfile` throws, nothing is committed and the login fails as `sso_unavailable`, recording a `sso_login`/`error`/`profile_failed` event with its reference
-- [ ] T014 [US1] Call `applyGroupProfile` inside the transaction of `provisionIdentity` in `packages/server/src/oidc-sso/identity/provisioning.ts`, after `ensureMembership` and `recordLoginState`, with the final role. Add it to `ProvisioningTx`
-- [ ] T015 [US1] Pass the effective `groupProfiles` from `services.config.getEffective()` in `packages/server/src/oidc-sso/plugin/login-flow.ts`, and record the `profile_failed` event on failure (R9)
+- [X] T014 [US1] Call `applyGroupProfile` inside the transaction of `provisionIdentity` in `packages/server/src/oidc-sso/identity/provisioning.ts`, after `ensureMembership` and `recordLoginState`, with the final role. Add it to `ProvisioningTx`
+- [X] T015 [US1] Pass the effective `groupProfiles` from `services.config.getEffective()` in `packages/server/src/oidc-sso/plugin/login-flow.ts`, and record the `profile_failed` event on failure (R9)
 - [ ] T016 [US1] Extend the e2e seed and add scenarios in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`:
   - seed: `developers` users `dev1` and `dev2` in the Keycloak realm; projects `alpha` and `beta` (environments `production` and `staging`) and `gamma` (`production`), with one application in each environment; `SSO_OIDC_GROUP_PROFILES` as in quickstart;
   - scenario: `dev1` sees exactly `alpha` and `beta` with `staging` and deploys a service there (quickstart 1–2, SC-001)

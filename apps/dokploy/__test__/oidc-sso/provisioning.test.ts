@@ -1,5 +1,6 @@
 import type { SsoIdentity } from "@dokploy/server/oidc-sso/domain/claims";
 import {
+	GroupProfileError,
 	type ProvisioningStore,
 	type ProvisioningTx,
 	provisionIdentity,
@@ -26,6 +27,7 @@ const makeStore = (overrides: Partial<ProvisioningStore> = {}) => {
 		upsertSsoAccount: vi.fn(async () => {}),
 		ensureMembership: vi.fn(async () => {}),
 		recordLoginState: vi.fn(async () => {}),
+		applyGroupProfile: vi.fn(async () => "none" as const),
 	};
 	const store = {
 		findOwner: vi.fn(async () => OWNER),
@@ -253,5 +255,65 @@ describe("provisionIdentity", () => {
 		const { store, tx } = makeStore();
 		await run(store, identity({ groups: [] }));
 		expect(tx.recordLoginState).not.toHaveBeenCalled();
+	});
+});
+
+describe("provisionIdentity · group profiles (spec 005)", () => {
+	const profiles = [
+		{ group: "developers", permissions: [], projects: ["alpha"] },
+	];
+	const withProfiles = (store: ProvisioningStore, id = identity()) =>
+		provisionIdentity({
+			store,
+			identity: id,
+			idToken: "id-token",
+			accessGroup: "dokploy-users,developers",
+			adminGroup: "dokploy-admins",
+			groupProfiles: profiles,
+			now: () => NOW,
+		});
+
+	it("FR-003: applies the profile in the same transaction, after the role and the login state", async () => {
+		const { store, tx } = makeStore();
+		await withProfiles(store, identity({ groups: ["/developers"] }));
+		expect(tx.applyGroupProfile).toHaveBeenCalledWith({
+			userId: "new-user-id",
+			organizationId: OWNER.organizationId,
+			groups: ["developers"],
+			profiles,
+			now: NOW,
+		});
+		const order = [
+			tx.ensureMembership.mock.invocationCallOrder[0],
+			tx.recordLoginState.mock.invocationCallOrder[0],
+			tx.applyGroupProfile.mock.invocationCallOrder[0],
+		];
+		expect(order).toEqual([...order].sort((a, b) => (a ?? 0) - (b ?? 0)));
+	});
+
+	it("FR-013: without profiles nothing is applied", async () => {
+		const { store, tx } = makeStore();
+		await run(store);
+		expect(tx.applyGroupProfile).not.toHaveBeenCalled();
+	});
+
+	it("FR-007: the owner never gets a profile", async () => {
+		const { store, tx } = makeStore({
+			findUserByEmail: vi.fn(async () => ({
+				id: OWNER.userId,
+				banned: false,
+				linkedSub: null,
+			})),
+		});
+		await withProfiles(store, identity({ groups: ["developers"] }));
+		expect(tx.applyGroupProfile).not.toHaveBeenCalled();
+	});
+
+	it("NFR-SEC-001: a failure while applying the profile fails the whole login", async () => {
+		const { store, tx } = makeStore();
+		tx.applyGroupProfile.mockRejectedValueOnce(new Error("db down"));
+		await expect(
+			withProfiles(store, identity({ groups: ["developers"] })),
+		).rejects.toBeInstanceOf(GroupProfileError);
 	});
 });

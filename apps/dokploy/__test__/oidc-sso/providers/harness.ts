@@ -71,6 +71,8 @@ const memoryProvisioning = (tables: { user: Row[] }) => {
 		async recordLoginState({ userId, groups, at }) {
 			loginStates.set(userId, { groups, lastSsoLoginAt: at });
 		},
+		// The provider matrix runs without group profiles.
+		applyGroupProfile: async () => "none",
 	};
 	const store: ProvisioningStore = {
 		findOwner: async () => ({ userId: OWNER_ID, organizationId: "org" }),

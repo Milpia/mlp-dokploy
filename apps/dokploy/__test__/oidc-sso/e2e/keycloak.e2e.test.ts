@@ -18,6 +18,7 @@ import type {
 	ProvisioningStore,
 	ProvisioningTx,
 } from "@dokploy/server/oidc-sso/identity/provisioning";
+import { applyGroupProfile } from "@dokploy/server/oidc-sso/member-profile/apply";
 import { createOpenIdClient } from "@dokploy/server/oidc-sso/oidc/client";
 import type { SsoEndpointDeps } from "@dokploy/server/oidc-sso/plugin/endpoints";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
@@ -33,7 +34,61 @@ import { organization } from "better-auth/plugins";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createUserManagementGuard } from "@/server/api/middlewares/user-management";
-import { activeConfig, fakeEvents, memoryRepository } from "../helpers";
+import {
+	activeConfig,
+	fakeEvents,
+	type MemoryProject,
+	memoryMemberProfileStore,
+	memoryRepository,
+	memoryScopeCatalog,
+} from "../helpers";
+
+// Spec 005: projects alpha and beta (production and staging) and gamma.
+const E2E_PROJECTS: MemoryProject[] = [
+	{
+		projectId: "p-alpha",
+		name: "alpha",
+		environments: [
+			{
+				environmentId: "e-alpha-prod",
+				name: "production",
+				services: ["s-alpha-prod"],
+			},
+			{
+				environmentId: "e-alpha-staging",
+				name: "staging",
+				services: ["s-alpha-staging"],
+			},
+		],
+	},
+	{
+		projectId: "p-beta",
+		name: "beta",
+		environments: [
+			{
+				environmentId: "e-beta-prod",
+				name: "production",
+				services: ["s-beta-prod"],
+			},
+			{
+				environmentId: "e-beta-staging",
+				name: "staging",
+				services: ["s-beta-staging"],
+			},
+		],
+	},
+	{
+		projectId: "p-gamma",
+		name: "gamma",
+		environments: [
+			{
+				environmentId: "e-gamma-prod",
+				name: "production",
+				services: ["s-gamma-prod"],
+			},
+		],
+	},
+];
 
 // vitest.config.ts replaces `process.env` with a fixed object at build time;
 // globalThis.process.env is the real environment.
@@ -71,6 +126,7 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 	const roles = new Map<string, string>([["owner-id", "owner"]]);
 	const subs = new Map<string, string>();
 	const loginStates = new Map<string, LoginState>();
+	const memberProfiles = memoryMemberProfileStore(roles);
 	const findUser = (id: string) => tables.user.find((u) => u.id === id);
 	const tx: ProvisioningTx = {
 		async createUser({ email }) {
@@ -96,6 +152,12 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 		async recordLoginState({ userId, groups, at }) {
 			loginStates.set(userId, { groups, lastSsoLoginAt: at });
 		},
+		applyGroupProfile: (input) =>
+			applyGroupProfile({
+				...input,
+				store: memberProfiles.store,
+				catalog: memoryScopeCatalog(E2E_PROJECTS),
+			}),
 	};
 	const provisioning: ProvisioningStore = {
 		findOwner: async () => ({ userId: "owner-id", organizationId: "org" }),
@@ -117,7 +179,7 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 		const user = tables.user.find((u) => u.email === email);
 		return user ? roles.get(user.id as string) : undefined;
 	};
-	return { provisioning, roleOf, loginStates };
+	return { provisioning, roleOf, loginStates, grants: memberProfiles.grants };
 };
 
 const setup = (overrides: Partial<StoredConfig> = {}) => {
