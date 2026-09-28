@@ -79,14 +79,14 @@ alcance y la decisión de R3. Todas las historias dependen de esta fase.
   - `update` accepts `groupProfiles: z.string().max(16384).nullable().optional()`; invalid content returns `BAD_REQUEST` with the validation message;
   - `get` returns `groupProfiles` with its source;
   - tests in `router.test.ts`
-- [ ] T008 [P] Write failing PGlite tests in `apps/dokploy/__test__/oidc-sso/member-profile-scope.test.ts` for `resolveScope(profiles, organizationId)` (FR-002, FR-016, R5):
+- [X] T008 [P] Write failing PGlite tests in `apps/dokploy/__test__/oidc-sso/member-profile-scope.test.ts` for `resolveScope(profiles, organizationId)` (FR-002, FR-016, R5):
   - projects by name, including two projects with the same name;
   - `exclude: ["production"]` and `include: ["staging"]`;
   - services from all 8 tables (`application`, `compose`, `postgres`, `mysql`, `mariadb`, `mongo`, `redis`, `libsql`);
   - unknown names ignored;
   - other organizations never included;
   - the union across several profiles
-- [ ] T009 Implement `packages/server/src/oidc-sso/member-profile/scope.ts` (`resolveScope`, port `ScopeCatalog`) and its Drizzle adapter until T008 passes. Add `checkGroupProfiles(profiles, organizationId)` that returns `missingProjects` and `ambiguousProjects` per group (R5)
+- [X] T009 Implement `packages/server/src/oidc-sso/member-profile/scope.ts` (`resolveScope`, port `ScopeCatalog`) and its Drizzle adapter until T008 passes. Add `checkGroupProfiles(profiles, organizationId)` that returns `missingProjects` and `ambiguousProjects` per group (R5)
 - [ ] T010 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` for `applyGroupProfile({ userId, organizationId, finalRole, groups, profiles, now })` with fake stores. Cover the full table of research R3 plus R8:
   - member in a profiled group overwrites all 11 flags (not-granted → `false`) and the three lists, and upserts the row with `expired_at = null`;
   - member with a row and no profiled group clears flags and lists and deletes the row;
