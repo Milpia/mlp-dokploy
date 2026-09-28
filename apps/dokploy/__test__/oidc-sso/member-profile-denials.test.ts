@@ -83,7 +83,7 @@ beforeAll(async () => {
 	for (const [projectId, name] of [
 		["p-alpha", "alpha"],
 		["p-gamma", "gamma"],
-	]) {
+	] as const) {
 		await db
 			.insert(schema.projects)
 			.values({ projectId, name, organizationId: ORG });

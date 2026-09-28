@@ -11,7 +11,20 @@ import {
 	testSsoConnection,
 	updateSsoConfig,
 } from "@dokploy/server/oidc-sso/admin/config-admin";
-import { GROUP_PROFILES_MAX_BYTES } from "@dokploy/server/oidc-sso/domain/group-profiles";
+import {
+	GROUP_PROFILES_MAX_BYTES,
+	parseGroupProfiles,
+} from "@dokploy/server/oidc-sso/domain/group-profiles";
+import {
+	checkGroupProfiles,
+	drizzleScopeCatalog,
+} from "@dokploy/server/oidc-sso/member-profile/scope";
+import {
+	findProfileWithLogin,
+	listProfilesWithLogin,
+	toStatus,
+	toSummaries,
+} from "@dokploy/server/oidc-sso/member-profile/status";
 import {
 	defaultUserManagementGuardDeps,
 	getUserManagementStatus,
@@ -83,6 +96,39 @@ export const oidcSsoRouter = createTRPCRouter({
 			? { canManageUsers: true, reason: null, expiresAt: null }
 			: getUserManagementStatus(defaultUserManagementGuardDeps(), ctx.user.id),
 	),
+
+	// Any signed-in user asks about their own group profile (spec 005, FR-017).
+	memberProfileStatus: protectedProcedure.query(async ({ ctx }) =>
+		IS_CLOUD
+			? toStatus(null, new Date())
+			: toStatus(await findProfileWithLogin(ctx.user.id), new Date()),
+	),
+
+	// Admins see which members' permissions come from their groups (FR-011).
+	memberProfiles: protectedProcedure.query(async ({ ctx }) => {
+		if (ctx.user.role !== "owner" && ctx.user.role !== "admin") {
+			throw new TRPCError({ code: "FORBIDDEN" });
+		}
+		if (IS_CLOUD) return {};
+		return toSummaries(
+			await listProfilesWithLogin(ctx.session.activeOrganizationId),
+			new Date(),
+		);
+	}),
+
+	groupProfilesCheck: ownerProcedure.query(async ({ ctx }) => {
+		const config = await getOidcSsoServices().config.getEffective();
+		const parsed = parseGroupProfiles(config.groupProfiles);
+		return {
+			groups: parsed.ok
+				? await checkGroupProfiles(
+						parsed.profiles,
+						ctx.session.activeOrganizationId,
+						drizzleScopeCatalog,
+					)
+				: [],
+		};
+	}),
 
 	get: ownerProcedure.query(() => getConfigView(getOidcSsoServices())),
 
