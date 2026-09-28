@@ -33,6 +33,7 @@ import { ShowBackups } from "@/components/dashboard/database/backups/show-backup
 import { ComposeFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-compose-monitoring";
 import { ComposePaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-compose-monitoring";
 import { AssignComposeNetworks } from "@/components/dashboard/networks/assign-compose-networks";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { AdvanceBreadcrumb } from "@/components/shared/advance-breadcrumb";
 import { StatusTooltip } from "@/components/shared/status-tooltip";
@@ -272,32 +273,38 @@ const Service = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent serviceId={composeId} value="general">
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralCompose composeId={composeId} />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.envVars.read && (
-										<TabsContent value="environment">
+										<ReadOnlyTabsContent
+											serviceId={composeId}
+											value="environment"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowEnvironment id={composeId} type="compose" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.service.create && (
-										<TabsContent value="backups">
+										<ReadOnlyTabsContent serviceId={composeId} value="backups">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowBackups id={composeId} backupType="compose" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 
 									{permissions?.schedule.read && (
-										<TabsContent value="schedules">
+										<ReadOnlyTabsContent
+											serviceId={composeId}
+											value="schedules"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowSchedules id={composeId} scheduleType="compose" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.volumeBackup.read && (
 										<TabsContent value="volumeBackups">
@@ -413,21 +420,25 @@ const Service = (
 									)}
 
 									{permissions?.domain.read && (
-										<TabsContent value="domains">
+										<ReadOnlyTabsContent serviceId={composeId} value="domains">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowDomains id={composeId} type="compose" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 
-									<TabsContent value="patches" className="w-full">
+									<ReadOnlyTabsContent
+										serviceId={composeId}
+										value="patches"
+										className="w-full"
+									>
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowPatches id={composeId} type="compose" />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 
 									{permissions?.service.create && (
-										<TabsContent value="advanced">
+										<ReadOnlyTabsContent serviceId={composeId} value="advanced">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<AddCommandCompose composeId={composeId} />
 												<ShowVolumes id={composeId} type="compose" />
@@ -435,7 +446,7 @@ const Service = (
 												<AssignComposeNetworks composeId={composeId} />
 												<IsolatedDeploymentTab composeId={composeId} />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 								</Tabs>
 							)}

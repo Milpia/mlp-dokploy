@@ -85,6 +85,24 @@ describe("AuthEventRecorder (FR-013)", () => {
 		expect(logEvent.mock.calls.flat().join(" ")).not.toContain("@");
 	});
 
+	it("spec 006 FR-011: a read-only denial names the resource, never an email", async () => {
+		const logEvent = vi.fn();
+		const recorder = new AuthEventRecorder(store(), { logEvent });
+		await recorder.record({
+			type: "member_profile",
+			outcome: "denied",
+			reason: "read_only",
+			correlationId: "RO1",
+			userId: "qa-1",
+			email: "qa1@example.com",
+			action: "application.deploy",
+			resourceId: "app-1",
+		});
+		expect(logEvent).toHaveBeenCalledWith(
+			"OIDC SSO event type=member_profile outcome=denied reason=read_only ref=RO1 user=qa-1 action=application.deploy resource=app-1",
+		);
+	});
+
 	it("still stores the event when the log sink throws", async () => {
 		const s = store();
 		const recorder = new AuthEventRecorder(s, {

@@ -22,6 +22,7 @@ import { ShowExternalMysqlCredentials } from "@/components/dashboard/mysql/gener
 import { ShowGeneralMysql } from "@/components/dashboard/mysql/general/show-general-mysql";
 import { ShowInternalMysqlCredentials } from "@/components/dashboard/mysql/general/show-internal-mysql-credentials";
 import { UpdateMysql } from "@/components/dashboard/mysql/update-mysql";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { ShowDatabaseAdvancedSettings } from "@/components/dashboard/shared/show-database-advanced-settings";
 import { MysqlIcon } from "@/components/icons/data-tools-icons";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
@@ -232,19 +233,23 @@ const MySql = (
 											</TabsList>
 										</div>
 
-										<TabsContent value="general">
+										<ReadOnlyTabsContent serviceId={mysqlId} value="general">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowGeneralMysql mysqlId={mysqlId} />
 												<ShowInternalMysqlCredentials mysqlId={mysqlId} />
 												<ShowExternalMysqlCredentials mysqlId={mysqlId} />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 										{permissions?.envVars.read && (
-											<TabsContent value="environment" className="w-full">
+											<ReadOnlyTabsContent
+												serviceId={mysqlId}
+												value="environment"
+												className="w-full"
+											>
 												<div className="flex flex-col gap-4 pt-2.5">
 													<ShowEnvironment id={mysqlId} type="mysql" />
 												</div>
-											</TabsContent>
+											</ReadOnlyTabsContent>
 										)}
 										{permissions?.monitoring.read && (
 											<TabsContent value="monitoring">
@@ -281,7 +286,7 @@ const MySql = (
 												</div>
 											</TabsContent>
 										)}
-										<TabsContent value="backups">
+										<ReadOnlyTabsContent serviceId={mysqlId} value="backups">
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowBackups
 													id={mysqlId}
@@ -289,16 +294,16 @@ const MySql = (
 													backupType="database"
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 										{permissions?.service.create && (
-											<TabsContent value="advanced">
+											<ReadOnlyTabsContent serviceId={mysqlId} value="advanced">
 												<div className="flex flex-col gap-4 pt-2.5">
 													<ShowDatabaseAdvancedSettings
 														id={mysqlId}
 														type="mysql"
 													/>
 												</div>
-											</TabsContent>
+											</ReadOnlyTabsContent>
 										)}
 									</Tabs>
 								)}

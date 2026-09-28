@@ -20,6 +20,7 @@ import type { Session, User } from "better-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { memberProfileGuard } from "./middlewares/member-profile";
+import { readOnlyGuard } from "./middlewares/read-only";
 import { userManagementGuard } from "./middlewares/user-management";
 
 type Resource = keyof typeof statements;
@@ -175,7 +176,8 @@ export const protectedProcedure = t.procedure
 		});
 	})
 	.use(userManagementGuard)
-	.use(memberProfileGuard);
+	.use(memberProfileGuard)
+	.use(readOnlyGuard);
 
 export const cliProcedure = t.procedure.use(({ ctx, next }) => {
 	if (

@@ -1,8 +1,12 @@
 import { db } from "@dokploy/server/db";
 import { member, oidcSsoMemberProfile } from "@dokploy/server/db/schema";
 import { and, eq } from "drizzle-orm";
-import { MEMBER_PERMISSIONS, type MemberPermission } from "../types";
-import { memberProfileCache } from "./cache";
+import {
+	MEMBER_PERMISSIONS,
+	type MemberPermission,
+	type ReadOnlyScope,
+} from "../types";
+import { memberProfileCache, readOnlyScopeCache } from "./cache";
 import type { ResolvedScope } from "./scope";
 
 export interface MemberProfileRow {
@@ -32,11 +36,24 @@ export interface MemberProfileStore {
 	}): Promise<void>;
 }
 
+const NO_READ_ONLY: ReadOnlyScope = {
+	environmentIds: [],
+	serviceIds: [],
+	projectIds: [],
+};
+
 const EMPTY_SCOPE: ResolvedScope = {
 	projectIds: [],
 	environmentIds: [],
 	serviceIds: [],
+	readOnly: NO_READ_ONLY,
 };
+
+const readOnlyColumns = (readOnly: ReadOnlyScope) => ({
+	readOnlyEnvironmentIds: readOnly.environmentIds,
+	readOnlyServiceIds: readOnly.serviceIds,
+	readOnlyProjectIds: readOnly.projectIds,
+});
 
 // Only the columns a profile owns; role, accessedGitProviders and
 // accessedServers stay whatever upstream or an admin set.
@@ -86,6 +103,7 @@ export const drizzleMemberProfileStore = (
 
 	async grant({ userId, organizationId, groups, permissions, scope, at }) {
 		memberProfileCache.add(userId);
+		readOnlyScopeCache.invalidate(userId);
 		await writer
 			.update(member)
 			.set(memberColumns(permissions, scope))
@@ -103,6 +121,7 @@ export const drizzleMemberProfileStore = (
 				groups,
 				appliedAt: at,
 				expiredAt: null,
+				...readOnlyColumns(scope.readOnly),
 				updatedAt: at,
 			})
 			.onConflictDoUpdate({
@@ -112,12 +131,14 @@ export const drizzleMemberProfileStore = (
 					groups,
 					appliedAt: at,
 					expiredAt: null,
+					...readOnlyColumns(scope.readOnly),
 					updatedAt: at,
 				},
 			});
 	},
 
 	async revoke({ userId, organizationId }) {
+		readOnlyScopeCache.invalidate(userId);
 		await writer
 			.update(member)
 			.set(memberColumns([], EMPTY_SCOPE))
@@ -133,6 +154,7 @@ export const drizzleMemberProfileStore = (
 	},
 
 	async expire({ userId, organizationId, at }) {
+		readOnlyScopeCache.invalidate(userId);
 		await writer
 			.update(member)
 			.set(memberColumns([], EMPTY_SCOPE))
@@ -144,7 +166,11 @@ export const drizzleMemberProfileStore = (
 			);
 		await writer
 			.update(oidcSsoMemberProfile)
-			.set({ expiredAt: at, updatedAt: at })
+			.set({
+				expiredAt: at,
+				...readOnlyColumns(NO_READ_ONLY),
+				updatedAt: at,
+			})
 			.where(eq(oidcSsoMemberProfile.userId, userId));
 	},
 });
@@ -156,3 +182,29 @@ export const listProfiledUserIds = async (): Promise<string[]> => {
 		.from(oidcSsoMemberProfile);
 	return rows.map((row) => row.userId);
 };
+
+const readOnlyFields = {
+	environmentIds: oidcSsoMemberProfile.readOnlyEnvironmentIds,
+	serviceIds: oidcSsoMemberProfile.readOnlyServiceIds,
+	projectIds: oidcSsoMemberProfile.readOnlyProjectIds,
+};
+
+/** One user's read-only scope (spec 006, research R3); null without a row. */
+export const findReadOnlyScope = async (
+	userId: string,
+): Promise<ReadOnlyScope | null> => {
+	const [row] = await db
+		.select(readOnlyFields)
+		.from(oidcSsoMemberProfile)
+		.where(eq(oidcSsoMemberProfile.userId, userId))
+		.limit(1);
+	return row ?? null;
+};
+
+/** Every profiled user's read-only scope, to reload the cache. */
+export const listReadOnlyScopes = (): Promise<
+	Array<ReadOnlyScope & { userId: string }>
+> =>
+	db
+		.select({ userId: oidcSsoMemberProfile.userId, ...readOnlyFields })
+		.from(oidcSsoMemberProfile);

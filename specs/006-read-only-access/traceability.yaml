@@ -1,0 +1,794 @@
+# Sincronizado con Jira por sdd-jira-backlog (MIL-393 → MIL-547 + 24 Subtasks, MIL-548..MIL-571).
+# T043 (issue en upstream) no cubre un requisito propio: es seguimiento de MIL-545.
+schema: sdd-jira/v2
+feature:
+  id: 006-read-only-access
+  title: Solo lectura por entorno para qa y para ver producción
+  spec: specs/006-read-only-access/spec.md
+  plan: specs/006-read-only-access/plan.md
+  tasks: specs/006-read-only-access/tasks.md
+  branch: 006-read-only-access
+  jira_site: pabelandino.atlassian.net
+  jira_project: MIL
+  master_epic: MIL-393
+  story: MIL-547
+  issue_type: Story
+  task_issue_type: Subtask
+  synced_at: '2026-09-28T05:25:38Z'
+  synced_from_sha: 49914bf31d55cb5e5b4d39da5681d583b04d1ee1
+  spec_digest: sha256:7b0f1e2f6150dedfaf9f6bb05eeada34381d14d3cfbfec02a635068bab60603c
+links:
+- type: relates
+  issue: MIL-514
+  note: Story de la spec 005, que esta amplía
+- type: relates
+  issue: MIL-545
+  note: Bug de la 005 que esta spec cierra para members con perfil (FR-004b)
+- type: relates
+  issue: MIL-546
+  note: Bug de la 005 que esta spec cierra para members con perfil (FR-004c)
+- type: relates
+  issue: MIL-423
+  note: 'Story de infra de la spec 014: origen del modelo de acceso'
+requirements:
+  FR-001:
+    text: 'El owner MUST poder marcar, en el perfil de un grupo de la spec 005, qué entornos de su alcance son de **solo
+      lectura**: todos los del grupo o una lista por nombre. El resto de entornos del alcance tiene acceso completo,
+      como en la 005.'
+    tasks:
+    - MIL-548
+    - MIL-549
+    - MIL-550
+    - MIL-568
+    local_tasks:
+    - T001
+    - T002
+    - T003
+    - T004
+    - T005
+    - T006
+    - T039
+    bugs: []
+    status: planned
+  FR-002:
+    text: En un servicio de un entorno de solo lectura, el sistema MUST permitir ver el proyecto, el entorno, el servicio,
+      su estado, su configuración no secreta, sus logs, su monitorización y su historial de despliegues.
+    tasks:
+    - MIL-557
+    local_tasks:
+    - T018
+    - T019
+    - T020
+    bugs: []
+    status: planned
+  FR-003:
+    text: 'En un servicio de un entorno de solo lectura, el sistema MUST rechazar: desplegar, volver a desplegar, cancelar
+      un despliegue, arrancar, parar o reiniciar; crear, cambiar o borrar variables de entorno, dominios, volúmenes,
+      backups, restores y tareas programadas; y cualquier otra acción que cambie el servicio o su configuración.'
+    tasks:
+    - MIL-554
+    - MIL-555
+    - MIL-556
+    local_tasks:
+    - T011
+    - T012
+    - T013
+    - T014
+    - T015
+    - T016
+    - T017
+    bugs: []
+    status: planned
+  FR-003a:
+    text: Si un proyecto contiene algún entorno de solo lectura para el usuario, el sistema MUST rechazar que cambie
+      las variables de entorno compartidas del proyecto, que borre el proyecto o que lo duplique, y MUST aplicar FR-006
+      a esas variables. Como el nombre y la descripción del proyecto se guardan en la misma operación que sus variables,
+      también quedan de solo lectura para ese usuario.
+    tasks:
+    - MIL-554
+    - MIL-560
+    local_tasks:
+    - T011
+    - T012
+    - T024
+    - T025
+    - T026
+    bugs: []
+    status: planned
+  FR-004:
+    text: En un servicio de un entorno de solo lectura, el sistema MUST rechazar abrir la terminal de sus contenedores.
+      Ver sus logs y estadísticas MUST seguir permitido.
+    tasks:
+    - MIL-558
+    local_tasks:
+    - T021
+    - T022
+    bugs: []
+    status: planned
+  FR-004a:
+    text: A un usuario con algún entorno de solo lectura, el sistema MUST rechazarle abrir la terminal de un servidor
+      y las acciones de Docker que actúan sobre el servidor y no sobre un servicio concreto (contenedores, volúmenes,
+      imágenes y redes), porque no se pueden limitar a un entorno.
+    tasks:
+    - MIL-554
+    - MIL-563
+    local_tasks:
+    - T011
+    - T012
+    - T030
+    bugs: []
+    status: planned
+  FR-004b:
+    text: Al abrir la terminal o los logs de un contenedor, el sistema MUST comprobar, para todo member con perfil de
+      grupo (tenga o no entornos de solo lectura), que el contenedor pertenece al servicio por el que se pide, y MUST
+      rechazar la conexión si no pertenece o si no se puede comprobar. A los members sin perfil no se les aplica (FR-009).
+    tasks:
+    - MIL-558
+    - MIL-564
+    local_tasks:
+    - T021
+    - T022
+    - T031
+    - T032
+    bugs: []
+    status: planned
+  FR-004c:
+    text: Antes de enviar en directo el log de un despliegue a un member con perfil de grupo, el sistema MUST comprobar
+      que el despliegue pertenece a un servicio de su alcance y que su perfil no ha caducado (FR-008), y MUST rechazar
+      la conexión si no se cumple o si no se puede comprobar. Ver ese log sigue siendo lectura, también en entornos de
+      solo lectura (FR-002).
+    tasks:
+    - MIL-562
+    - MIL-564
+    local_tasks:
+    - T028
+    - T029
+    - T031
+    - T032
+    bugs: []
+    status: planned
+  FR-005:
+    text: 'Las restricciones de FR-003, FR-003a, FR-004, FR-004a, FR-004b y FR-004c MUST cumplirse en el servidor por
+      todas las vías (la interfaz, llamadas directas, claves de API y conexiones WebSocket), con fallo cerrado: un error
+      al comprobarlas deniega la acción.'
+    tasks:
+    - MIL-554
+    - MIL-555
+    - MIL-556
+    - MIL-558
+    - MIL-561
+    local_tasks:
+    - T011
+    - T012
+    - T013
+    - T014
+    - T015
+    - T016
+    - T017
+    - T021
+    - T022
+    - T027
+    bugs: []
+    status: planned
+  FR-006:
+    text: En un servicio de un entorno de solo lectura, el sistema MUST mostrar los **nombres** de las variables de entorno
+      (del servicio, del entorno y del proyecto) y MUST NOT devolver sus **valores**, por ninguna vía. Lo mismo aplica
+      a cualquier otro campo secreto de la configuración del servicio (contraseñas de bases de datos, tokens) al contenido
+      de los archivos montados, de los que se muestran la ruta y el tipo, y al contenido del compose y a los comandos
+      personalizados, de los que se muestran el tipo de build, la rama, el repositorio y la ruta del Dockerfile.
+    tasks:
+    - MIL-557
+    - MIL-568
+    local_tasks:
+    - T018
+    - T019
+    - T020
+    - T039
+    bugs: []
+    status: planned
+  FR-006a:
+    text: En un servicio de un entorno de solo lectura, el sistema MUST mostrar la lista de backups y su estado (fecha,
+      resultado, tamaño) y MUST rechazar descargarlos o leer su contenido, por ninguna vía.
+    tasks:
+    - MIL-557
+    local_tasks:
+    - T018
+    - T019
+    - T020
+    bugs: []
+    status: planned
+  FR-007:
+    text: 'Si una persona está en un grupo que da acceso completo a un entorno y en otro que lo da en solo lectura, gana
+      el **acceso completo**: los grupos suman, como en la spec 005 (FR-006 de la 005). Un entorno es de solo lectura
+      para el usuario solo si ninguno de sus grupos le da acceso completo a él.'
+    tasks:
+    - MIL-550
+    - MIL-560
+    local_tasks:
+    - T005
+    - T006
+    - T024
+    - T025
+    - T026
+    bugs: []
+    status: planned
+  FR-008:
+    text: La solo lectura MUST recalcularse en cada login por SSO y caducar con el perfil a las 8 horas, como el resto
+      de la spec 005.
+    tasks:
+    - MIL-551
+    - MIL-562
+    - MIL-563
+    - MIL-564
+    local_tasks:
+    - T007
+    - T008
+    - T028
+    - T029
+    - T030
+    - T031
+    - T032
+    bugs: []
+    status: planned
+  FR-009:
+    text: La solo lectura MUST aplicarse solo a members con perfil de grupo; nunca al owner, a los admins ni a members
+      sin perfil.
+    tasks:
+    - MIL-556
+    - MIL-566
+    local_tasks:
+    - T015
+    - T016
+    - T017
+    - T036
+    - T037
+    bugs: []
+    status: planned
+  FR-010:
+    text: En los servicios de solo lectura, la interfaz MUST indicar que el acceso es de solo lectura y MUST NOT ofrecer
+      como disponibles las acciones que FR-003 y FR-004 rechazan.
+    tasks:
+    - MIL-565
+    local_tasks:
+    - T033
+    - T034
+    - T035
+    bugs: []
+    status: planned
+  FR-011:
+    text: Un intento rechazado por la solo lectura MUST registrarse en los eventos del SSO (con quién, la acción y el
+      servicio) y en el log del contenedor sin emails, como los de la spec 002 y la T062.
+    tasks:
+    - MIL-548
+    - MIL-552
+    - MIL-556
+    - MIL-568
+    local_tasks:
+    - T001
+    - T002
+    - T009
+    - T015
+    - T016
+    - T017
+    - T039
+    bugs: []
+    status: planned
+  FR-012:
+    text: Sin ningún entorno marcado como solo lectura, el sistema MUST comportarse exactamente como con la spec 005.
+    tasks:
+    - MIL-566
+    local_tasks:
+    - T036
+    - T037
+    bugs: []
+    status: planned
+  FR-013:
+    text: La funcionalidad MUST NOT depender de roles personalizados ni de código bajo licencia enterprise, y los nombres
+      de grupo y de entorno MUST vivir en la configuración.
+    tasks:
+    - MIL-569
+    local_tasks:
+    - T040
+    - T041
+    bugs: []
+    status: planned
+  FR-014:
+    text: Una configuración de solo lectura inválida (entorno fuera del alcance del grupo, formato incorrecto) MUST rechazarse
+      entera con un mensaje, como en la spec 005.
+    tasks:
+    - MIL-549
+    - MIL-553
+    local_tasks:
+    - T003
+    - T004
+    - T010
+    bugs: []
+    status: planned
+  NFR-PERF-001:
+    text: Comprobar la solo lectura MUST añadir como máximo 5 ms (p95) a cada acción de cambio de un member con perfil.
+      MUST NOT añadir consultas a las peticiones de lectura tRPC, salvo una carga única del alcance de solo lectura por
+      usuario tras un reinicio del proceso, ni añadir nada a las peticiones del owner, de los admins o de los members
+      sin perfil. Al abrir una conexión WebSocket de un member con perfil (FR-004b, FR-004c), la comprobación MUST costar
+      como máximo una consulta de ≤ 5 ms (p95) o una inspección del contenedor con un tiempo máximo de 5 s, una sola
+      vez por conexión y nunca por mensaje.
+    tasks:
+    - MIL-567
+    local_tasks:
+    - T038
+    bugs: []
+    status: planned
+  NFR-SEC-001:
+    text: Cualquier error al comprobar la solo lectura MUST resolverse denegando la acción.
+    tasks:
+    - MIL-551
+    - MIL-556
+    local_tasks:
+    - T007
+    - T008
+    - T015
+    - T016
+    - T017
+    bugs: []
+    status: planned
+success_criteria:
+  SC-001:
+    text: Un usuario de `qa` ve el estado, los logs y el historial de despliegues de todos los servicios de su alcance
+      en su primer login por SSO, con 0 pasos manuales de un admin.
+    verified_by:
+    - MIL-559
+    - MIL-570
+  SC-002:
+    text: El 100 % de las acciones de cambio de FR-003, FR-003a, FR-004 y FR-004a, de las conexiones a contenedores o
+      logs de despliegue ajenos de FR-004b y FR-004c, y de las descargas de backups de FR-006a, sobre servicios de solo
+      lectura se rechazan, por la interfaz, por llamada directa, con clave de API y por WebSocket.
+    verified_by:
+    - MIL-561
+    - MIL-570
+  SC-003:
+    text: Un developer ve producción y despliega en staging en la misma sesión, sin rechazos en staging.
+    verified_by:
+    - MIL-560
+    - MIL-570
+  SC-004:
+    text: Con perfiles sin solo lectura, las pruebas actuales pasan sin cambios.
+    verified_by:
+    - MIL-566
+    - MIL-570
+user_stories:
+- local_id: US1
+  title: qa revisa sin poder cambiar nada
+  priority: P1
+  requirements:
+  - FR-002
+  - FR-003
+  - FR-003a
+  - FR-004
+  - FR-004a
+  - FR-004b
+  - FR-005
+  - FR-006
+  - FR-006a
+  - FR-009
+  - FR-011
+  - NFR-SEC-001
+  success_criteria:
+  - SC-001
+  tasks:
+  - local_id: T011
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/read-only-policy.test.ts` for the pure `evaluate(rule,
+      rawInput, scope)`
+    jira: MIL-554
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/read-only-policy.test.ts
+    requirements: &id001
+    - FR-003
+    - FR-003a
+    - FR-004a
+    - FR-005
+  - local_id: T012
+    title: Implement `packages/server/src/oidc-sso/read-only/policy.ts` with `READ_ONLY_POLICY` exactly as the table
+      of contracts/guard-and-redaction.md, plus `evaluate` a
+    jira: MIL-554
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/read-only/policy.ts
+    requirements: *id001
+  - local_id: T013
+    title: Write failing PGlite tests in `apps/dokploy/__test__/oidc-sso/read-only-lookup.test.ts` for the `SubResourceOwner`
+      port
+    jira: MIL-555
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/read-only-lookup.test.ts
+    requirements: &id002
+    - FR-003
+    - FR-005
+  - local_id: T014
+    title: Implement `packages/server/src/oidc-sso/read-only/lookup.ts`
+    jira: MIL-555
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/read-only/lookup.ts
+    requirements: *id002
+  - local_id: T015
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/read-only-guard.test.ts` for `createReadOnlyGuard(deps)`
+      with fakes
+    jira: MIL-556
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/read-only-guard.test.ts
+    requirements: &id003
+    - FR-003
+    - FR-005
+    - FR-009
+    - FR-011
+    - NFR-SEC-001
+  - local_id: T016
+    title: Implement `apps/dokploy/server/api/middlewares/read-only.ts`
+    jira: MIL-556
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/middlewares/read-only.ts
+    - apps/dokploy/server/api/trpc.ts
+    requirements: *id003
+  - local_id: T017
+    title: Write the drift tests in `apps/dokploy/__test__/oidc-sso/read-only-drift.test.ts`
+    jira: MIL-556
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/read-only-drift.test.ts
+    requirements: *id003
+  - local_id: T018
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/read-only-redact.test.ts` for the pure `redact(data,
+      scope)`
+    jira: MIL-557
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/read-only-redact.test.ts
+    requirements: &id004
+    - FR-002
+    - FR-006
+    - FR-006a
+  - local_id: T019
+    title: Implement `packages/server/src/oidc-sso/read-only/redact.ts` and `secret-fields.ts`
+    jira: MIL-557
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/read-only/redact.ts
+    requirements: *id004
+  - local_id: T020
+    title: Write the column drift test in `read-only-drift.test.ts`
+    jira: MIL-557
+    parallel: false
+    paths: []
+    requirements: *id004
+  - local_id: T021
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/read-only-wss.test.ts` for `checkContainerBinding`
+      with a fake `ContainerInspector`
+    jira: MIL-558
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/read-only-wss.test.ts
+    requirements: &id005
+    - FR-004
+    - FR-004b
+    - FR-005
+  - local_id: T022
+    title: Implement `packages/server/src/oidc-sso/read-only/wss.ts`
+    jira: MIL-558
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/wss/*.test.ts
+    - apps/dokploy/server/wss/docker-container-terminal.ts
+    - packages/server/src/oidc-sso/read-only/wss.ts
+    requirements: *id005
+  - local_id: T023
+    title: Add e2e scenarios in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`
+    jira: MIL-559
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts
+    requirements:
+    - SC-001
+- local_id: US2
+  title: developers ven producción sin poder cambiarla
+  priority: P1
+  requirements:
+  - FR-003a
+  - FR-007
+  success_criteria:
+  - SC-003
+  tasks:
+  - local_id: T024
+    title: Add tests to `read-only-guard.test.ts` with the developer scope
+    jira: MIL-560
+    parallel: true
+    paths: []
+    requirements: &id006
+    - FR-003a
+    - FR-007
+    - SC-003
+  - local_id: T025
+    title: Add tests to `read-only-redact.test.ts` with a `project.one`-shaped response that holds both environments
+    jira: MIL-560
+    parallel: true
+    paths: []
+    requirements: *id006
+  - local_id: T026
+    title: Add e2e scenarios in `keycloak.e2e.test.ts`
+    jira: MIL-560
+    parallel: false
+    paths: []
+    requirements: *id006
+- local_id: US3
+  title: La restricción se cumple por todas las vías y caduca igual
+  priority: P2
+  requirements:
+  - FR-004a
+  - FR-004b
+  - FR-004c
+  - FR-005
+  - FR-008
+  success_criteria:
+  - SC-002
+  tasks:
+  - local_id: T027
+    title: 'Write a failing test in `read-only-guard.test.ts`: a call through `createOpenApiNextHandler` with an API-key
+      context of a read-only member'
+    jira: MIL-561
+    parallel: true
+    paths: []
+    requirements:
+    - FR-005
+    - SC-002
+  - local_id: T028
+    title: Write failing tests in `read-only-wss.test.ts` for `checkDeploymentLogAccess` with fakes
+    jira: MIL-562
+    parallel: true
+    paths: []
+    requirements: &id007
+    - FR-004c
+    - FR-008
+  - local_id: T029
+    title: Implement `checkDeploymentLogAccess` in `packages/server/src/oidc-sso/read-only/wss.ts`
+    jira: MIL-562
+    parallel: false
+    paths:
+    - apps/dokploy/server/wss/listen-deployment.ts
+    - packages/server/src/oidc-sso/read-only/wss.ts
+    requirements: *id007
+  - local_id: T030
+    title: Write failing tests, then deny `/terminal` for a user with any read-only environment and add the 005 expiry
+      check to `canAccessTerminalOverWss` in `canAccessTer
+    jira: MIL-563
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/wss/authorize.test.ts
+    - apps/dokploy/server/wss/authorize.ts
+    requirements:
+    - FR-004a
+    - FR-008
+  - local_id: T031
+    title: 'Add a test to `member-profile-expiry.test.ts`: after `expire`, `getReadOnlyScope` returns empty lists and
+      the member has no scope left, so `readOnlyGuard` exits'
+    jira: MIL-564
+    parallel: false
+    paths: []
+    requirements: &id008
+    - FR-008
+    - FR-004b
+    - FR-004c
+  - local_id: T032
+    title: 'Write the regression tests named after the bugs, which must fail on `canary` `449acf0c4` and pass now: `MIL-545:
+      container of another service is refused` and `M'
+    jira: MIL-564
+    parallel: false
+    paths:
+    - specs/005-developer-access/traceability.yaml
+    requirements: *id008
+- local_id: US4
+  title: La interfaz no ofrece lo que no se puede hacer
+  priority: P3
+  requirements:
+  - FR-010
+  success_criteria: []
+  tasks:
+  - local_id: T033
+    title: Extend `oidcSso.memberProfileStatus` in `apps/dokploy/server/api/routers/oidc-sso.ts` and `packages/server/src/oidc-sso/member-profile/status.ts`
+      with `readOnly
+    jira: MIL-565
+    parallel: true
+    paths:
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    - packages/server/src/oidc-sso/member-profile/status.ts
+    requirements: &id009
+    - FR-010
+  - local_id: T034
+    title: 'Create `apps/dokploy/components/dashboard/settings/oidc-sso/read-only-boundary.tsx`: given a `serviceId`,
+      if it is read-only for the user, it shows a «Solo lect'
+    jira: MIL-565
+    parallel: false
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/read-only-boundary.tsx
+    requirements: *id009
+  - local_id: T035
+    title: Mount `ReadOnlyBoundary` in the 8 service pages under `apps/dokploy/pages/dashboard/project/[projectId]/environment/[environmentId]/services/{application,compos
+    jira: MIL-565
+    parallel: false
+    paths:
+    - apps/dokploy/pages/dashboard/project/[projectId]/environment/[environmentId]/services/{application,compose,postgres,mysql,mariadb,mongo,redis,libsql}/
+    requirements: *id009
+- local_id: US5
+  title: Sin configuración, nada cambia
+  priority: P3
+  requirements:
+  - FR-009
+  - FR-012
+  success_criteria:
+  - SC-004
+  tasks:
+  - local_id: T036
+    title: Add tests in `read-only-guard.test.ts` and `read-only-wss.test.ts`
+    jira: MIL-566
+    parallel: true
+    paths: []
+    requirements: &id010
+    - FR-009
+    - FR-012
+    - SC-004
+  - local_id: T037
+    title: Run the whole `__test__/oidc-sso` suite and `__test__/wss` and check that the 005 tests pass without changes
+      other than the documented mocks
+    jira: MIL-566
+    parallel: false
+    paths: []
+    requirements: *id010
+phase_tasks:
+- name: Setup
+  tasks:
+  - local_id: T001
+    title: Add domain types to `packages/server/src/oidc-sso/types.ts`
+    jira: MIL-548
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/types.ts
+    requirements: &id011
+    - FR-001
+    - FR-011
+  - local_id: T002
+    title: Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration after `0198_spicy_blackheart.sql`
+      with `pnpm --filter=dokploy run migratio
+    jira: MIL-548
+    parallel: false
+    paths:
+    - packages/server/src/db/schema/oidc-sso.ts
+    requirements: *id011
+- name: Foundational
+  tasks:
+  - local_id: T003
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/group-profiles.test.ts` for `readOnly` in `parseGroupProfiles`
+    jira: MIL-549
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/group-profiles.test.ts
+    requirements: &id012
+    - FR-001
+    - FR-014
+  - local_id: T004
+    title: 'Extend `packages/server/src/oidc-sso/domain/group-profiles.ts` until T003 passes: add `readOnly` to the allowed
+      keys of `parseProfile` and validate it against t'
+    jira: MIL-549
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/domain/group-profiles.ts
+    requirements: *id012
+  - local_id: T005
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-scope.test.ts`
+    jira: MIL-550
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-scope.test.ts
+    requirements: &id013
+    - FR-001
+    - FR-007
+  - local_id: T006
+    title: 'Extend `packages/server/src/oidc-sso/member-profile/scope.ts` until T005 passes: `ResolvedScope.readOnly`
+      = ⋃ read-only per group − ⋃ full per group, services o'
+    jira: MIL-550
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/scope.ts
+    requirements: *id013
+  - local_id: T007
+    title: Extend `packages/server/src/oidc-sso/member-profile/store.ts` and `cache.ts`, with PGlite tests in `db-adapters.test.ts`
+    jira: MIL-551
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/store.ts
+    requirements: &id014
+    - FR-008
+    - NFR-SEC-001
+  - local_id: T008
+    title: 'Pass the resolved `readOnly` from `apply.ts` to `store.grant`, with a case in `member-profile-apply.test.ts`:
+      a login that removes `readOnly` from the config le'
+    jira: MIL-551
+    parallel: false
+    paths: []
+    requirements: *id014
+  - local_id: T009
+    title: Add `resourceId` to `AuthEventInput` and to the insert in `packages/server/src/oidc-sso/events/auth-events.ts`,
+      and `resource=<id>` to `formatAuthEventLine`. Te
+    jira: MIL-552
+    parallel: true
+    paths:
+    - packages/server/src/oidc-sso/events/auth-events.ts
+    requirements:
+    - FR-011
+  - local_id: T010
+    title: Extend `checkGroupProfiles` in `scope.ts` and the `groupProfilesCheck` query in `apps/dokploy/server/api/routers/oidc-sso.ts`
+      with `missingReadOnlyEnvironments`
+    jira: MIL-553
+    parallel: true
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-014
+- name: Polish
+  tasks:
+  - local_id: T038
+    title: Add the block `performance · read-only
+    jira: MIL-567
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/performance.test.ts
+    requirements:
+    - NFR-PERF-001
+  - local_id: T039
+    title: 'Document the feature in `specs/001-keycloak-sso/operations.md`: a «Solo lectura por entorno» section with
+      `readOnly`, the Milpia example, what is hidden, the We'
+    jira: MIL-568
+    parallel: true
+    paths:
+    - specs/001-keycloak-sso/operations.md
+    requirements:
+    - FR-001
+    - FR-006
+    - FR-011
+  - local_id: T040
+    title: Run `/security-review` on the branch and fix its findings
+    jira: MIL-569
+    parallel: false
+    paths: []
+    requirements: &id015
+    - FR-013
+  - local_id: T041
+    title: Run `pnpm typecheck`, `npx biome check` on the touched files, the server declaration build
+    jira: MIL-569
+    parallel: false
+    paths: []
+    requirements: *id015
+  - local_id: T042
+    title: Run the quickstart manual scenarios in the lab with the canary image and record the results in the lab PR
+    jira: MIL-570
+    parallel: false
+    paths: []
+    requirements:
+    - SC-001
+    - SC-002
+    - SC-003
+    - SC-004
+  - local_id: T043
+    title: Open an issue in upstream Dokploy about the container binding of `/docker-container-terminal` and `/docker-container-logs`
+      for any member
+    jira: MIL-571
+    parallel: false
+    paths: []
+    requirements: []
+bugs: []
+orphans:
+  requirements_without_issue: []
+  tasks_without_requirement:
+  - T043
+  issues_without_local_id: []

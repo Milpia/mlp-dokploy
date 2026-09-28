@@ -36,6 +36,7 @@ import { DeleteService } from "@/components/dashboard/compose/delete-service";
 import { ContainerFreeMonitoring } from "@/components/dashboard/monitoring/free/container/show-free-container-monitoring";
 import { ContainerPaidMonitoring } from "@/components/dashboard/monitoring/paid/container/show-paid-container-monitoring";
 import { AssignNetworks } from "@/components/dashboard/networks/assign-networks";
+import { ReadOnlyTabsContent } from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { AdvanceBreadcrumb } from "@/components/shared/advance-breadcrumb";
 import { StatusTooltip } from "@/components/shared/status-tooltip";
@@ -280,17 +281,23 @@ const Service = (
 										</TabsList>
 									</div>
 
-									<TabsContent value="general">
+									<ReadOnlyTabsContent
+										serviceId={applicationId}
+										value="general"
+									>
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowGeneralApplication applicationId={applicationId} />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.envVars.read && (
-										<TabsContent value="environment">
+										<ReadOnlyTabsContent
+											serviceId={applicationId}
+											value="environment"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowEnvironment applicationId={applicationId} />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 
 									{permissions?.monitoring.read && (
@@ -355,14 +362,17 @@ const Service = (
 										</TabsContent>
 									)}
 									{permissions?.schedule.read && (
-										<TabsContent value="schedules">
+										<ReadOnlyTabsContent
+											serviceId={applicationId}
+											value="schedules"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowSchedules
 													id={applicationId}
 													scheduleType="application"
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.deployment.read && (
 										<TabsContent value="deployments" className="w-full pt-2.5">
@@ -377,7 +387,8 @@ const Service = (
 										</TabsContent>
 									)}
 									{permissions?.volumeBackup.read && (
-										<TabsContent
+										<ReadOnlyTabsContent
+											serviceId={applicationId}
 											value="volume-backups"
 											className="w-full pt-2.5"
 										>
@@ -388,7 +399,7 @@ const Service = (
 													serverId={data?.serverId || ""}
 												/>
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 									{permissions?.deployment.read && (
 										<TabsContent value="preview-deployments" className="w-full">
@@ -398,19 +409,30 @@ const Service = (
 										</TabsContent>
 									)}
 									{permissions?.domain.read && (
-										<TabsContent value="domains" className="w-full">
+										<ReadOnlyTabsContent
+											serviceId={applicationId}
+											value="domains"
+											className="w-full"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<ShowDomains id={applicationId} type="application" />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
-									<TabsContent value="patches" className="w-full">
+									<ReadOnlyTabsContent
+										serviceId={applicationId}
+										value="patches"
+										className="w-full"
+									>
 										<div className="flex flex-col gap-4 pt-2.5">
 											<ShowPatches id={applicationId} type="application" />
 										</div>
-									</TabsContent>
+									</ReadOnlyTabsContent>
 									{permissions?.service.create && (
-										<TabsContent value="advanced">
+										<ReadOnlyTabsContent
+											serviceId={applicationId}
+											value="advanced"
+										>
 											<div className="flex flex-col gap-4 pt-2.5">
 												<AddCommand applicationId={applicationId} />
 												<ShowClusterSettings
@@ -426,7 +448,7 @@ const Service = (
 												<ShowPorts applicationId={applicationId} />
 												<ShowTraefikConfig applicationId={applicationId} />
 											</div>
-										</TabsContent>
+										</ReadOnlyTabsContent>
 									)}
 								</Tabs>
 							)}

@@ -236,7 +236,12 @@ export const memoryMemberProfileStore = (roles: Map<string, string>) => {
 				grants.set(userId, {
 					...grant,
 					permissions: [],
-					scope: { projectIds: [], environmentIds: [], serviceIds: [] },
+					scope: {
+						projectIds: [],
+						environmentIds: [],
+						serviceIds: [],
+						readOnly: { environmentIds: [], serviceIds: [], projectIds: [] },
+					},
 					expiredAt: at,
 				});
 			}

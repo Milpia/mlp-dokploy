@@ -12,6 +12,15 @@ vi.mock("@dokploy/server/services/permission", () => ({
 
 // The group profile expiry (spec 005) is covered in __test__/oidc-sso.
 vi.mock("@dokploy/server/oidc-sso", () => ({ getOidcSsoServices: vi.fn() }));
+// The container binding of spec 006 is tested in __test__/oidc-sso.
+vi.mock("@dokploy/server/oidc-sso/read-only/wss", () => ({
+	checkContainerBinding: vi.fn(async () => ({ ok: true })),
+	defaultContainerBindingDeps: vi.fn(),
+	checkDeploymentLogAccess: vi.fn(async () => ({ ok: true })),
+	defaultDeploymentLogDeps: vi.fn(),
+	checkServerTerminal: vi.fn(async () => ({ ok: true })),
+	defaultServerTerminalDeps: vi.fn(),
+}));
 vi.mock("@dokploy/server/oidc-sso/member-profile/expiry", () => ({
 	checkMemberProfileExpiryForUser: vi.fn(async () => ({
 		ok: true,

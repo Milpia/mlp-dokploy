@@ -166,6 +166,89 @@ beforeAll(async () => {
 const resolve = (scopes: Parameters<typeof resolveScope>[0]) =>
 	resolveScope(scopes, ORG, drizzleScopeCatalog);
 
+const NO_READ_ONLY = { environmentIds: [], serviceIds: [], projectIds: [] };
+
+const ALPHA_STAGING_SERVICES = [
+	"svc-app",
+	"svc-compose",
+	"svc-libsql",
+	"svc-mariadb",
+	"svc-mongo",
+	"svc-mysql",
+	"svc-postgres",
+	"svc-redis",
+];
+
+describe("resolveScope read-only (spec 006, FR-001, FR-007, R2)", () => {
+	it("readOnly true marks every environment of the group, its services and projects", async () => {
+		const scope = await resolve([
+			{
+				projects: ["alpha"],
+				environments: { exclude: ["production"] },
+				readOnly: true,
+			},
+		]);
+		expect(scope.readOnly).toEqual({
+			environmentIds: [ids.alphaStaging],
+			serviceIds: expect.arrayContaining(ALPHA_STAGING_SERVICES),
+			projectIds: [ids.alpha],
+		});
+		expect(scope.readOnly.serviceIds).toHaveLength(
+			ALPHA_STAGING_SERVICES.length,
+		);
+	});
+
+	it("a list marks only the named environments", async () => {
+		const scope = await resolve([
+			{ projects: ["alpha"], readOnly: ["production"] },
+		]);
+		expect(scope.readOnly).toEqual({
+			environmentIds: [ids.alphaProd],
+			serviceIds: ["svc-alpha-prod"],
+			projectIds: [ids.alpha],
+		});
+	});
+
+	it("keeps read-only environments and services in the upstream scope", async () => {
+		const scope = await resolve([
+			{ projects: ["alpha"], readOnly: ["production"] },
+		]);
+		expect(scope.environmentIds).toContain(ids.alphaProd);
+		expect(scope.serviceIds).toContain("svc-alpha-prod");
+	});
+
+	it("FR-007: full access in one group wins over read-only in another", async () => {
+		const scope = await resolve([
+			{ projects: ["alpha"], readOnly: ["production"] },
+			{
+				projects: ["alpha"],
+				environments: { exclude: ["production"] },
+				readOnly: true,
+			},
+		]);
+		expect(scope.readOnly).toEqual({
+			environmentIds: [ids.alphaProd],
+			serviceIds: ["svc-alpha-prod"],
+			projectIds: [ids.alpha],
+		});
+	});
+
+	it("FR-007: an environment read-only in every group stays read-only", async () => {
+		const scope = await resolve([
+			{ projects: ["alpha"], readOnly: true },
+			{ projects: ["alpha"], readOnly: ["staging", "production"] },
+		]);
+		expect(scope.readOnly.environmentIds.sort()).toEqual(
+			[ids.alphaProd, ids.alphaStaging].sort(),
+		);
+	});
+
+	it("no readOnly anywhere gives three empty lists", async () => {
+		const scope = await resolve([{ projects: ["alpha"] }]);
+		expect(scope.readOnly).toEqual(NO_READ_ONLY);
+	});
+});
+
 describe("resolveScope (spec 005, FR-002, FR-016, R5)", () => {
 	it("resolves projects by name to all their environments and services", async () => {
 		const scope = await resolve([{ projects: ["alpha"] }]);
@@ -220,6 +303,7 @@ describe("resolveScope (spec 005, FR-002, FR-016, R5)", () => {
 			projectIds: [],
 			environmentIds: [],
 			serviceIds: [],
+			readOnly: NO_READ_ONLY,
 		});
 	});
 
@@ -245,6 +329,7 @@ describe("resolveScope (spec 005, FR-002, FR-016, R5)", () => {
 			projectIds: [],
 			environmentIds: [],
 			serviceIds: [],
+			readOnly: NO_READ_ONLY,
 		});
 	});
 });
@@ -270,13 +355,40 @@ describe("checkGroupProfiles (spec 005, R5)", () => {
 				missingProjects: ["delta"],
 				ambiguousProjects: ["beta"],
 				projectsResolved: 3,
+				missingReadOnlyEnvironments: [],
 			},
 			{
 				group: "qa",
 				missingProjects: [],
 				ambiguousProjects: [],
 				projectsResolved: 0,
+				missingReadOnlyEnvironments: [],
 			},
 		]);
+	});
+
+	it("spec 006 R8: reports read-only environment names that match nothing", async () => {
+		const [check] = await checkGroupProfiles(
+			[
+				{
+					group: "developers",
+					permissions: [],
+					projects: ["alpha", "gamma"],
+					readOnly: ["production", "prodution"],
+				},
+			],
+			ORG,
+			drizzleScopeCatalog,
+		);
+		expect(check?.missingReadOnlyEnvironments).toEqual(["prodution"]);
+	});
+
+	it("spec 006 R8: readOnly true has nothing to report", async () => {
+		const [check] = await checkGroupProfiles(
+			[{ group: "qa", permissions: [], projects: ["alpha"], readOnly: true }],
+			ORG,
+			drizzleScopeCatalog,
+		);
+		expect(check?.missingReadOnlyEnvironments).toEqual([]);
 	});
 });

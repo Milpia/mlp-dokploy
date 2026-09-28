@@ -167,7 +167,7 @@ conexión comprueba el secreto revocando un token inventado cuando el proveedor 
 | `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
 | `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto desde el que el owner puede usar la ruta de emergencia por un túnel (spec 003), p. ej. `http://localhost:3900` |
 | `SSO_OIDC_USER_MANAGEMENT_GROUP` | grupo o lista separada por comas que puede gestionar usuarios (spec 002); vacío, rige upstream |
-| `SSO_OIDC_GROUP_PROFILES` | JSON con los permisos y proyectos de cada grupo de members (spec 005, ver «Perfiles por grupo»); vacío, se gestionan a mano |
+| `SSO_OIDC_GROUP_PROFILES` | JSON con los permisos, proyectos y entornos de solo lectura de cada grupo de members (specs 005 y 006, ver «Perfiles por grupo» y «Solo lectura por entorno»); vacío, se gestionan a mano |
 
 - Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen
   bloqueados en ella.
@@ -359,6 +359,86 @@ Los tres también salen en el log del contenedor como `OIDC SSO event … ref=<r
 Antes de añadir un grupo a `SSO_OIDC_ACCESS_GROUP` (y, en Milpia, a `deploy_access_groups` de
 oauth2-proxy), su perfil tiene que estar configurado. Sin él, sus personas entran sin permisos ni
 proyectos.
+
+### Solo lectura por entorno (spec 006)
+
+La clave `readOnly` del perfil de un grupo hace que sus personas **vean** esos entornos sin poder
+cambiarlos. El formato está en `specs/006-read-only-access/contracts/env.md`:
+
+- `"readOnly": true`: todos los entornos del grupo son de solo lectura.
+- `"readOnly": ["production"]`: solo esos entornos. El resto del alcance tiene acceso completo.
+- Los nombres deben estar dentro del alcance del grupo (en `include` y nunca en `exclude`); si no,
+  la configuración entera se rechaza como en la spec 005.
+
+Ejemplo de Milpia: `developers` operan staging y ven producción, y `qa` ve todo `milpia` salvo
+producción, sin cambiar nada:
+
+```json
+{
+  "developers": { "permissions": [], "projects": ["milpia"], "readOnly": ["production"] },
+  "qa": {
+    "permissions": [],
+    "projects": ["milpia"],
+    "environments": { "exclude": ["production"] },
+    "readOnly": true
+  }
+}
+```
+
+**Qué se ve y qué no:**
+- Se ven el proyecto, los entornos, los servicios, su estado, logs, monitorización e historial de
+  despliegues, y la lista de backups con su fecha, resultado y tamaño.
+- Las variables de entorno muestran sus **nombres** con el valor `••••••••`. Lo mismo para
+  contraseñas, tokens de despliegue, el contenido de los archivos montados, el contenido del compose
+  y los comandos personalizados. El tipo de build, la rama, el repositorio y la ruta del Dockerfile
+  siguen visibles.
+- Si un proyecto tiene algún entorno de solo lectura para la persona, las variables compartidas del
+  proyecto también lo son, y no puede borrar ni duplicar el proyecto.
+- Se rechaza cualquier cambio: desplegar, cancelar, arrancar, parar, variables, dominios,
+  volúmenes, backups, restores, tareas programadas y la terminal de sus contenedores. El servidor lo
+  rechaza siempre, también por la API con clave; la interfaz además lo indica y desactiva los
+  botones.
+- Quien tenga algún entorno de solo lectura tampoco abre la terminal del servidor ni usa las
+  acciones de Docker del servidor, porque llegan a todos los entornos.
+
+**Para todo member con perfil de grupo**, tenga o no solo lectura:
+- la terminal y los logs de un contenedor solo se abren desde el servicio al que pertenece el
+  contenedor;
+- los logs de despliegue en directo solo se ven para servicios de su alcance y con el perfil
+  vigente.
+
+**Varios grupos:** si un grupo da acceso completo a un entorno y otro solo lectura, gana el acceso
+completo.
+
+**Cuándo se aplica:** en cada login por SSO, y caduca a las 8 horas como el resto del perfil. Un
+cambio de configuración llega en el siguiente login. Quitar `readOnly` devuelve el acceso completo
+en el siguiente login; mientras tanto, la persona sigue en solo lectura.
+
+**Antes de activar la solo lectura en un entorno que el grupo ya podía ver con acceso completo:** los
+tokens de despliegue (`refreshToken`) y las contraseñas que esas personas pudieron ver siguen siendo
+válidos. Si hace falta, rótalos al activarla.
+
+La pantalla de SSO avisa de los nombres de `readOnly` que no coinciden con ningún entorno de los
+proyectos del grupo: una errata dejaría ese entorno con acceso completo.
+
+**Límites que conviene conocer:**
+- La solo lectura protege los entornos dentro del panel. **No aísla entornos que comparten
+  servidor**: quien tiene acceso completo a un servicio puede, con los permisos normales de upstream
+  (volúmenes, backups, compose), llegar a otros recursos del mismo servidor. Para que producción esté
+  aislada de verdad, ejecútala en un servidor distinto del de staging.
+- Si se vacía `groupProfiles` (o la variable deja de ser válida), la solo lectura se desactiva
+  junto con el resto de perfiles, y los members conservan el alcance que tenían, **incluidos los
+  entornos que eran de solo lectura**, ahora con acceso completo (como en la spec 005). Antes de
+  desactivar los perfiles, revisa y recorta a mano el alcance de esos members.
+
+| Evento (`type` / `outcome` / `reason`) | Cuándo | Qué hacer |
+|---|---|---|
+| `member_profile` / `denied` / `read_only` | alguien intentó cambiar algo de solo lectura; `action` es el procedimiento (o `wss:terminal`, `wss:docker-container-terminal`) y el recurso, el servicio, entorno o proyecto | nada, salvo que se repita: confirmar con la persona si su grupo debería tener acceso completo |
+| `member_profile` / `denied` / `container_mismatch` | se pidió la terminal o los logs de un contenedor que no es del servicio indicado | revisar quién y desde dónde; la interfaz nunca lo pide así |
+| `member_profile` / `denied` / `out_of_scope` | se pidió el log de un despliegue fuera del alcance | igual que el anterior |
+| `member_profile` / `error` / `read_only_check_failed` | falló la comprobación; se denegó la acción | revisar los logs `OIDC SSO: read-only check failed`, `container binding check failed`, `deployment log check failed` o `server terminal check failed` |
+
+Estos eventos también salen en el log del contenedor, con `resource=<id>`.
 
 ## 6. Consideraciones de seguridad
 

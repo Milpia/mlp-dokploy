@@ -18,9 +18,14 @@ export interface AuthEventInput {
 	ip?: string;
 	/** Set when an emergency login arrived through the emergency origin (spec 003). */
 	emergencyOrigin?: boolean;
-	/** Only on user_management events (spec 002). */
-	action?: UserManagementAction;
+	/**
+	 * A user_management action (spec 002), or the procedure or WebSocket path
+	 * of a read-only denial (spec 006).
+	 */
+	action?: UserManagementAction | (string & {});
 	targetUserId?: string;
+	/** Service, environment or project of a read-only denial (spec 006). */
+	resourceId?: string;
 }
 
 export interface AuthEvent extends AuthEventInput {
@@ -91,8 +96,9 @@ export const drizzleAuthEventStore: AuthEventStore = {
 			...(row.userId ? { userId: row.userId } : {}),
 			...(row.ip ? { ip: row.ip } : {}),
 			...(row.emergencyOrigin ? { emergencyOrigin: true } : {}),
-			...(row.action ? { action: row.action as UserManagementAction } : {}),
+			...(row.action ? { action: row.action } : {}),
 			...(row.targetUserId ? { targetUserId: row.targetUserId } : {}),
+			...(row.resourceId ? { resourceId: row.resourceId } : {}),
 			...(row.userId && emails.has(row.userId)
 				? { userEmail: emails.get(row.userId) }
 				: {}),
@@ -133,6 +139,7 @@ export const formatAuthEventLine = (event: AuthEventInput): string =>
 		event.userId && `user=${event.userId}`,
 		event.action && `action=${event.action}`,
 		event.targetUserId && `target=${event.targetUserId}`,
+		event.resourceId && `resource=${event.resourceId}`,
 		event.emergencyOrigin && "via=emergency_origin",
 	]
 		.filter(Boolean)

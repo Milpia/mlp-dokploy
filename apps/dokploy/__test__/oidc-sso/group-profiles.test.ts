@@ -186,3 +186,126 @@ describe("mergeProfiles (spec 005, FR-006)", () => {
 		]);
 	});
 });
+
+describe("readOnly in parseGroupProfiles (spec 006, FR-001, FR-014)", () => {
+	const qa = {
+		permissions: [],
+		projects: ["milpia"],
+		environments: { exclude: ["production"] },
+	};
+
+	it.each([
+		[undefined, undefined],
+		[false, undefined],
+		[true, true],
+	])("accepts readOnly %j", (readOnly, expected) => {
+		const result = parse({ qa: { ...qa, readOnly } });
+		expect(result).toMatchObject({ ok: true });
+		if (result.ok) expect(result.profiles[0]?.readOnly).toEqual(expected);
+	});
+
+	it("accepts a list of environment names inside the group scope", () => {
+		expect(
+			parse({
+				developers: {
+					permissions: [],
+					projects: ["milpia"],
+					readOnly: [" production "],
+				},
+			}),
+		).toMatchObject({ ok: true, profiles: [{ readOnly: ["production"] }] });
+	});
+
+	it.each(["yes", {}, [], 1])("rejects readOnly %j", (readOnly) => {
+		expect(errorOf({ qa: { ...qa, readOnly } })).toBe(
+			"qa.readOnly: must be true, false or a list of environment names",
+		);
+	});
+
+	it("rejects an empty name and a name over 256 characters", () => {
+		expect(errorOf({ qa: { ...qa, readOnly: [" "] } })).toBe(
+			"qa.readOnly[0]: must be a non-empty name",
+		);
+		expect(errorOf({ qa: { ...qa, readOnly: ["x".repeat(257)] } })).toBe(
+			"qa.readOnly[0]: at most 256 characters",
+		);
+	});
+
+	it("rejects more than 20 names", () => {
+		const names = Array.from({ length: 21 }, (_, i) => `env-${i}`);
+		expect(errorOf({ qa: { ...qa, readOnly: names } })).toBe(
+			"qa.readOnly: at most 20 names",
+		);
+	});
+
+	it("rejects a duplicate name", () => {
+		expect(
+			errorOf({ qa: { ...qa, readOnly: ["staging", "dev", "staging"] } }),
+		).toBe('qa.readOnly[2]: duplicate environment "staging"');
+	});
+
+	it("rejects a name excluded from the group scope", () => {
+		expect(
+			errorOf({
+				developers: {
+					permissions: [],
+					projects: ["milpia"],
+					environments: { exclude: ["production"] },
+					readOnly: ["production"],
+				},
+			}),
+		).toBe(
+			'developers.readOnly[0]: environment "production" is excluded from the group scope',
+		);
+	});
+
+	it("rejects a name missing from the group include list", () => {
+		expect(
+			errorOf({
+				developers: {
+					permissions: [],
+					projects: ["milpia"],
+					environments: { include: ["staging", "production"] },
+					readOnly: ["production", "stage"],
+				},
+			}),
+		).toBe(
+			'developers.readOnly[1]: environment "stage" is not in the group include list',
+		);
+	});
+
+	it("rejects the whole set when one group fails", () => {
+		const result = parse({
+			developers: { permissions: [], projects: ["milpia"] },
+			qa: { ...qa, readOnly: "yes" },
+		});
+		expect(result.ok).toBe(false);
+	});
+});
+
+describe("readOnly in mergeProfiles (spec 006, FR-007)", () => {
+	it("keeps readOnly per scope part", () => {
+		expect(
+			mergeProfiles(
+				[
+					{
+						group: "developers",
+						permissions: [],
+						projects: ["milpia"],
+						readOnly: ["production"],
+					},
+					{
+						group: "qa",
+						permissions: [],
+						projects: ["milpia"],
+						readOnly: true,
+					},
+				],
+				["developers", "qa"],
+			)?.scopes,
+		).toEqual([
+			{ projects: ["milpia"], readOnly: ["production"] },
+			{ projects: ["milpia"], readOnly: true },
+		]);
+	});
+});

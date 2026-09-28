@@ -35,9 +35,12 @@ const { ownerHasEnterpriseLicense, getOidcSsoServices } = await import(
 const { drizzleResolveTarget, defaultUserManagementGuardDeps } = await import(
 	"@dokploy/server/oidc-sso/user-management/guard"
 );
-const { drizzleMemberProfileStore, listProfiledUserIds } = await import(
-	"@dokploy/server/oidc-sso/member-profile/store"
-);
+const {
+	drizzleMemberProfileStore,
+	findReadOnlyScope,
+	listProfiledUserIds,
+	listReadOnlyScopes,
+} = await import("@dokploy/server/oidc-sso/member-profile/store");
 
 type Db = import("drizzle-orm/pglite").PgliteDatabase<typeof schema>;
 let db: Db;
@@ -251,6 +254,7 @@ describe("drizzleMemberProfileStore (spec 005, R3)", () => {
 		projectIds: ["p1"],
 		environmentIds: ["e1"],
 		serviceIds: ["s1", "s2"],
+		readOnly: { environmentIds: [], serviceIds: [], projectIds: [] },
 	};
 
 	const memberRow = async () => {
@@ -338,6 +342,116 @@ describe("drizzleMemberProfileStore (spec 005, R3)", () => {
 			accessedServers: ["server-1"],
 		});
 		await expect(store.findProfile(DEV_ID)).resolves.toBeNull();
+	});
+});
+
+describe("read-only columns of the member profile (spec 006, FR-008, R3)", () => {
+	const RO_ID = "ro-profile-user";
+	const memberRowOf = async (userId: string) => {
+		const { eq } = await import("drizzle-orm");
+		const [row] = await db
+			.select()
+			.from(schema.member)
+			.where(eq(schema.member.userId, userId));
+		return row;
+	};
+	const readOnly = {
+		environmentIds: ["e-prod"],
+		serviceIds: ["s-prod"],
+		projectIds: ["p1"],
+	};
+
+	it("writes the read-only scope on grant, empties it on expire and drops it on revoke", async () => {
+		const now = new Date("2026-09-28T12:00:00Z");
+		await db.insert(schema.user).values({
+			id: RO_ID,
+			email: "read-only-store@example.com",
+			emailVerified: true,
+			updatedAt: now,
+		});
+		await db.insert(schema.member).values({
+			userId: RO_ID,
+			organizationId: ORG_ID,
+			role: "member",
+			createdAt: now,
+		});
+		const store = drizzleMemberProfileStore(db as never);
+		await expect(findReadOnlyScope(RO_ID)).resolves.toBeNull();
+
+		await store.grant({
+			userId: RO_ID,
+			organizationId: ORG_ID,
+			groups: ["developers"],
+			permissions: [],
+			scope: {
+				projectIds: ["p1"],
+				environmentIds: ["e-prod", "e-staging"],
+				serviceIds: ["s-prod", "s-staging"],
+				readOnly,
+			},
+			at: now,
+		});
+		await expect(findReadOnlyScope(RO_ID)).resolves.toEqual(readOnly);
+		await expect(listReadOnlyScopes()).resolves.toContainEqual({
+			userId: RO_ID,
+			...readOnly,
+		});
+
+		await store.expire({ userId: RO_ID, organizationId: ORG_ID, at: now });
+		await expect(findReadOnlyScope(RO_ID)).resolves.toEqual({
+			environmentIds: [],
+			serviceIds: [],
+			projectIds: [],
+		});
+
+		await store.revoke({ userId: RO_ID, organizationId: ORG_ID });
+		await expect(findReadOnlyScope(RO_ID)).resolves.toBeNull();
+	});
+
+	it("US3-3/FR-008: once the profile expires the read-only scope is gone and the guard steps aside", async () => {
+		const { getReadOnlyScope, isReadOnlyEmpty, readOnlyScopeCache } =
+			await import("@dokploy/server/oidc-sso/member-profile/read-only-scope");
+		const { checkReadOnlyCall } = await import(
+			"@dokploy/server/oidc-sso/read-only/guard"
+		);
+		const now = new Date("2026-09-28T12:00:00Z");
+		const store = drizzleMemberProfileStore(db as never);
+		await store.grant({
+			userId: RO_ID,
+			organizationId: ORG_ID,
+			groups: ["qa"],
+			permissions: [],
+			scope: {
+				projectIds: ["p1"],
+				environmentIds: ["e-prod"],
+				serviceIds: ["s-prod"],
+				readOnly,
+			},
+			at: now,
+		});
+		readOnlyScopeCache.reset();
+		expect(isReadOnlyEmpty(await getReadOnlyScope(RO_ID))).toBe(false);
+
+		await store.expire({ userId: RO_ID, organizationId: ORG_ID, at: now });
+		const scope = await getReadOnlyScope(RO_ID);
+		expect(isReadOnlyEmpty(scope)).toBe(true);
+		await expect(
+			checkReadOnlyCall(
+				{
+					user: { id: RO_ID, role: "member" },
+					path: "application.deploy",
+					type: "mutation",
+					getRawInput: async () => ({ applicationId: "s-prod" }),
+				},
+				{
+					isProfiled: () => true,
+					getScope: async () => scope,
+					ownerOf: async () => null,
+					record: async () => {},
+				},
+			),
+		).resolves.toEqual({ kind: "pass" });
+		expect(await memberRowOf(RO_ID)).toMatchObject({ accessedServices: [] });
 	});
 });
 
@@ -507,6 +621,23 @@ describe("services wiring", () => {
 });
 
 describe("drizzleAuthEventStore user-management fields (spec 002, FR-012)", () => {
+	it("spec 006 FR-011: stores the resource of a read-only denial", async () => {
+		await drizzleAuthEventStore.insert({
+			type: "member_profile",
+			outcome: "denied",
+			reason: "read_only",
+			correlationId: "RO-1",
+			userId: "qa-x",
+			action: "application.deploy",
+			resourceId: "app-x",
+		});
+		const events = await drizzleAuthEventStore.listRecent(20);
+		expect(events.find((e) => e.correlationId === "RO-1")).toMatchObject({
+			action: "application.deploy",
+			resourceId: "app-x",
+		});
+	});
+
 	it("stores the action and the affected user of a denied attempt", async () => {
 		await drizzleAuthEventStore.insert({
 			type: "user_management",

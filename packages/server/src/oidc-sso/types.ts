@@ -71,14 +71,36 @@ export type MemberPermission = (typeof MEMBER_PERMISSIONS)[number];
 
 export type EnvironmentFilter = { include: string[] } | { exclude: string[] };
 
+/** `true` marks every environment of the group's scope read-only (spec 006, FR-001). */
+export type ReadOnlyEnvironments = true | string[];
+
 export interface GroupProfile {
 	group: string;
 	permissions: MemberPermission[];
 	projects: string[];
 	environments?: EnvironmentFilter;
+	readOnly?: ReadOnlyEnvironments;
 }
 
-export type MemberProfileReason = "profile_expired" | "profile_failed";
+export interface ReadOnlyScope {
+	environmentIds: string[];
+	serviceIds: string[];
+	projectIds: string[];
+}
+
+export type MemberProfileReason =
+	| "profile_expired"
+	| "profile_failed"
+	| "read_only"
+	| "read_only_check_failed"
+	| "container_mismatch"
+	| "out_of_scope";
+
+export const MAX_READ_ONLY_ENVIRONMENTS = 20;
+export const READ_ONLY_DENIED_MESSAGE =
+	"This environment is read-only for you.";
+export const REDACTED_VALUE = "••••••••";
+export const TERMINAL_INSPECT_TIMEOUT_MS = 5_000;
 
 export type ConfigField =
 	| "mode"

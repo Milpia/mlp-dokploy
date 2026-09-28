@@ -3,7 +3,7 @@ import { findServerById, IS_CLOUD, validateRequest } from "@dokploy/server";
 import { spawn } from "node-pty";
 import { Client } from "ssh2";
 import { WebSocketServer } from "ws";
-import { canAccessDockerOverWss } from "./authorize";
+import { canAccessDockerOverWss, canUseContainerOverWss } from "./authorize";
 import {
 	getShell,
 	isValidContainerId,
@@ -77,6 +77,17 @@ export const setupDockerContainerLogsWebSocketServer = (
 		}
 
 		if (!(await canAccessDockerOverWss(user, session, serverId, serviceId))) {
+			ws.close(4003, "Not authorized");
+			return;
+		}
+		if (
+			!(await canUseContainerOverWss(user, session, {
+				serviceId,
+				containerId,
+				serverId,
+				mode: "logs",
+			}))
+		) {
 			ws.close(4003, "Not authorized");
 			return;
 		}

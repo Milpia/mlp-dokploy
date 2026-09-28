@@ -30,3 +30,41 @@ export const memberProfileCache = {
 		loadedAt = Number.NEGATIVE_INFINITY;
 	},
 };
+
+export interface ReadOnlySets {
+	environmentIds: ReadonlySet<string>;
+	serviceIds: ReadonlySet<string>;
+	projectIds: ReadonlySet<string>;
+}
+
+let readOnly = new Map<string, ReadOnlySets>();
+let readOnlyLoadedAt = Number.NEGATIVE_INFINITY;
+
+/**
+ * Read-only scope per profiled user (spec 006, research R3). Writes only
+ * invalidate an entry, so a login whose transaction rolls back can never
+ * leave a scope in memory that the database does not hold.
+ */
+export const readOnlyScopeCache = {
+	get(userId: string) {
+		return readOnly.get(userId);
+	},
+	set(userId: string, sets: ReadOnlySets) {
+		readOnly.set(userId, sets);
+	},
+	invalidate(userId: string) {
+		readOnly.delete(userId);
+	},
+	isStale(now: number) {
+		return now - readOnlyLoadedAt >= RELOAD_INTERVAL_MS;
+	},
+	replace(entries: Iterable<[string, ReadOnlySets]>, now: number) {
+		readOnly = new Map(entries);
+		readOnlyLoadedAt = now;
+	},
+	/** Tests only. */
+	reset() {
+		readOnly = new Map();
+		readOnlyLoadedAt = Number.NEGATIVE_INFINITY;
+	},
+};
