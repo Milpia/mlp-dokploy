@@ -1,4 +1,9 @@
 import { getAccessibleServerIds } from "@dokploy/server";
+import { getOidcSsoServices } from "@dokploy/server/oidc-sso";
+import {
+	checkMemberProfileExpiryForUser,
+	defaultMemberProfileExpiryDeps,
+} from "@dokploy/server/oidc-sso/member-profile/expiry";
 import {
 	checkServiceAccess,
 	findMemberByUserId,
@@ -29,6 +34,15 @@ export const canAccessDockerOverWss = async (
 	if (!user || !session?.activeOrganizationId) return false;
 
 	const ctx = buildCtx(user, session.activeOrganizationId);
+
+	// WebSockets never reach the tRPC guard, so a group profile that expired
+	// 8 hours after the last SSO login is revoked here too (spec 005, FR-017).
+	const expiry = await checkMemberProfileExpiryForUser(
+		user.id,
+		session.activeOrganizationId,
+		defaultMemberProfileExpiryDeps(getOidcSsoServices()),
+	);
+	if (!expiry.ok) return false;
 
 	// When the container belongs to a specific Dokploy service (opened from a
 	// service page, so serviceId is present), access to that service is the

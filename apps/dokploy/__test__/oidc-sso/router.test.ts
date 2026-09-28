@@ -14,6 +14,35 @@ vi.mock("@dokploy/server/oidc-sso/identity/login-state", () => ({
 	drizzleLoginStateStore: { find: async () => holder.loginState },
 }));
 
+const profiles = vi.hoisted(() => ({
+	rows: [] as Array<{
+		userId: string;
+		organizationId: string;
+		groups: string[];
+		appliedAt: Date;
+		expiredAt: Date | null;
+		lastSsoLoginAt: Date | null;
+	}>,
+	projectsByName: [] as Array<{ projectId: string; name: string }>,
+}));
+
+vi.mock("@dokploy/server/oidc-sso/member-profile/status", async (original) => ({
+	...(await original<object>()),
+	findProfileWithLogin: async (userId: string) =>
+		profiles.rows.find((row) => row.userId === userId) ?? null,
+	listProfilesWithLogin: async () => profiles.rows,
+}));
+
+vi.mock("@dokploy/server/oidc-sso/member-profile/scope", async (original) => ({
+	...(await original<object>()),
+	drizzleScopeCatalog: {
+		projectsByName: async (_org: string, names: string[]) =>
+			profiles.projectsByName.filter((p) => names.includes(p.name)),
+		environmentsOf: async () => [],
+		servicesOf: async () => [],
+	},
+}));
+
 const { oidcSsoRouter } = await import("@/server/api/routers/oidc-sso");
 
 const caller = (role: "owner" | "admin" | "member" | null) =>
@@ -233,6 +262,27 @@ describe("oidcSso router", () => {
 		).rejects.toMatchObject({ code: "BAD_REQUEST" });
 	});
 
+	it("spec 005 FR-001/FR-009: get returns group profiles; update rejects invalid ones as BAD_REQUEST", async () => {
+		const profiles = JSON.stringify({
+			developers: { permissions: [], projects: ["alpha"] },
+		});
+		await caller("owner").update({ groupProfiles: profiles });
+		await expect(caller("owner").get()).resolves.toMatchObject({
+			groupProfiles: profiles,
+			sources: { groupProfiles: "db" },
+		});
+		await expect(
+			caller("owner").update({
+				groupProfiles: JSON.stringify({
+					developers: { permissions: ["canDeploy"], projects: [] },
+				}),
+			}),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+		await expect(
+			caller("owner").update({ groupProfiles: "x".repeat(16_385) }),
+		).rejects.toMatchObject({ code: "BAD_REQUEST" });
+	});
+
 	it("spec 002 FR-002: a group set from the environment cannot be changed", async () => {
 		built = makeServices({
 			env: { values: { userManagementGroup: "admins" }, errors: [] },
@@ -272,5 +322,115 @@ describe("oidcSso router", () => {
 		);
 		expect(holder.loginState).toBe(state);
 		expect(state.groups).toEqual(["leads"]);
+	});
+});
+
+describe("oidcSso router · group profiles (spec 005)", () => {
+	const recent = new Date(Date.now() - 60 * 60 * 1000);
+	const old = new Date(Date.now() - 9 * 60 * 60 * 1000);
+
+	beforeEach(() => {
+		holder.services = makeServices({
+			config: {
+				...activeConfig,
+				groupProfiles: JSON.stringify({
+					developers: { permissions: [], projects: ["alpha", "beta", "delta"] },
+				}),
+			},
+		}).services;
+		profiles.rows = [
+			{
+				userId: "member-id",
+				organizationId: "org",
+				groups: ["developers"],
+				appliedAt: recent,
+				expiredAt: null,
+				lastSsoLoginAt: recent,
+			},
+			{
+				userId: "dev-old",
+				organizationId: "org",
+				groups: ["developers"],
+				appliedAt: old,
+				expiredAt: null,
+				lastSsoLoginAt: old,
+			},
+		];
+		profiles.projectsByName = [
+			{ projectId: "p1", name: "alpha" },
+			{ projectId: "p2", name: "beta" },
+			{ projectId: "p3", name: "beta" },
+		];
+	});
+
+	it("R5: groupProfilesCheck reports missing and ambiguous names to the owner only", async () => {
+		await expect(caller("owner").groupProfilesCheck()).resolves.toEqual({
+			groups: [
+				{
+					group: "developers",
+					missingProjects: ["delta"],
+					ambiguousProjects: ["beta"],
+					projectsResolved: 3,
+				},
+			],
+		});
+		await expect(caller("admin").groupProfilesCheck()).rejects.toMatchObject({
+			code: "FORBIDDEN",
+		});
+	});
+
+	it("FR-011: memberProfiles lists managed members for owner and admins, with expiry", async () => {
+		const result = await caller("admin").memberProfiles();
+		expect(result["member-id"]).toMatchObject({
+			groups: ["developers"],
+			expired: false,
+		});
+		expect(result["dev-old"]?.expired).toBe(true);
+		await expect(caller("member").memberProfiles()).rejects.toMatchObject({
+			code: "FORBIDDEN",
+		});
+	});
+
+	it("FR-017: memberProfileStatus tells a member about their own profile", async () => {
+		await expect(caller("member").memberProfileStatus()).resolves.toMatchObject(
+			{
+				managed: true,
+				groups: ["developers"],
+				expired: false,
+			},
+		);
+		await expect(caller("admin").memberProfileStatus()).resolves.toEqual({
+			managed: false,
+			groups: [],
+			expiresAt: null,
+			expired: false,
+		});
+	});
+});
+
+describe("oidcSso router · group profiles switched off (spec 005)", () => {
+	it("does not report a profile as expired while the profiles are disabled", async () => {
+		holder.services = makeServices({
+			config: { ...activeConfig, groupProfiles: null },
+		}).services;
+		profiles.rows = [
+			{
+				userId: "member-id",
+				organizationId: "org",
+				groups: ["developers"],
+				appliedAt: new Date(Date.now() - 9 * 60 * 60 * 1000),
+				expiredAt: null,
+				lastSsoLoginAt: new Date(Date.now() - 9 * 60 * 60 * 1000),
+			},
+		];
+		expect((await caller("admin").memberProfiles())["member-id"]?.expired).toBe(
+			false,
+		);
+		await expect(caller("member").memberProfileStatus()).resolves.toMatchObject(
+			{
+				managed: true,
+				expired: false,
+			},
+		);
 	});
 });

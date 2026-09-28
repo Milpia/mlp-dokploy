@@ -1,4 +1,4 @@
-import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
+import { SSO_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import {
 	checkUserManagement,
 	getUserManagementStatus,
@@ -69,7 +69,7 @@ describe("checkUserManagement (spec 002)", () => {
 			"grant_expired",
 			{
 				groups: ["admins"],
-				lastSsoLoginAt: new Date(NOW.getTime() - USER_MANAGEMENT_GRANT_TTL_MS),
+				lastSsoLoginAt: new Date(NOW.getTime() - SSO_GRANT_TTL_MS),
 			},
 		],
 	])(
@@ -227,7 +227,7 @@ describe("getUserManagementStatus (spec 002, FR-007)", () => {
 		const { deps } = await setup({
 			loginState: {
 				groups: ["admins"],
-				lastSsoLoginAt: new Date(NOW.getTime() - USER_MANAGEMENT_GRANT_TTL_MS),
+				lastSsoLoginAt: new Date(NOW.getTime() - SSO_GRANT_TTL_MS),
 			},
 		});
 		await expect(
@@ -245,9 +245,7 @@ describe("getUserManagementStatus (spec 002, FR-007)", () => {
 		await expect(getUserManagementStatus(deps, "admin-1")).resolves.toEqual({
 			canManageUsers: true,
 			reason: null,
-			expiresAt: new Date(
-				NOW.getTime() + USER_MANAGEMENT_GRANT_TTL_MS,
-			).toISOString(),
+			expiresAt: new Date(NOW.getTime() + SSO_GRANT_TTL_MS).toISOString(),
 		});
 	});
 

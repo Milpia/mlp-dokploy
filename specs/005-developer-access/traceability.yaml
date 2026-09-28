@@ -1,0 +1,706 @@
+# Sincronizado con Jira por sdd-jira-backlog (MIL-393 → MIL-514 + 20 Subtasks, MIL-515..MIL-534).
+# T034 (verificación final) va agrupada en MIL-533 con T033 y no cubre un requisito propio: es control de calidad.
+schema: sdd-jira/v2
+feature:
+  id: 005-developer-access
+  title: Los developers entran por SSO con su perfil y solo a sus proyectos
+  spec: specs/005-developer-access/spec.md
+  plan: specs/005-developer-access/plan.md
+  tasks: specs/005-developer-access/tasks.md
+  branch: 005-developer-access
+  jira_site: pabelandino.atlassian.net
+  jira_project: MIL
+  master_epic: MIL-393
+  story: MIL-514
+  issue_type: Story
+  task_issue_type: Subtask
+  synced_at: '2026-09-28T02:12:56Z'
+  synced_from_sha: 52851c398f6ec83805b848c95cd3b9c4c7e6f8e2
+  spec_digest: sha256:3ba1974e66b1d5028a4948b5e68dc818b1efedc54b9f9d9c1915130bc510373f
+links:
+- type: relates
+  issue: MIL-423
+  note: 'Story de infra de la spec 014: origen del modelo de acceso'
+requirements:
+  FR-001:
+    text: 'El owner MUST poder definir, desde la pantalla de SSO o por variable de entorno, un **perfil de permisos
+      por grupo**: qué permisos individuales de member recibe cada grupo del proveedor de identidad. El valor del
+      entorno manda y aparece bloqueado, como el resto de ajustes del SSO.'
+    tasks:
+    - MIL-515
+    - MIL-517
+    - MIL-524
+    local_tasks:
+    - T001
+    - T002
+    - T006
+    - T007
+    - T021
+    bugs: []
+    status: planned
+  FR-002:
+    text: 'El owner MUST poder definir, con la misma precedencia, un **alcance por grupo**: una lista de proyectos
+      por nombre para cada grupo y, opcionalmente, los entornos de esos proyectos a los que accede o los que excluye,
+      también por nombre. Sin entornos indicados, el alcance cubre todos los entornos de los proyectos de la lista.
+      Un proyecto nuevo solo entra en el alcance cuando se añade a la lista.'
+    tasks:
+    - MIL-518
+    - MIL-523
+    local_tasks:
+    - T008
+    - T009
+    - T019
+    bugs: []
+    status: planned
+  FR-003:
+    text: En cada login por SSO de un usuario con rol `member` que pertenece a uno o más grupos con perfil o alcance
+      configurado, el sistema MUST sustituir sus permisos individuales y su alcance por los que resultan de sus
+      grupos. Lo que un admin haya puesto a mano no se conserva.
+    tasks:
+    - MIL-519
+    - MIL-520
+    - MIL-521
+    local_tasks:
+    - T010
+    - T011
+    - T012
+    - T013
+    - T014
+    - T015
+    - T016
+    bugs: []
+    status: planned
+  FR-004:
+    text: Si un usuario con rol `member` deja de pertenecer a todo grupo con perfil o alcance, el sistema MUST quitarle
+      en su siguiente login por SSO los permisos y el alcance que recibió de los grupos, dejándolo sin ninguno.
+    tasks:
+    - MIL-519
+    - MIL-529
+    local_tasks:
+    - T010
+    - T011
+    - T012
+    - T028
+    bugs: []
+    status: planned
+  FR-005:
+    text: 'El sistema MUST NOT cambiar los permisos ni el alcance de un member que nunca recibió un perfil de grupo
+      y no pertenece a ningún grupo con perfil: su configuración manual sigue siendo la de upstream.'
+    tasks:
+    - MIL-519
+    - MIL-530
+    local_tasks:
+    - T010
+    - T012
+    - T029
+    bugs: []
+    status: planned
+  FR-006:
+    text: Si el usuario pertenece a varios grupos con perfil, el sistema MUST aplicar la unión de sus permisos y
+      de sus alcances.
+    tasks:
+    - MIL-516
+    local_tasks:
+    - T003
+    - T004
+    bugs: []
+    status: planned
+  FR-007:
+    text: 'El perfil y el alcance MUST aplicarse solo a usuarios con rol `member`. El owner nunca cambia (spec 001)
+      y un admin no recibe perfil: si un usuario pertenece al grupo de administración y a un grupo con perfil, gana
+      el rol admin.'
+    tasks:
+    - MIL-519
+    - MIL-529
+    local_tasks:
+    - T010
+    - T012
+    - T028
+    bugs: []
+    status: planned
+  FR-008:
+    text: Un perfil MUST poder otorgar solo los permisos individuales que ya existen para member en upstream (crear
+      o borrar proyectos, servicios y entornos; acceso a Docker, a la API, a las SSH keys, a los proveedores Git
+      y a los archivos de Traefik). La funcionalidad MUST NOT dar a un member ningún permiso que upstream reserve
+      a admin.
+    tasks:
+    - MIL-515
+    - MIL-516
+    - MIL-522
+    local_tasks:
+    - T001
+    - T002
+    - T003
+    - T004
+    - T017
+    bugs: []
+    status: planned
+  FR-009:
+    text: El sistema MUST rechazar una configuración con un permiso desconocido, un grupo vacío o un formato inválido,
+      con un mensaje que diga qué falla, y MUST NOT aplicar perfiles a medias. Si la configuración del entorno es
+      inválida al arrancar, los perfiles MUST quedar desactivados y el sistema MUST registrarlo.
+    tasks:
+    - MIL-516
+    - MIL-517
+    - MIL-524
+    local_tasks:
+    - T003
+    - T004
+    - T006
+    - T007
+    - T021
+    bugs: []
+    status: planned
+  FR-010:
+    text: Las comprobaciones de permisos y de alcance MUST cumplirse en el servidor, también en peticiones que no
+      vienen de la interfaz, con las mismas reglas que upstream aplica hoy a un member con esos permisos y ese alcance.
+    tasks:
+    - MIL-522
+    local_tasks:
+    - T017
+    - T018
+    bugs: []
+    status: planned
+  FR-011:
+    text: La lista de usuarios MUST indicar, para un member con perfil de grupo, que sus permisos y su alcance vienen
+      de sus grupos y que un cambio manual se perderá en su siguiente login por SSO.
+    tasks:
+    - MIL-523
+    - MIL-525
+    local_tasks:
+    - T020
+    - T022
+    - T023
+    bugs: []
+    status: planned
+  FR-012:
+    text: Los cambios de perfiles y alcances en la pantalla de SSO MUST registrarse en los eventos del SSO como
+      cambios de configuración, igual que el resto de ajustes.
+    tasks:
+    - MIL-517
+    local_tasks:
+    - T006
+    bugs: []
+    status: planned
+  FR-013:
+    text: Sin perfiles ni alcances configurados, el sistema MUST comportarse exactamente como hoy.
+    tasks:
+    - MIL-519
+    - MIL-530
+    local_tasks:
+    - T010
+    - T012
+    - T029
+    bugs: []
+    status: planned
+  FR-014:
+    text: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise.
+      Si el usuario tiene un rol personalizado, el sistema MUST NOT aplicarle perfil.
+    tasks:
+    - MIL-519
+    local_tasks:
+    - T010
+    - T012
+    bugs: []
+    status: planned
+  FR-015:
+    text: Los nombres de grupo, los permisos de cada perfil y el alcance MUST vivir en la configuración; el código
+      MUST NOT fijar ninguno.
+    tasks:
+    - MIL-532
+    - MIL-533
+    local_tasks:
+    - T032
+    - T033
+    bugs: []
+    status: planned
+  FR-016:
+    text: El alcance MUST poder excluir entornos por nombre, para que un grupo opere sus proyectos fuera de producción.
+      En esta spec, un entorno excluido no es visible para el grupo. Ver producción en solo lectura llegará con
+      la spec 006, que añadirá al alcance un nivel de acceso de solo lectura por entorno.
+    tasks:
+    - MIL-518
+    - MIL-521
+    local_tasks:
+    - T008
+    - T009
+    - T016
+    bugs: []
+    status: planned
+  FR-017:
+    text: El perfil y el alcance que un member recibe de sus grupos MUST caducar 8 horas después de su último login
+      por SSO. Pasado ese plazo, el sistema MUST dejar de aplicarlos (el member queda sin esos permisos ni ese alcance)
+      y MUST indicarle en el panel que vuelva a iniciar sesión por SSO, sin cerrar su sesión. Los permisos manuales
+      de los members sin perfil de grupo no caducan (FR-005).
+    tasks:
+    - MIL-515
+    - MIL-516
+    - MIL-526
+    - MIL-527
+    - MIL-528
+    - MIL-529
+    local_tasks:
+    - T001
+    - T002
+    - T005
+    - T024
+    - T025
+    - T026
+    - T027
+    - T028
+    bugs: []
+    status: planned
+  NFR-PERF-001:
+    text: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
+    tasks:
+    - MIL-531
+    local_tasks:
+    - T031
+    bugs: []
+    status: planned
+  NFR-PERF-002:
+    text: Comprobar la caducidad (FR-017) MUST añadir como máximo 5 ms (p95) a cada petición de un member con perfil
+      de grupo, y MUST NOT añadir consultas ni tiempo a las peticiones del owner, de los admins ni de los members
+      sin perfil de grupo.
+    tasks:
+    - MIL-526
+    - MIL-531
+    local_tasks:
+    - T024
+    - T031
+    bugs: []
+    status: planned
+  NFR-SEC-001:
+    text: Cualquier error al calcular el perfil o el alcance durante el login (configuración ilegible, fallo de
+      base de datos) MUST resolverse dejando al usuario sin los permisos y el alcance del perfil, nunca con permisos
+      de más, y MUST registrar un evento de error con su referencia.
+    tasks:
+    - MIL-520
+    local_tasks:
+    - T013
+    - T015
+    bugs: []
+    status: planned
+  NFR-SEC-002:
+    text: Un member MUST NOT poder ampliar su propio perfil ni su alcance por ninguna vía.
+    tasks:
+    - MIL-522
+    local_tasks:
+    - T017
+    bugs: []
+    status: planned
+success_criteria:
+  SC-001:
+    text: Un developer nuevo puede desplegar un servicio de uno de sus proyectos en su primer login por SSO, con
+      0 pasos manuales de un admin.
+    verified_by: []
+  SC-002:
+    text: El 100 % de las acciones fuera del perfil de developer (crear o borrar proyectos, servicios o entornos,
+      Docker, Traefik, SSH keys, proveedores Git, gestión de usuarios, proyectos fuera de su alcance) se rechazan,
+      tanto desde la interfaz como por llamada directa.
+    verified_by: []
+  SC-003:
+    text: Al sacar a una persona del grupo, pierde el perfil y el alcance en su siguiente login por SSO o, como
+      mucho, 8 horas después de su último login por SSO, en el 100 % de los casos.
+    verified_by: []
+  SC-004:
+    text: 'Una instancia que actualiza sin configurar perfiles no cambia de comportamiento: las pruebas actuales
+      de permisos pasan sin modificarse y ningún permiso manual existente cambia.'
+    verified_by: []
+  SC-005:
+    text: El login por SSO de un developer tarda como mucho 50 ms más (p95) que el de un member sin perfil.
+    verified_by: []
+user_stories:
+- local_id: US1
+  title: Un developer entra y trabaja en sus proyectos sin esperar a un admin
+  priority: P1
+  requirements:
+  - FR-003
+  - FR-016
+  - NFR-SEC-001
+  success_criteria:
+  - SC-001
+  tasks:
+  - local_id: T013
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/provisioning.test.ts`
+    jira: MIL-520
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/provisioning.test.ts
+    requirements:
+    - FR-003
+    - NFR-SEC-001
+  - local_id: T014
+    title: Call `applyGroupProfile` inside the transaction of `provisionIdentity` in `packages/server/src/oidc-sso/identity/provisioning.ts`,
+      after `ensureMember
+    jira: MIL-520
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/identity/provisioning.ts
+    requirements:
+    - FR-003
+  - local_id: T015
+    title: Pass the effective `groupProfiles` from `services.config.getEffective
+    jira: MIL-520
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/plugin/login-flow.ts
+    requirements:
+    - FR-003
+    - NFR-SEC-001
+  - local_id: T016
+    title: Extend the e2e seed and add scenarios in `apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts`
+    jira: MIL-521
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/e2e/keycloak.e2e.test.ts
+    requirements:
+    - FR-003
+    - FR-016
+    - SC-001
+- local_id: US2
+  title: Un developer no puede hacer lo que corresponde a admins y leads
+  priority: P1
+  requirements:
+  - FR-008
+  - FR-010
+  - NFR-SEC-002
+  success_criteria:
+  - SC-002
+  tasks:
+  - local_id: T017
+    title: Write tests in `apps/dokploy/__test__/oidc-sso/member-profile-denials.test.ts` using upstream `checkPermission`,
+      `checkProjectAccess`, `checkEnvironme
+    jira: MIL-522
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-denials.test.ts
+    requirements:
+    - FR-008
+    - FR-010
+    - NFR-SEC-002
+    - SC-002
+  - local_id: T018
+    title: 'Add e2e direct-call denials with the developer''s cookie to `keycloak.e2e.test.ts`: create a project,
+      list Docker containers and operate a service of `'
+    jira: MIL-522
+    parallel: false
+    paths: []
+    requirements:
+    - FR-010
+    - SC-002
+- local_id: US3
+  title: El owner define perfiles y alcances por grupo y ve de dónde salen los permisos
+  priority: P2
+  requirements:
+  - FR-001
+  - FR-002
+  - FR-009
+  - FR-011
+  success_criteria: []
+  tasks:
+  - local_id: T019
+    title: Add `oidcSso.groupProfilesCheck`
+    jira: MIL-523
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-002
+  - local_id: T020
+    title: Add `oidcSso.memberProfiles`
+    jira: MIL-523
+    parallel: false
+    paths: []
+    requirements:
+    - FR-011
+  - local_id: T021
+    title: Add the «Group profiles» JSON field to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx`
+    jira: MIL-524
+    parallel: false
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx
+    requirements:
+    - FR-001
+    - FR-009
+  - local_id: T022
+    title: Create `apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-badge.tsx`
+    jira: MIL-525
+    parallel: true
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-badge.tsx
+    - apps/dokploy/components/dashboard/settings/users/show-users.tsx
+    requirements:
+    - FR-011
+  - local_id: T023
+    title: 'Create the overwrite notice in `apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-notice.tsx`:
+      «These permissions come from SSO group'
+    jira: MIL-525
+    parallel: false
+    paths:
+    - apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-notice.tsx
+    - apps/dokploy/components/dashboard/settings/users/add-permissions.tsx
+    requirements:
+    - FR-011
+- local_id: US4
+  title: Un cambio de grupo se refleja en el siguiente login
+  priority: P2
+  requirements:
+  - FR-004
+  - FR-007
+  - FR-017
+  - NFR-PERF-002
+  success_criteria:
+  - SC-003
+  tasks:
+  - local_id: T024
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-expiry.test.ts` for `checkMemberProfileExpiry`
+      covering the five exits of contra
+    jira: MIL-526
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-expiry.test.ts
+    requirements:
+    - FR-017
+    - NFR-PERF-002
+  - local_id: T025
+    title: Implement `packages/server/src/oidc-sso/member-profile/expiry.ts`
+    jira: MIL-526
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/expiry.ts
+    requirements:
+    - FR-017
+  - local_id: T026
+    title: Create the tRPC middleware `apps/dokploy/server/api/middlewares/member-profile.ts` and chain it in `protectedProcedure`
+      after `userManagementGuard` in
+    jira: MIL-527
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-drift.test.ts
+    - apps/dokploy/server/api/middlewares/member-profile.ts
+    - apps/dokploy/server/api/trpc.ts
+    requirements:
+    - FR-017
+  - local_id: T027
+    title: Add `oidcSso.memberProfileStatus`
+    jira: MIL-528
+    parallel: false
+    paths:
+    - apps/dokploy/pages/dashboard/projects.tsx
+    requirements:
+    - FR-017
+  - local_id: T028
+    title: Add e2e scenarios to `keycloak.e2e.test.ts`
+    jira: MIL-529
+    parallel: false
+    paths: []
+    requirements:
+    - FR-004
+    - FR-007
+    - FR-017
+    - SC-003
+- local_id: US5
+  title: Sin configuración, nada cambia
+  priority: P3
+  requirements:
+  - FR-005
+  - FR-013
+  success_criteria:
+  - SC-004
+  tasks:
+  - local_id: T029
+    title: Add tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` and `member-profile-expiry.test.ts`
+    jira: MIL-530
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts
+    requirements:
+    - FR-005
+    - FR-013
+    - SC-004
+  - local_id: T030
+    title: Run the whole test suite of `apps/dokploy` and confirm that the existing permission tests pass without
+      changes
+    jira: MIL-530
+    parallel: false
+    paths:
+    - apps/dokploy
+    requirements:
+    - SC-004
+phase_tasks:
+- name: Setup
+  tasks:
+  - local_id: T001
+    title: Add domain types to `packages/server/src/oidc-sso/types.ts`
+    jira: MIL-515
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/types.ts
+    requirements:
+    - FR-001
+    - FR-008
+    - FR-017
+  - local_id: T002
+    title: Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration after `0197_equal_wallflower.sql`
+      with `pnpm --filter=dokploy ru
+    jira: MIL-515
+    parallel: false
+    paths:
+    - packages/server/src/db/schema/oidc-sso.ts
+    requirements:
+    - FR-001
+    - FR-008
+    - FR-017
+- name: Foundational
+  tasks:
+  - local_id: T003
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/group-profiles.test.ts` for `parseGroupProfiles
+    jira: MIL-516
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/group-profiles.test.ts
+    requirements:
+    - FR-006
+    - FR-008
+    - FR-009
+  - local_id: T004
+    title: Implement `packages/server/src/oidc-sso/domain/group-profiles.ts`
+    jira: MIL-516
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/domain/group-profiles.ts
+    requirements:
+    - FR-006
+    - FR-008
+    - FR-009
+  - local_id: T005
+    title: Rename `USER_MANAGEMENT_GRANT_TTL_MS` to `SSO_GRANT_TTL_MS` in `packages/server/src/oidc-sso/domain/user-management.ts`
+      and update its imports. Spec 0
+    jira: MIL-516
+    parallel: true
+    paths:
+    - packages/server/src/oidc-sso/domain/user-management.ts
+    requirements:
+    - FR-017
+  - local_id: T006
+    title: Write failing tests, then add `groupProfiles` to the configuration
+    jira: MIL-517
+    parallel: false
+    paths: []
+    requirements:
+    - FR-001
+    - FR-009
+    - FR-012
+  - local_id: T007
+    title: Extend `apps/dokploy/server/api/routers/oidc-sso.ts`
+    jira: MIL-517
+    parallel: false
+    paths:
+    - apps/dokploy/server/api/routers/oidc-sso.ts
+    requirements:
+    - FR-001
+    - FR-009
+  - local_id: T008
+    title: Write failing PGlite tests in `apps/dokploy/__test__/oidc-sso/member-profile-scope.test.ts` for `resolveScope
+    jira: MIL-518
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-scope.test.ts
+    requirements:
+    - FR-002
+    - FR-016
+  - local_id: T009
+    title: Implement `packages/server/src/oidc-sso/member-profile/scope.ts`
+    jira: MIL-518
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/scope.ts
+    requirements:
+    - FR-002
+    - FR-016
+  - local_id: T010
+    title: Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts` for `applyGroupProfile
+    jira: MIL-519
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-profile-apply.test.ts
+    requirements:
+    - FR-003
+    - FR-004
+    - FR-005
+    - FR-007
+    - FR-013
+    - FR-014
+  - local_id: T011
+    title: Implement `packages/server/src/oidc-sso/member-profile/store.ts`
+    jira: MIL-519
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/store.ts
+    requirements:
+    - FR-003
+    - FR-004
+  - local_id: T012
+    title: Implement `packages/server/src/oidc-sso/member-profile/apply.ts` until T010 passes
+    jira: MIL-519
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/apply.ts
+    requirements:
+    - FR-003
+    - FR-004
+    - FR-005
+    - FR-007
+    - FR-013
+    - FR-014
+- name: Polish & Cross-Cutting Concerns
+  tasks:
+  - local_id: T031
+    title: Add benches in `apps/dokploy/__test__/oidc-sso/performance.test.ts`
+    jira: MIL-531
+    parallel: true
+    paths:
+    - apps/dokploy/__test__/oidc-sso/performance.test.ts
+    requirements:
+    - NFR-PERF-001
+    - NFR-PERF-002
+    - SC-005
+  - local_id: T032
+    title: Document the feature in `specs/001-keycloak-sso/operations.md`
+    jira: MIL-532
+    parallel: true
+    paths:
+    - specs/001-keycloak-sso/operations.md
+    requirements:
+    - FR-015
+  - local_id: T033
+    title: Run `/security-review` on the branch and fix its findings
+    jira: MIL-533
+    parallel: false
+    paths: []
+    requirements:
+    - FR-015
+  - local_id: T034
+    title: Run `pnpm typecheck`, `npx biome check` on the touched files, the server declaration build
+    jira: MIL-533
+    parallel: false
+    paths: []
+    requirements: []
+  - local_id: T035
+    title: Run the quickstart manual scenarios 1–13 in the lab with the canary image and record the results in the
+      lab PR
+    jira: MIL-534
+    parallel: false
+    paths: []
+    requirements:
+    - SC-001
+    - SC-002
+    - SC-003
+    - SC-004
+bugs: []
+orphans:
+  requirements_without_issue: []
+  tasks_without_requirement:
+  - T034
+  issues_without_local_id: []

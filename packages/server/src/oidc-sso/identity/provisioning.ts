@@ -3,7 +3,15 @@ import { account, member, user } from "@dokploy/server/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { decideAccess } from "../domain/access-policy";
 import type { SsoIdentity } from "../domain/claims";
-import { type DenyReason, SSO_PROVIDER_ID, type SsoRole } from "../types";
+import { type ApplyOutcome, applyGroupProfile } from "../member-profile/apply";
+import { drizzleScopeCatalog } from "../member-profile/scope";
+import { drizzleMemberProfileStore } from "../member-profile/store";
+import {
+	type DenyReason,
+	type GroupProfile,
+	SSO_PROVIDER_ID,
+	type SsoRole,
+} from "../types";
 import { drizzleLoginStateStore, normalizeLoginGroups } from "./login-state";
 
 export interface UserRecord {
@@ -34,6 +42,22 @@ export interface ProvisioningTx {
 		groups: string[];
 		at: Date;
 	}): Promise<void>;
+	/** Permissions and scope from the user's groups (spec 005, FR-003). */
+	applyGroupProfile(input: {
+		userId: string;
+		organizationId: string;
+		groups: string[];
+		profiles: GroupProfile[];
+		now: Date;
+	}): Promise<ApplyOutcome>;
+}
+
+/** Lets the login record why it failed (spec 005, NFR-SEC-001). */
+export class GroupProfileError extends Error {
+	constructor(cause: unknown) {
+		super("OIDC SSO: the group profile could not be applied", { cause });
+		this.name = "GroupProfileError";
+	}
 }
 
 export interface ProvisioningStore {
@@ -51,6 +75,7 @@ export interface ProvisionInput {
 	idToken: string;
 	accessGroup: string | null;
 	adminGroup: string | null;
+	groupProfiles?: GroupProfile[];
 	now?: () => Date;
 }
 
@@ -69,6 +94,7 @@ export const provisionIdentity = async ({
 	idToken,
 	accessGroup,
 	adminGroup,
+	groupProfiles = [],
 	now = () => new Date(),
 }: ProvisionInput): Promise<ProvisionResult> => {
 	const owner = await store.findOwner();
@@ -115,11 +141,22 @@ export const provisionIdentity = async ({
 				organizationId: owner.organizationId,
 				role: decision.role === "unchanged" ? null : decision.role,
 			});
-			await tx.recordLoginState({
-				userId: id,
-				groups: normalizeLoginGroups(identity.groups),
-				at: now(),
-			});
+			const groups = normalizeLoginGroups(identity.groups);
+			const at = now();
+			await tx.recordLoginState({ userId: id, groups, at });
+			if (groupProfiles.length > 0) {
+				try {
+					await tx.applyGroupProfile({
+						userId: id,
+						organizationId: owner.organizationId,
+						groups,
+						profiles: groupProfiles,
+						now: at,
+					});
+				} catch (error) {
+					throw new GroupProfileError(error);
+				}
+			}
 		}
 		return id;
 	});
@@ -200,6 +237,18 @@ const drizzleTx = (tx: Tx): ProvisioningTx => ({
 
 	recordLoginState(input) {
 		return drizzleLoginStateStore.upsert(tx, input);
+	},
+
+	applyGroupProfile({ userId, organizationId, groups, profiles, now }) {
+		return applyGroupProfile({
+			store: drizzleMemberProfileStore(tx),
+			catalog: drizzleScopeCatalog,
+			userId,
+			organizationId,
+			groups,
+			profiles,
+			now,
+		});
 	},
 });
 

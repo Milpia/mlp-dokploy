@@ -19,6 +19,7 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session, User } from "better-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { memberProfileGuard } from "./middlewares/member-profile";
 import { userManagementGuard } from "./middlewares/user-management";
 
 type Resource = keyof typeof statements;
@@ -173,7 +174,8 @@ export const protectedProcedure = t.procedure
 			},
 		});
 	})
-	.use(userManagementGuard);
+	.use(userManagementGuard)
+	.use(memberProfileGuard);
 
 export const cliProcedure = t.procedure.use(({ ctx, next }) => {
 	if (

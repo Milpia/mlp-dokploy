@@ -12,6 +12,20 @@ import {
 	updateSsoConfig,
 } from "@dokploy/server/oidc-sso/admin/config-admin";
 import {
+	GROUP_PROFILES_MAX_BYTES,
+	parseGroupProfiles,
+} from "@dokploy/server/oidc-sso/domain/group-profiles";
+import {
+	checkGroupProfiles,
+	drizzleScopeCatalog,
+} from "@dokploy/server/oidc-sso/member-profile/scope";
+import {
+	findProfileWithLogin,
+	listProfilesWithLogin,
+	toStatus,
+	toSummaries,
+} from "@dokploy/server/oidc-sso/member-profile/status";
+import {
 	defaultUserManagementGuardDeps,
 	getUserManagementStatus,
 } from "@dokploy/server/oidc-sso/user-management/guard";
@@ -50,6 +64,7 @@ const updateInput = connectionInput.extend({
 	accessGroup: optionalText,
 	adminGroup: optionalText,
 	userManagementGroup: optionalText,
+	groupProfiles: z.string().max(GROUP_PROFILES_MAX_BYTES).nullable().optional(),
 	groupsClaim: z.string().max(256).optional(),
 	extraScopes: z.string().max(1024).optional(),
 	buttonLabel: z.string().trim().min(1).max(BUTTON_LABEL_MAX_LENGTH).optional(),
@@ -60,6 +75,9 @@ const requestIp = (req: { headers: Record<string, unknown> } | undefined) => {
 	const value = Array.isArray(forwarded) ? forwarded[0] : forwarded;
 	return typeof value === "string" ? value.split(",")[0]?.trim() : undefined;
 };
+
+const profilesActive = async () =>
+	!!(await getOidcSsoServices().config.getEffective()).groupProfiles;
 
 const PRECONDITION_CODES = new Set([
 	"incomplete",
@@ -81,6 +99,44 @@ export const oidcSsoRouter = createTRPCRouter({
 			? { canManageUsers: true, reason: null, expiresAt: null }
 			: getUserManagementStatus(defaultUserManagementGuardDeps(), ctx.user.id),
 	),
+
+	// Any signed-in user asks about their own group profile (spec 005, FR-017).
+	memberProfileStatus: protectedProcedure.query(async ({ ctx }) =>
+		IS_CLOUD
+			? toStatus(null, new Date())
+			: toStatus(
+					await findProfileWithLogin(ctx.user.id),
+					new Date(),
+					await profilesActive(),
+				),
+	),
+
+	// Admins see which members' permissions come from their groups (FR-011).
+	memberProfiles: protectedProcedure.query(async ({ ctx }) => {
+		if (ctx.user.role !== "owner" && ctx.user.role !== "admin") {
+			throw new TRPCError({ code: "FORBIDDEN" });
+		}
+		if (IS_CLOUD) return {};
+		return toSummaries(
+			await listProfilesWithLogin(ctx.session.activeOrganizationId),
+			new Date(),
+			await profilesActive(),
+		);
+	}),
+
+	groupProfilesCheck: ownerProcedure.query(async ({ ctx }) => {
+		const config = await getOidcSsoServices().config.getEffective();
+		const parsed = parseGroupProfiles(config.groupProfiles);
+		return {
+			groups: parsed.ok
+				? await checkGroupProfiles(
+						parsed.profiles,
+						ctx.session.activeOrganizationId,
+						drizzleScopeCatalog,
+					)
+				: [],
+		};
+	}),
 
 	get: ownerProcedure.query(() => getConfigView(getOidcSsoServices())),
 

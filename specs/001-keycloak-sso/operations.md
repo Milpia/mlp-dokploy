@@ -167,6 +167,7 @@ conexión comprueba el secreto revocando un token inventado cuando el proveedor 
 | `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` solo en desarrollo |
 | `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto desde el que el owner puede usar la ruta de emergencia por un túnel (spec 003), p. ej. `http://localhost:3900` |
 | `SSO_OIDC_USER_MANAGEMENT_GROUP` | grupo o lista separada por comas que puede gestionar usuarios (spec 002); vacío, rige upstream |
+| `SSO_OIDC_GROUP_PROFILES` | JSON con los permisos y proyectos de cada grupo de members (spec 005, ver «Perfiles por grupo»); vacío, se gestionan a mano |
 
 - Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen
   bloqueados en ella.
@@ -310,6 +311,54 @@ resto de admins (en Milpia, `leads`) conserva todo lo demás y ve la lista de us
 | `no_sso_login` | `Sign in with SSO to manage users.` | Entrar por SSO (un login local no basta) |
 | `grant_expired` | `Your permission to manage users expired. Sign in with SSO again.` | Volver a entrar por SSO |
 | `check_failed` | `You are not allowed to manage users.` (mismo texto, para no revelar el fallo) | Revisar los logs `OIDC SSO` y la base de datos |
+
+### Perfiles por grupo (spec 005)
+
+Con `SSO_OIDC_GROUP_PROFILES` (o el campo «Group profiles» de la pantalla de SSO), un member que
+pertenece a un grupo con perfil recibe en **cada login por SSO** los permisos y los proyectos de su
+grupo, sin que un admin tenga que marcarlos a mano. El formato completo está en
+`specs/005-developer-access/contracts/env.md`:
+
+```json
+{
+  "developers": {
+    "permissions": [],
+    "projects": ["milpia-web", "milpia-api"],
+    "environments": { "exclude": ["production"] }
+  }
+}
+```
+
+- **`permissions`**: los permisos individuales de member de upstream (`canCreateServices`,
+  `canAccessToDocker`…). Los que no aparecen quedan en `false`. Un perfil nunca da permisos de admin.
+- **`projects`**: nombres de proyecto. Un proyecto nuevo solo entra cuando se añade a la lista. Si
+  varios proyectos se llaman igual, entran todos.
+- **`environments`** (opcional): `include` o `exclude` por nombre. `exclude: ["production"]` deja
+  fuera el entorno de producción y sus servicios.
+- **Sobrescribe**: lo que un admin haya puesto a mano se reemplaza en el siguiente login por SSO. La
+  lista de usuarios marca a estos members con «SSO: <grupos>» y el diálogo de permisos lo avisa.
+- **Revocación**: si la persona sale de todo grupo con perfil, o pasa a un grupo de admins, pierde
+  permisos y proyectos en su siguiente login.
+- **Caducidad**: el perfil caduca **8 horas** después del último login por SSO. La primera petición
+  tras ese plazo vacía permisos y proyectos. La página de proyectos le pide volver a entrar por SSO.
+- **Owner y admins**: nunca reciben perfil. Los members sin grupo con perfil no cambian.
+- **Configuración inválida**: si la variable no es válida, los perfiles quedan **desactivados** (no
+  se usa el valor guardado) y la pantalla de SSO muestra el error. Desde la pantalla, un valor
+  inválido no se guarda.
+- **Nombres que no coinciden**: bajo el campo, la pantalla avisa de los proyectos que no existen o
+  que están repetidos. Mientras no se corrijan, esos nombres simplemente no dan acceso.
+
+| Evento (`type` / `outcome` / `reason`) | Cuándo | Qué hacer |
+|---|---|---|
+| `sso_login` / `error` / `profile_failed` | falló al aplicar el perfil; el login se deshizo | revisar el log `OIDC SSO [<referencia>] group profile failed` y la base de datos |
+| `member_profile` / `denied` / `profile_expired` | un member llevaba 8 h sin entrar por SSO | nada: al volver a entrar recupera su acceso |
+| `member_profile` / `error` / `check_failed` | falló la comprobación de caducidad; se denegó la petición | revisar el log `OIDC SSO: group profile expiry check failed` |
+
+Los tres también salen en el log del contenedor como `OIDC SSO event … ref=<referencia>` (T062).
+
+Antes de añadir un grupo a `SSO_OIDC_ACCESS_GROUP` (y, en Milpia, a `deploy_access_groups` de
+oauth2-proxy), su perfil tiene que estar configurado. Sin él, sus personas entran sin permisos ni
+proyectos.
 
 ## 6. Consideraciones de seguridad
 

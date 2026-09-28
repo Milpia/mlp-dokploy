@@ -8,6 +8,11 @@ import {
 	AuthEventRecorder,
 } from "@dokploy/server/oidc-sso/events/auth-events";
 import type { ProvisioningStore } from "@dokploy/server/oidc-sso/identity/provisioning";
+import type {
+	ResolvedScope,
+	ScopeCatalog,
+} from "@dokploy/server/oidc-sso/member-profile/scope";
+import type { MemberProfileStore } from "@dokploy/server/oidc-sso/member-profile/store";
 import type { OidcClient } from "@dokploy/server/oidc-sso/oidc/client";
 import type { SsoEndpointDeps } from "@dokploy/server/oidc-sso/plugin/endpoints";
 import type { OidcSsoServices } from "@dokploy/server/oidc-sso/services";
@@ -25,6 +30,7 @@ export const activeConfig: StoredConfig = {
 	accessGroup: "dokploy-users",
 	adminGroup: "dokploy-admins",
 	userManagementGroup: null,
+	groupProfiles: null,
 };
 
 export const memoryRepository = (initial: StoredConfig = activeConfig) => {
@@ -126,6 +132,7 @@ export const fakeProvisioningStore = (
 			upsertSsoAccount: vi.fn(async () => {}),
 			ensureMembership: vi.fn(async () => {}),
 			recordLoginState: vi.fn(async () => {}),
+			applyGroupProfile: vi.fn(async () => "none" as const),
 		}),
 	),
 	...overrides,
@@ -150,4 +157,90 @@ export const makeDeps = (
 		),
 	};
 	return { ...built, deps };
+};
+
+export interface MemoryProject {
+	projectId: string;
+	name: string;
+	environments: Array<{
+		environmentId: string;
+		name: string;
+		services: string[];
+	}>;
+}
+
+/** The project catalog the e2e harness resolves group scopes against (spec 005). */
+export const memoryScopeCatalog = (
+	projects: MemoryProject[],
+): ScopeCatalog => ({
+	projectsByName: async (_organizationId, names) =>
+		projects
+			.filter((p) => names.includes(p.name))
+			.map(({ projectId, name }) => ({ projectId, name })),
+	environmentsOf: async (projectIds) =>
+		projects
+			.filter((p) => projectIds.includes(p.projectId))
+			.flatMap((p) =>
+				p.environments.map(({ environmentId, name }) => ({
+					environmentId,
+					projectId: p.projectId,
+					name,
+				})),
+			),
+	servicesOf: async (environmentIds) =>
+		projects.flatMap((p) =>
+			p.environments
+				.filter((e) => environmentIds.includes(e.environmentId))
+				.flatMap((e) => e.services),
+		),
+});
+
+export interface MemoryGrant {
+	groups: string[];
+	permissions: string[];
+	scope: ResolvedScope;
+	appliedAt: Date;
+	expiredAt: Date | null;
+}
+
+/** In-memory member profile store over a role map (spec 005). */
+export const memoryMemberProfileStore = (roles: Map<string, string>) => {
+	const grants = new Map<string, MemoryGrant>();
+	const store: MemberProfileStore = {
+		findRole: async (userId) => roles.get(userId) ?? null,
+		findProfile: async (userId) => {
+			const grant = grants.get(userId);
+			return grant
+				? {
+						groups: grant.groups,
+						appliedAt: grant.appliedAt,
+						expiredAt: grant.expiredAt,
+					}
+				: null;
+		},
+		grant: async ({ userId, groups, permissions, scope, at }) => {
+			grants.set(userId, {
+				groups,
+				permissions,
+				scope,
+				appliedAt: at,
+				expiredAt: null,
+			});
+		},
+		revoke: async ({ userId }) => {
+			grants.delete(userId);
+		},
+		expire: async ({ userId, at }) => {
+			const grant = grants.get(userId);
+			if (grant) {
+				grants.set(userId, {
+					...grant,
+					permissions: [],
+					scope: { projectIds: [], environmentIds: [], serviceIds: [] },
+					expiredAt: at,
+				});
+			}
+		},
+	};
+	return { store, grants };
 };

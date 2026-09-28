@@ -1,5 +1,6 @@
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { nanoid } from "nanoid";
+import { organization } from "./account";
 import { user } from "./user";
 
 export const oidcSsoConfig = pgTable("oidc_sso_config", {
@@ -16,6 +17,7 @@ export const oidcSsoConfig = pgTable("oidc_sso_config", {
 	accessGroup: text("access_group"),
 	adminGroup: text("admin_group"),
 	userManagementGroup: text("user_management_group"),
+	groupProfiles: text("group_profiles"),
 	groupsClaim: text("groups_claim").notNull().default("groups"),
 	// Space-separated, appended to "openid email profile".
 	extraScopes: text("extra_scopes").notNull().default(""),
@@ -57,5 +59,23 @@ export const oidcSsoLoginState = pgTable("oidc_sso_login_state", {
 		.references(() => user.id, { onDelete: "cascade" }),
 	groups: text("groups").array().notNull(),
 	lastSsoLoginAt: timestamp("last_sso_login_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull(),
+});
+
+/**
+ * Members whose permissions and scope come from their SSO groups (spec 005,
+ * research R3). The row is what allows revoking them later without touching
+ * members whose permissions an admin set by hand.
+ */
+export const oidcSsoMemberProfile = pgTable("oidc_sso_member_profile", {
+	userId: text("user_id")
+		.primaryKey()
+		.references(() => user.id, { onDelete: "cascade" }),
+	organizationId: text("organization_id")
+		.notNull()
+		.references(() => organization.id, { onDelete: "cascade" }),
+	groups: text("groups").array().notNull(),
+	appliedAt: timestamp("applied_at").notNull(),
+	expiredAt: timestamp("expired_at"),
 	updatedAt: timestamp("updated_at").notNull(),
 });

@@ -10,6 +10,16 @@ vi.mock("@dokploy/server/services/permission", () => ({
 	checkServiceAccess: mockCheckServiceAccess,
 }));
 
+// The group profile expiry (spec 005) is covered in __test__/oidc-sso.
+vi.mock("@dokploy/server/oidc-sso", () => ({ getOidcSsoServices: vi.fn() }));
+vi.mock("@dokploy/server/oidc-sso/member-profile/expiry", () => ({
+	checkMemberProfileExpiryForUser: vi.fn(async () => ({
+		ok: true,
+		outcome: "skipped",
+	})),
+	defaultMemberProfileExpiryDeps: vi.fn(),
+}));
+
 const mockGetAccessibleServerIds = vi.hoisted(() => vi.fn());
 vi.mock("@dokploy/server", () => ({
 	getAccessibleServerIds: mockGetAccessibleServerIds,

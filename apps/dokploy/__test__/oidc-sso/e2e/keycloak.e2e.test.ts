@@ -13,11 +13,17 @@
  */
 import { SsoConfigProvider } from "@dokploy/server/oidc-sso/config/provider";
 import type { LoginState } from "@dokploy/server/oidc-sso/domain/user-management";
-import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
+import { SSO_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import type {
 	ProvisioningStore,
 	ProvisioningTx,
 } from "@dokploy/server/oidc-sso/identity/provisioning";
+import { applyGroupProfile } from "@dokploy/server/oidc-sso/member-profile/apply";
+import { memberProfileCache } from "@dokploy/server/oidc-sso/member-profile/cache";
+import {
+	checkMemberProfileExpiry,
+	type MemberProfileExpiryDeps,
+} from "@dokploy/server/oidc-sso/member-profile/expiry";
 import { createOpenIdClient } from "@dokploy/server/oidc-sso/oidc/client";
 import type { SsoEndpointDeps } from "@dokploy/server/oidc-sso/plugin/endpoints";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
@@ -33,7 +39,61 @@ import { organization } from "better-auth/plugins";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createUserManagementGuard } from "@/server/api/middlewares/user-management";
-import { activeConfig, fakeEvents, memoryRepository } from "../helpers";
+import {
+	activeConfig,
+	fakeEvents,
+	type MemoryProject,
+	memoryMemberProfileStore,
+	memoryRepository,
+	memoryScopeCatalog,
+} from "../helpers";
+
+// Spec 005: projects alpha and beta (production and staging) and gamma.
+const E2E_PROJECTS: MemoryProject[] = [
+	{
+		projectId: "p-alpha",
+		name: "alpha",
+		environments: [
+			{
+				environmentId: "e-alpha-prod",
+				name: "production",
+				services: ["s-alpha-prod"],
+			},
+			{
+				environmentId: "e-alpha-staging",
+				name: "staging",
+				services: ["s-alpha-staging"],
+			},
+		],
+	},
+	{
+		projectId: "p-beta",
+		name: "beta",
+		environments: [
+			{
+				environmentId: "e-beta-prod",
+				name: "production",
+				services: ["s-beta-prod"],
+			},
+			{
+				environmentId: "e-beta-staging",
+				name: "staging",
+				services: ["s-beta-staging"],
+			},
+		],
+	},
+	{
+		projectId: "p-gamma",
+		name: "gamma",
+		environments: [
+			{
+				environmentId: "e-gamma-prod",
+				name: "production",
+				services: ["s-gamma-prod"],
+			},
+		],
+	},
+];
 
 // vitest.config.ts replaces `process.env` with a fixed object at build time;
 // globalThis.process.env is the real environment.
@@ -71,6 +131,7 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 	const roles = new Map<string, string>([["owner-id", "owner"]]);
 	const subs = new Map<string, string>();
 	const loginStates = new Map<string, LoginState>();
+	const memberProfiles = memoryMemberProfileStore(roles);
 	const findUser = (id: string) => tables.user.find((u) => u.id === id);
 	const tx: ProvisioningTx = {
 		async createUser({ email }) {
@@ -96,6 +157,12 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 		async recordLoginState({ userId, groups, at }) {
 			loginStates.set(userId, { groups, lastSsoLoginAt: at });
 		},
+		applyGroupProfile: (input) =>
+			applyGroupProfile({
+				...input,
+				store: memberProfiles.store,
+				catalog: memoryScopeCatalog(E2E_PROJECTS),
+			}),
 	};
 	const provisioning: ProvisioningStore = {
 		findOwner: async () => ({ userId: "owner-id", organizationId: "org" }),
@@ -117,7 +184,13 @@ const memoryProvisioningStore = (tables: { user: Row[] }) => {
 		const user = tables.user.find((u) => u.email === email);
 		return user ? roles.get(user.id as string) : undefined;
 	};
-	return { provisioning, roleOf, loginStates };
+	return {
+		provisioning,
+		roleOf,
+		loginStates,
+		grants: memberProfiles.grants,
+		memberProfileStore: memberProfiles.store,
+	};
 };
 
 const setup = (overrides: Partial<StoredConfig> = {}) => {
@@ -148,7 +221,8 @@ const setup = (overrides: Partial<StoredConfig> = {}) => {
 		member: [] as Row[],
 		invitation: [] as Row[],
 	};
-	const { provisioning, roleOf, loginStates } = memoryProvisioningStore(tables);
+	const { provisioning, roleOf, loginStates, grants, memberProfileStore } =
+		memoryProvisioningStore(tables);
 	const deps: SsoEndpointDeps = {
 		services: {
 			config: new SsoConfigProvider({
@@ -195,6 +269,9 @@ const setup = (overrides: Partial<StoredConfig> = {}) => {
 		clock,
 		repository,
 		roleOf,
+		grants,
+		loginStates,
+		memberProfileStore,
 		events: events.recorded,
 	};
 };
@@ -483,7 +560,7 @@ describe.skipIf(!enabled)(
 		it("FR-015: admin1's grant expires 8 hours after the SSO login", async () => {
 			const ctx = setup(spec002Config);
 			const admin1 = await signIn(ctx, "admin1");
-			ctx.clock.now = new Date(Date.now() + USER_MANAGEMENT_GRANT_TTL_MS);
+			ctx.clock.now = new Date(Date.now() + SSO_GRANT_TTL_MS);
 			const { caller } = trpcCaller(ctx, admin1.userId);
 			await expect(caller.user.remove()).rejects.toMatchObject({
 				code: "FORBIDDEN",
@@ -496,6 +573,123 @@ describe.skipIf(!enabled)(
 			const lead1 = await signIn(ctx, "lead1");
 			const { caller } = trpcCaller(ctx, lead1.userId);
 			await expect(caller.user.remove()).resolves.toBe("handled");
+		});
+	},
+);
+
+describe.skipIf(!enabled)(
+	"Keycloak end-to-end: developers get their group profile (spec 005)",
+	() => {
+		const spec005Config = {
+			accessGroup: "admins,leads,developers",
+			adminGroup: "admins,leads",
+			groupProfiles: JSON.stringify({
+				developers: {
+					permissions: [],
+					projects: ["alpha", "beta"],
+					environments: { exclude: ["production"] },
+				},
+			}),
+		};
+
+		it("US1-1/FR-003/FR-016: dev1 enters as member with alpha and beta outside production", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			expect(ctx.roleOf("dev1@example.com")).toBe("member");
+			const grant = ctx.grants.get(userId);
+			expect(grant?.groups).toEqual(["developers"]);
+			expect(grant?.permissions).toEqual([]);
+			expect(grant?.scope.projectIds.sort()).toEqual(["p-alpha", "p-beta"]);
+			expect(grant?.scope.environmentIds.sort()).toEqual([
+				"e-alpha-staging",
+				"e-beta-staging",
+			]);
+			expect(grant?.scope.serviceIds.sort()).toEqual([
+				"s-alpha-staging",
+				"s-beta-staging",
+			]);
+		});
+
+		const expiryDeps = (
+			ctx: ReturnType<typeof setup>,
+			now: Date,
+		): MemberProfileExpiryDeps => ({
+			services: ctx.deps.services,
+			findRole: async () => "member",
+			findProfile: async (userId) => {
+				const grant = ctx.grants.get(userId);
+				return grant
+					? {
+							userId,
+							organizationId: "org",
+							groups: grant.groups,
+							appliedAt: grant.appliedAt,
+							expiredAt: grant.expiredAt,
+							lastSsoLoginAt:
+								ctx.loginStates.get(userId)?.lastSsoLoginAt ?? null,
+						}
+					: null;
+			},
+			listProfiledUserIds: async () => [...ctx.grants.keys()],
+			expire: (fn) => fn(ctx.memberProfileStore),
+			now: () => now,
+		});
+
+		it("US4-4/FR-017: 8 hours after the SSO login the scope is cleared, and a new login restores it", async () => {
+			memberProfileCache.reset();
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			const later = new Date(Date.now() + SSO_GRANT_TTL_MS + 1000);
+			await expect(
+				checkMemberProfileExpiry(
+					{ id: userId, role: "member" },
+					expiryDeps(ctx, later),
+				),
+			).resolves.toEqual({ ok: true, outcome: "expired" });
+			expect(ctx.grants.get(userId)?.scope.projectIds).toEqual([]);
+			expect(ctx.events.at(-1)).toMatchObject({
+				type: "member_profile",
+				reason: "profile_expired",
+			});
+
+			await signIn(ctx, "dev1");
+			expect(ctx.grants.get(userId)?.expiredAt).toBeNull();
+			expect(ctx.grants.get(userId)?.scope.projectIds.sort()).toEqual([
+				"p-alpha",
+				"p-beta",
+			]);
+		});
+
+		it("US4-1/FR-004: when developers no longer has a profile, dev1's next login revokes it", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			expect(ctx.grants.has(userId)).toBe(true);
+			await ctx.repository.save({
+				groupProfiles: JSON.stringify({
+					qa: { permissions: [], projects: ["alpha"] },
+				}),
+			});
+			ctx.deps.services.config.invalidate();
+			await signIn(ctx, "dev1");
+			expect(ctx.grants.has(userId)).toBe(false);
+		});
+
+		it("US4-2/FR-007: when dev1's group becomes an admin group, the profile is dropped", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			expect(ctx.grants.has(userId)).toBe(true);
+			await ctx.repository.save({ adminGroup: "admins,leads,developers" });
+			ctx.deps.services.config.invalidate();
+			await signIn(ctx, "dev1");
+			expect(ctx.roleOf("dev1@example.com")).toBe("admin");
+			expect(ctx.grants.has(userId)).toBe(false);
+		});
+
+		it("FR-007: lead1 is admin and gets no profile", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "lead1");
+			expect(ctx.roleOf("lead1@example.com")).toBe("admin");
+			expect(ctx.grants.has(userId)).toBe(false);
 		});
 	},
 );

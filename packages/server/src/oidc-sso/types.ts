@@ -30,7 +30,8 @@ export type AuthEventType =
 	| "emergency_login"
 	| "config_change"
 	| "mode_change"
-	| "user_management";
+	| "user_management"
+	| "member_profile";
 
 export type AuthEventOutcome = "success" | "denied" | "error";
 
@@ -52,6 +53,33 @@ export type UserManagementDenyReason =
 	| "not_in_group"
 	| "check_failed";
 
+/** Upstream member columns a group profile may grant (spec 005, FR-008). */
+export const MEMBER_PERMISSIONS = [
+	"canCreateProjects",
+	"canDeleteProjects",
+	"canCreateServices",
+	"canDeleteServices",
+	"canCreateEnvironments",
+	"canDeleteEnvironments",
+	"canAccessToDocker",
+	"canAccessToAPI",
+	"canAccessToSSHKeys",
+	"canAccessToGitProviders",
+	"canAccessToTraefikFiles",
+] as const;
+export type MemberPermission = (typeof MEMBER_PERMISSIONS)[number];
+
+export type EnvironmentFilter = { include: string[] } | { exclude: string[] };
+
+export interface GroupProfile {
+	group: string;
+	permissions: MemberPermission[];
+	projects: string[];
+	environments?: EnvironmentFilter;
+}
+
+export type MemberProfileReason = "profile_expired" | "profile_failed";
+
 export type ConfigField =
 	| "mode"
 	| "issuerUrl"
@@ -60,6 +88,7 @@ export type ConfigField =
 	| "accessGroup"
 	| "adminGroup"
 	| "userManagementGroup"
+	| "groupProfiles"
 	| "groupsClaim"
 	| "extraScopes"
 	| "buttonLabel"
@@ -76,6 +105,8 @@ export interface StoredConfig {
 	adminGroup: string | null;
 	/** Only these groups (and the owner) may manage users (spec 002). */
 	userManagementGroup: string | null;
+	/** JSON of per-group member profiles (spec 005); null disables them. */
+	groupProfiles: string | null;
 	groupsClaim: string;
 	/** Space-separated, appended to "openid email profile". */
 	extraScopes: string;

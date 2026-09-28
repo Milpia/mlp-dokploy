@@ -32,7 +32,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { api, type RouterOutputs } from "@/utils/api";
+import { GroupProfilesCheck } from "./group-profiles-check";
 import { DEFAULT_PRESET, PROVIDER_PRESETS } from "./provider-presets";
 import { SsoAuthEventsDialog } from "./sso-auth-events";
 
@@ -47,6 +49,7 @@ const schema = z.object({
 	accessGroup: z.string().trim().max(512),
 	adminGroup: z.string().trim().max(512),
 	userManagementGroup: z.string().trim().max(512),
+	groupProfiles: z.string().trim().max(16384),
 	groupsClaim: z.string().trim().max(256),
 	extraScopes: z.string().trim().max(1024),
 	buttonLabel: z.string().trim().min(1, "Required").max(64),
@@ -71,6 +74,7 @@ const toFormValues = (view: ConfigView): FormValues => ({
 	accessGroup: view.accessGroup ?? "",
 	adminGroup: view.adminGroup ?? "",
 	userManagementGroup: view.userManagementGroup ?? "",
+	groupProfiles: view.groupProfiles ?? "",
 	groupsClaim: view.groupsClaim,
 	extraScopes: view.extraScopes,
 	buttonLabel: view.buttonLabel,
@@ -139,6 +143,7 @@ export const OidcSsoSettings = () => {
 			"accessGroup",
 			"adminGroup",
 			"userManagementGroup",
+			"groupProfiles",
 			"groupsClaim",
 			"extraScopes",
 			"buttonLabel",
@@ -434,6 +439,36 @@ export const OidcSsoSettings = () => {
 												Requires an SSO login in the last 8 hours.
 											</FormDescription>
 											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="groupProfiles"
+									render={({ field }) => (
+										<FormItem className="md:col-span-2">
+											<FormLabel>
+												Group profiles
+												<EnvBadge show={fromEnv("groupProfiles")} />
+											</FormLabel>
+											<FormControl>
+												<Textarea
+													className="font-mono text-xs min-h-28"
+													placeholder={
+														'{"developers": {"permissions": [], "projects": ["my-project"], "environments": {"exclude": ["production"]}}}'
+													}
+													disabled={!editable("groupProfiles")}
+													{...field}
+												/>
+											</FormControl>
+											<FormDescription>
+												Permissions and projects that members of each group get
+												at every SSO login, replacing what was set by hand.
+												Access expires 8 hours after the last SSO login. Leave
+												empty to manage members by hand.
+											</FormDescription>
+											<FormMessage />
+											<GroupProfilesCheck enabled={!!view.groupProfiles} />
 										</FormItem>
 									)}
 								/>

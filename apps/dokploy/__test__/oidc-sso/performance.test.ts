@@ -1,4 +1,7 @@
 import { DEFAULT_STORED_CONFIG } from "@dokploy/server/oidc-sso/config/repository";
+import { applyGroupProfile } from "@dokploy/server/oidc-sso/member-profile/apply";
+import { memberProfileCache } from "@dokploy/server/oidc-sso/member-profile/cache";
+import { checkMemberProfileExpiry } from "@dokploy/server/oidc-sso/member-profile/expiry";
 import { createEmergencyOriginHandler } from "@dokploy/server/oidc-sso/plugin/emergency-origin";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
 import type { UserManagementGuardDeps } from "@dokploy/server/oidc-sso/user-management/guard";
@@ -7,7 +10,15 @@ import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { describe, expect, it, vi } from "vitest";
 import { createUserManagementGuard } from "@/server/api/middlewares/user-management";
-import { activeConfig, ISSUER, makeDeps, makeServices } from "./helpers";
+import {
+	activeConfig,
+	ISSUER,
+	type MemoryProject,
+	makeDeps,
+	makeServices,
+	memoryMemberProfileStore,
+	memoryScopeCatalog,
+} from "./helpers";
 
 const BASE = "http://localhost:3000";
 const SECRET = "test-secret-that-is-long-enough-for-better-auth";
@@ -256,4 +267,103 @@ describe("performance (NFR-PERF, SC-008, SC-009)", () => {
 		expect(added.enabledOther).toBeLessThan(1);
 		expect(added.manageAction).toBeLessThan(20);
 	}, 60_000);
+});
+
+describe("performance · group profiles (spec 005)", () => {
+	it("NFR-PERF-001/SC-005: applying a profile with 200 projects and 500 services takes at most 50 ms p95", async () => {
+		const projects: MemoryProject[] = Array.from({ length: 200 }, (_, i) => ({
+			projectId: `p${i}`,
+			name: `project-${i}`,
+			environments: [
+				{
+					environmentId: `e${i}-prod`,
+					name: "production",
+					services: [`s${i}-prod`],
+				},
+				{
+					environmentId: `e${i}-staging`,
+					name: "staging",
+					services: [`s${i}-a`, `s${i}-b`, ...(i < 100 ? [`s${i}-c`] : [])],
+				},
+			],
+		}));
+		const catalog = memoryScopeCatalog(projects);
+		const profiles = [
+			{
+				group: "developers",
+				permissions: [],
+				projects: projects.map((p) => p.name),
+				environments: { exclude: ["production"] },
+			},
+		];
+		const { store, grants } = memoryMemberProfileStore(
+			new Map([["dev", "member"]]),
+		);
+		const run = () =>
+			applyGroupProfile({
+				store,
+				catalog,
+				userId: "dev",
+				organizationId: "org",
+				groups: ["developers"],
+				profiles,
+				now: new Date(),
+			});
+		await run();
+		expect(grants.get("dev")?.scope.serviceIds).toHaveLength(500);
+		const samples: number[] = [];
+		for (let i = 0; i < 100; i++) {
+			const t0 = performance.now();
+			await run();
+			samples.push(performance.now() - t0);
+		}
+		expect(p95(samples)).toBeLessThanOrEqual(50);
+	});
+
+	it("NFR-PERF-002: the expiry guard costs at most 5 ms p95 for a member with a profile and no reads for others", async () => {
+		memberProfileCache.reset();
+		const { services } = makeServices({
+			config: {
+				...activeConfig,
+				groupProfiles: JSON.stringify({
+					developers: { permissions: [], projects: [] },
+				}),
+			},
+		});
+		const now = new Date();
+		const findProfile = vi.fn(async (userId: string) =>
+			userId === "dev"
+				? {
+						userId,
+						organizationId: "org",
+						groups: ["developers"],
+						appliedAt: now,
+						expiredAt: null,
+						lastSsoLoginAt: now,
+					}
+				: null,
+		);
+		const listProfiledUserIds = vi.fn(async () => ["dev"]);
+		const deps = {
+			services,
+			findRole: vi.fn(async () => "member"),
+			findProfile,
+			listProfiledUserIds,
+			expire: vi.fn(async () => {}),
+			now: () => now,
+		};
+
+		await checkMemberProfileExpiry({ id: "admin", role: "admin" }, deps);
+		await checkMemberProfileExpiry({ id: "manual", role: "member" }, deps);
+		expect(findProfile).not.toHaveBeenCalled();
+
+		const samples: number[] = [];
+		for (let i = 0; i < 300; i++) {
+			const t0 = performance.now();
+			await checkMemberProfileExpiry({ id: "dev", role: "member" }, deps);
+			samples.push(performance.now() - t0);
+		}
+		expect(p95(samples)).toBeLessThanOrEqual(5);
+		expect(listProfiledUserIds).toHaveBeenCalledTimes(1);
+	});
 });
