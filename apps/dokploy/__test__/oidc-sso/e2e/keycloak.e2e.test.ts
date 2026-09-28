@@ -210,7 +210,8 @@ const setup = (overrides: Partial<StoredConfig> = {}) => {
 		member: [] as Row[],
 		invitation: [] as Row[],
 	};
-	const { provisioning, roleOf, loginStates } = memoryProvisioningStore(tables);
+	const { provisioning, roleOf, loginStates, grants } =
+		memoryProvisioningStore(tables);
 	const deps: SsoEndpointDeps = {
 		services: {
 			config: new SsoConfigProvider({
@@ -257,6 +258,7 @@ const setup = (overrides: Partial<StoredConfig> = {}) => {
 		clock,
 		repository,
 		roleOf,
+		grants,
 		events: events.recorded,
 	};
 };
@@ -558,6 +560,48 @@ describe.skipIf(!enabled)(
 			const lead1 = await signIn(ctx, "lead1");
 			const { caller } = trpcCaller(ctx, lead1.userId);
 			await expect(caller.user.remove()).resolves.toBe("handled");
+		});
+	},
+);
+
+describe.skipIf(!enabled)(
+	"Keycloak end-to-end: developers get their group profile (spec 005)",
+	() => {
+		const spec005Config = {
+			accessGroup: "admins,leads,developers",
+			adminGroup: "admins,leads",
+			groupProfiles: JSON.stringify({
+				developers: {
+					permissions: [],
+					projects: ["alpha", "beta"],
+					environments: { exclude: ["production"] },
+				},
+			}),
+		};
+
+		it("US1-1/FR-003/FR-016: dev1 enters as member with alpha and beta outside production", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "dev1");
+			expect(ctx.roleOf("dev1@example.com")).toBe("member");
+			const grant = ctx.grants.get(userId);
+			expect(grant?.groups).toEqual(["developers"]);
+			expect(grant?.permissions).toEqual([]);
+			expect(grant?.scope.projectIds.sort()).toEqual(["p-alpha", "p-beta"]);
+			expect(grant?.scope.environmentIds.sort()).toEqual([
+				"e-alpha-staging",
+				"e-beta-staging",
+			]);
+			expect(grant?.scope.serviceIds.sort()).toEqual([
+				"s-alpha-staging",
+				"s-beta-staging",
+			]);
+		});
+
+		it("FR-007: lead1 is admin and gets no profile", async () => {
+			const ctx = setup(spec005Config);
+			const { userId } = await signIn(ctx, "lead1");
+			expect(ctx.roleOf("lead1@example.com")).toBe("admin");
+			expect(ctx.grants.has(userId)).toBe(false);
 		});
 	},
 );
