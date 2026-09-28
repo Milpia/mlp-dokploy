@@ -67,6 +67,7 @@ Se aplican siempre, salvo que el owner autorice explícitamente lo contrario en 
 
 - `specs/<NNN>-<slug>/`: cada funcionalidad, con `spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/`, `tasks.md`, `quickstart.md`, `traceability.yaml` y, si la hay, una guía de operación (`operations.md`).
 - La **guía compartida entre sesiones** (brief) de Milpia, en Claude Docs: decisiones que cruzan repos, el contrato entre infra, la CLI y Dokploy, las preferencias del owner y el estado de cada repo.
+- `docs/decisions/`: decisiones del fork que no pertenecen a una sola spec (p. ej. `0001-sin-i18n.md`).
 - Para decisiones que cruzan repos, cita el repo, la spec y el SHA (p. ej. «infra 013 R12 en `cb107e2`»).
 
 ## Spec Kit (herramienta de SDD)

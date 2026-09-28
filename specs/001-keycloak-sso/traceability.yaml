@@ -489,6 +489,7 @@ requirements:
     - MIL-409
     - MIL-510
     - MIL-511
+    - MIL-512
     local_tasks:
     - T004
     - T005
@@ -510,6 +511,7 @@ requirements:
     - T052
     - T061
     - T062
+    - T063
     commits:
     - f3a4a07bc
     - e6c239a0b
@@ -1759,6 +1761,12 @@ phase_tasks:
     requirements:
     - FR-013
     - NFR-QA-004
+  - local_id: T063
+    title: Add a rows-per-page select to the events dialog (10, 20 or 50, default 10)
+    jira: MIL-512
+    parallel: false
+    requirements:
+    - FR-013
 bugs:
 - jira: MIL-421
   summary: La prueba de conexión da por válido un secreto incorrecto con Keycloak (resuelto)
