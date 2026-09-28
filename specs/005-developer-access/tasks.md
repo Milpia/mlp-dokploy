@@ -131,13 +131,14 @@ Todavía no se aplican en el login.
 
 **Independent Test**: quickstart §2, escenarios 3 y 4.
 
-- [ ] T017 [P] [US2] Write tests in `apps/dokploy/__test__/oidc-sso/member-profile-denials.test.ts` using upstream `checkPermission`, `checkProjectAccess`, `checkEnvironmentAccess` and `checkServiceAccess` against a PGlite member written by `applyGroupProfile` with `permissions: []` (FR-008, FR-010, SC-002). Each of these must be rejected:
+- [X] T017 [P] [US2] Write tests in `apps/dokploy/__test__/oidc-sso/member-profile-denials.test.ts` using upstream `checkPermission`, `checkProjectAccess`, `checkEnvironmentAccess` and `checkServiceAccess` against a PGlite member written by `applyGroupProfile` with `permissions: []` (FR-008, FR-010, SC-002). Each of these must be rejected:
   - create or delete a project, a service or an environment;
   - `docker.read`, `traefikFiles.read`, `sshKeys.read`, `gitProviders.read` and `api.read`;
   - a service of a project outside the scope;
   - a service of the excluded `production` environment
   - widening its own profile or scope (NFR-SEC-002): `user.assignPermissions` on itself (rejected by the spec 002 guard) and `oidcSso.update` (rejected by `ownerProcedure`)
-- [ ] T018 [US2] Add e2e direct-call denials with the developer's cookie to `keycloak.e2e.test.ts`: create a project, list Docker containers and operate a service of `gamma` by id (quickstart 3–4)
+- [X] T018 [US2] Add e2e direct-call denials with the developer's cookie to `keycloak.e2e.test.ts`: create a project, list Docker containers and operate a service of `gamma` by id (quickstart 3–4)
+  - implementation note: the e2e harness has no Dokploy routers, so the direct-call denials run in T017 against the real upstream checks and a member row written by `applyGroupProfile`. The cookie-based calls are quickstart scenarios 3 and 4 in the lab (T035)
 
 **Checkpoint**: US1 y US2 cumplen SC-001 y SC-002.
 
