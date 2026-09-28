@@ -58,6 +58,44 @@ describe("AuthEventRecorder (FR-013)", () => {
 		expect(s.deleteOlderThan).toHaveBeenCalledTimes(2);
 	});
 
+	it("NFR-QA-004 (MIL-511): writes one log line per denied or failed event, without the email", async () => {
+		const logEvent = vi.fn();
+		const recorder = new AuthEventRecorder(store(), { logEvent });
+		await recorder.record(event);
+		await recorder.record({
+			type: "user_management",
+			outcome: "denied",
+			reason: "not_in_group",
+			correlationId: "UM1",
+			userId: "lead-1",
+			action: "remove_user",
+			targetUserId: "dev-1",
+			ip: "10.0.0.1",
+		});
+		await recorder.record({ ...event, outcome: "success", reason: undefined });
+
+		expect(logEvent.mock.calls).toEqual([
+			[
+				"OIDC SSO event type=sso_login outcome=denied reason=not_in_access_group ref=ABC",
+			],
+			[
+				"OIDC SSO event type=user_management outcome=denied reason=not_in_group ref=UM1 user=lead-1 action=remove_user target=dev-1",
+			],
+		]);
+		expect(logEvent.mock.calls.flat().join(" ")).not.toContain("@");
+	});
+
+	it("still stores the event when the log sink throws", async () => {
+		const s = store();
+		const recorder = new AuthEventRecorder(s, {
+			logEvent: () => {
+				throw new Error("stdout closed");
+			},
+		});
+		await expect(recorder.record(event)).resolves.toBeUndefined();
+		expect(s.insert).toHaveBeenCalledWith(event);
+	});
+
 	it("swallows pruning failures", async () => {
 		const s = store();
 		s.deleteOlderThan.mockRejectedValueOnce(new Error("locked"));

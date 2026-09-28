@@ -115,7 +115,28 @@ export const drizzleAuthEventStore: AuthEventStore = {
 export interface AuthEventRecorderOptions {
 	now?: () => number;
 	logError?: (message: string, error: unknown) => void;
+	logEvent?: (line: string) => void;
 }
+
+/**
+ * One line per denied or failed event, so operators can diagnose from the
+ * container log without database access. Emails stay out of the log; the
+ * reference lets them find the full row on the events screen (NFR-QA-004).
+ */
+export const formatAuthEventLine = (event: AuthEventInput): string =>
+	[
+		"OIDC SSO event",
+		`type=${event.type}`,
+		`outcome=${event.outcome}`,
+		event.reason && `reason=${event.reason}`,
+		`ref=${event.correlationId}`,
+		event.userId && `user=${event.userId}`,
+		event.action && `action=${event.action}`,
+		event.targetUserId && `target=${event.targetUserId}`,
+		event.emergencyOrigin && "via=emergency_origin",
+	]
+		.filter(Boolean)
+		.join(" ");
 
 /**
  * Recording must never break a login: failures are logged and swallowed.
@@ -125,6 +146,7 @@ export class AuthEventRecorder {
 	private lastPruneAt = Number.NEGATIVE_INFINITY;
 	private readonly now: () => number;
 	private readonly logError: (message: string, error: unknown) => void;
+	private readonly logEvent: (line: string) => void;
 
 	constructor(
 		private readonly store: AuthEventStore,
@@ -133,9 +155,17 @@ export class AuthEventRecorder {
 		this.now = options.now ?? Date.now;
 		this.logError =
 			options.logError ?? ((message, error) => console.error(message, error));
+		this.logEvent = options.logEvent ?? ((line) => console.warn(line));
 	}
 
 	async record(event: AuthEventInput): Promise<void> {
+		if (event.outcome !== "success") {
+			try {
+				this.logEvent(formatAuthEventLine(event));
+			} catch {
+				// A broken log sink must not break a login either.
+			}
+		}
 		try {
 			await this.store.insert(event);
 		} catch (error) {
