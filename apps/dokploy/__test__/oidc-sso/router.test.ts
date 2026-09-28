@@ -17,6 +17,7 @@ vi.mock("@dokploy/server/oidc-sso/identity/login-state", () => ({
 const profiles = vi.hoisted(() => ({
 	rows: [] as Array<{
 		userId: string;
+		organizationId: string;
 		groups: string[];
 		appliedAt: Date;
 		expiredAt: Date | null;
@@ -340,6 +341,7 @@ describe("oidcSso router · group profiles (spec 005)", () => {
 		profiles.rows = [
 			{
 				userId: "member-id",
+				organizationId: "org",
 				groups: ["developers"],
 				appliedAt: recent,
 				expiredAt: null,
@@ -347,6 +349,7 @@ describe("oidcSso router · group profiles (spec 005)", () => {
 			},
 			{
 				userId: "dev-old",
+				organizationId: "org",
 				groups: ["developers"],
 				appliedAt: old,
 				expiredAt: null,

@@ -169,14 +169,14 @@ Todavía no se aplican en el login.
 
 **Independent Test**: quickstart §2, escenarios 7, 8 y 9.
 
-- [ ] T024 [P] [US4] Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-expiry.test.ts` for `checkMemberProfileExpiry` covering the five exits of contracts/trpc-and-guard.md:
+- [X] T024 [P] [US4] Write failing tests in `apps/dokploy/__test__/oidc-sso/member-profile-expiry.test.ts` for `checkMemberProfileExpiry` covering the five exits of contracts/trpc-and-guard.md:
   - not a member: no reads;
   - not in the cache: no reads;
   - valid: pass;
   - expired: clears in a transaction, sets `expired_at` and records the `member_profile`/`denied`/`profile_expired` event, then passes;
   - error: `FORBIDDEN` with «Your access expired. Sign in with SSO again.» and a `member_profile`/`error` event;
   - the cache is loaded at startup and updated on every store write
-- [ ] T025 [US4] Implement `packages/server/src/oidc-sso/member-profile/expiry.ts` (checker + in-memory user cache) until T024 passes, using `SSO_GRANT_TTL_MS`
+- [X] T025 [US4] Implement `packages/server/src/oidc-sso/member-profile/expiry.ts` (checker + in-memory user cache) until T024 passes, using `SSO_GRANT_TTL_MS`
 - [ ] T026 [US4] Create the tRPC middleware `apps/dokploy/server/api/middlewares/member-profile.ts` and chain it in `protectedProcedure` after `userManagementGuard` in `apps/dokploy/server/api/trpc.ts` (upstream). Add a drift test in `apps/dokploy/__test__/oidc-sso/member-profile-drift.test.ts` asserting that the middleware is in the chain of `protectedProcedure` and of a `withPermission(...)` procedure
 - [ ] T027 [US4] Add `oidcSso.memberProfileStatus` (any session) returning `{ managed, groups, expiresAt, expired }`. Show the expired notice with `SignInWithSso` on `apps/dokploy/pages/dashboard/projects.tsx` (upstream mount point) through `member-profile-notice.tsx` (FR-017)
 - [ ] T028 [US4] Add e2e scenarios to `keycloak.e2e.test.ts`:

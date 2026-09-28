@@ -8,6 +8,7 @@ import { SSO_GRANT_TTL_MS } from "../domain/user-management";
 
 export interface ProfileWithLogin {
 	userId: string;
+	organizationId: string;
 	groups: string[];
 	appliedAt: Date;
 	expiredAt: Date | null;
@@ -72,6 +73,7 @@ const selectProfiles = () =>
 	db
 		.select({
 			userId: oidcSsoMemberProfile.userId,
+			organizationId: oidcSsoMemberProfile.organizationId,
 			groups: oidcSsoMemberProfile.groups,
 			appliedAt: oidcSsoMemberProfile.appliedAt,
 			expiredAt: oidcSsoMemberProfile.expiredAt,
