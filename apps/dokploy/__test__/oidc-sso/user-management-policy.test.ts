@@ -1,6 +1,6 @@
 import {
 	decideUserManagement,
-	USER_MANAGEMENT_GRANT_TTL_MS,
+	SSO_GRANT_TTL_MS,
 	type UserManagementInput,
 } from "@dokploy/server/oidc-sso/domain/user-management";
 import { describe, expect, it } from "vitest";
@@ -56,13 +56,13 @@ describe("decideUserManagement (spec 002)", () => {
 	});
 
 	it("FR-015: the grant expires exactly 8 hours after the last SSO login", () => {
-		expect(USER_MANAGEMENT_GRANT_TTL_MS).toBe(8 * 60 * 60 * 1000);
+		expect(SSO_GRANT_TTL_MS).toBe(8 * 60 * 60 * 1000);
 		expect(
 			decideUserManagement(
 				input({
 					loginState: {
 						groups: ["admins"],
-						lastSsoLoginAt: ago(USER_MANAGEMENT_GRANT_TTL_MS),
+						lastSsoLoginAt: ago(SSO_GRANT_TTL_MS),
 					},
 				}),
 			),
@@ -72,7 +72,7 @@ describe("decideUserManagement (spec 002)", () => {
 				input({
 					loginState: {
 						groups: ["admins"],
-						lastSsoLoginAt: ago(USER_MANAGEMENT_GRANT_TTL_MS - 60_000),
+						lastSsoLoginAt: ago(SSO_GRANT_TTL_MS - 60_000),
 					},
 				}),
 			),
@@ -93,7 +93,7 @@ describe("decideUserManagement (spec 002)", () => {
 				input({
 					loginState: {
 						groups: ["leads"],
-						lastSsoLoginAt: ago(USER_MANAGEMENT_GRANT_TTL_MS + 1),
+						lastSsoLoginAt: ago(SSO_GRANT_TTL_MS + 1),
 					},
 				}),
 			),

@@ -1,8 +1,8 @@
 import type { UserManagementDenyReason } from "../types";
 import { isInGroup } from "./claims";
 
-/** How long a user-management grant lasts after an SSO login (spec 002, FR-015). */
-export const USER_MANAGEMENT_GRANT_TTL_MS = 8 * 60 * 60 * 1000;
+/** How long what an SSO login grants lasts: user management (spec 002, FR-015) and group profiles (spec 005, FR-017). */
+export const SSO_GRANT_TTL_MS = 8 * 60 * 60 * 1000;
 
 export interface LoginState {
 	groups: string[];
@@ -36,10 +36,7 @@ export const decideUserManagement = ({
 	if (!ssoActive || !userManagementGroup) return { allow: true };
 	if (isInstanceOwner) return { allow: true };
 	if (!loginState) return { allow: false, reason: "no_sso_login" };
-	if (
-		now.getTime() - loginState.lastSsoLoginAt.getTime() >=
-		USER_MANAGEMENT_GRANT_TTL_MS
-	) {
+	if (now.getTime() - loginState.lastSsoLoginAt.getTime() >= SSO_GRANT_TTL_MS) {
 		return { allow: false, reason: "grant_expired" };
 	}
 	if (!isInGroup(loginState.groups, userManagementGroup)) {

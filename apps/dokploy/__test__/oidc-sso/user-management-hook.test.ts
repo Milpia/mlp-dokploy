@@ -1,4 +1,4 @@
-import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
+import { SSO_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
 import type { UserManagementGuardDeps } from "@dokploy/server/oidc-sso/user-management/guard";
 import { AUTH_USER_MANAGEMENT_PATHS } from "@dokploy/server/oidc-sso/user-management/paths";
@@ -197,7 +197,7 @@ describe("better-auth organization routes guard (spec 002)", () => {
 
 	it("FR-015: after 8 h an admin of the group gets grant_expired", async () => {
 		ctx = setup(["admins"], {
-			now: new Date(NOW.getTime() + USER_MANAGEMENT_GRANT_TTL_MS),
+			now: new Date(NOW.getTime() + SSO_GRANT_TTL_MS),
 		});
 		const cookie = await signedIn(ctx);
 		const response = await post(

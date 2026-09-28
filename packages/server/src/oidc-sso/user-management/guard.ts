@@ -3,7 +3,7 @@ import { member, user } from "@dokploy/server/db/schema";
 import { eq } from "drizzle-orm";
 import {
 	decideUserManagement,
-	USER_MANAGEMENT_GRANT_TTL_MS,
+	SSO_GRANT_TTL_MS,
 } from "../domain/user-management";
 import { newCorrelationId } from "../events/auth-events";
 import {
@@ -194,7 +194,7 @@ export const getUserManagementStatus = async (
 		const expiresAt =
 			!isInstanceOwner && loginState
 				? new Date(
-						loginState.lastSsoLoginAt.getTime() + USER_MANAGEMENT_GRANT_TTL_MS,
+						loginState.lastSsoLoginAt.getTime() + SSO_GRANT_TTL_MS,
 					).toISOString()
 				: null;
 		return { canManageUsers: true, reason: null, expiresAt };

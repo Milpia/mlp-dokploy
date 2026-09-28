@@ -1,4 +1,4 @@
-import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
+import { SSO_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import type { UserManagementGuardDeps } from "@dokploy/server/oidc-sso/user-management/guard";
 import { TRPC_USER_MANAGEMENT_PATHS } from "@dokploy/server/oidc-sso/user-management/paths";
 import { initTRPC, TRPCError } from "@trpc/server";
@@ -145,9 +145,7 @@ describe("tRPC user-management guard (spec 002)", () => {
 	it("FR-003/FR-015: an admin with an SSO login under 8 h ago reaches the handler", async () => {
 		const { caller, handler } = setup({
 			groups: ["admins"],
-			lastSsoLoginAt: new Date(
-				NOW.getTime() - USER_MANAGEMENT_GRANT_TTL_MS + 1,
-			),
+			lastSsoLoginAt: new Date(NOW.getTime() - SSO_GRANT_TTL_MS + 1),
 		});
 		await expect(call(caller, "user.assignPermissions")).resolves.toBe(
 			"handled",
@@ -185,7 +183,7 @@ describe("tRPC user-management guard (spec 002)", () => {
 		const { caller, handler } = setup(
 			{ groups: ["admins"], lastSsoLoginAt: NOW },
 			"admins",
-			{ now: new Date(NOW.getTime() + USER_MANAGEMENT_GRANT_TTL_MS) },
+			{ now: new Date(NOW.getTime() + SSO_GRANT_TTL_MS) },
 		);
 		await expect(call(caller, "user.remove")).rejects.toMatchObject({
 			code: "FORBIDDEN",

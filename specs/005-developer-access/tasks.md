@@ -29,12 +29,12 @@ deben fallar primero.
 
 **Purpose**: Tipos compartidos y esquema.
 
-- [ ] T001 Add domain types to `packages/server/src/oidc-sso/types.ts` (FR-001, FR-008, FR-017, R9):
+- [X] T001 Add domain types to `packages/server/src/oidc-sso/types.ts` (FR-001, FR-008, FR-017, R9):
   - `MEMBER_PERMISSIONS` as a readonly tuple of the 11 upstream column names (`canCreateProjects`, `canDeleteProjects`, `canCreateServices`, `canDeleteServices`, `canCreateEnvironments`, `canDeleteEnvironments`, `canAccessToDocker`, `canAccessToAPI`, `canAccessToSSHKeys`, `canAccessToGitProviders`, `canAccessToTraefikFiles`), and `MemberPermission` derived from it
   - `GroupProfile = { group: string; permissions: MemberPermission[]; projects: string[]; environments?: { include: string[] } | { exclude: string[] } }`
   - add `"member_profile"` to `AuthEventType`; reasons `"profile_expired"` and `"profile_failed"`
   - add `"groupProfiles"` to `ConfigField`
-- [ ] T002 Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration after `0197_equal_wallflower.sql` with `pnpm --filter=dokploy run migration:generate` (data-model.md):
+- [X] T002 Extend `packages/server/src/db/schema/oidc-sso.ts` and generate an additive migration after `0197_equal_wallflower.sql` with `pnpm --filter=dokploy run migration:generate` (data-model.md):
   - `oidc_sso_config.group_profiles`: `text`, nullable, default `null`
   - new table `oidc_sso_member_profile`:
     - `user_id text` PK, FK → `user.id` `on delete cascade`
@@ -52,7 +52,7 @@ deben fallar primero.
 **Purpose**: Validación de la configuración, configuración por entorno y pantalla, resolución del
 alcance y la decisión de R3. Todas las historias dependen de esta fase.
 
-- [ ] T003 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/group-profiles.test.ts` for `parseGroupProfiles(json)` and `mergeProfiles(profiles, userGroups)` (FR-006, FR-008, FR-009, R10), one case per rule:
+- [X] T003 [P] Write failing tests in `apps/dokploy/__test__/oidc-sso/group-profiles.test.ts` for `parseGroupProfiles(json)` and `mergeProfiles(profiles, userGroups)` (FR-006, FR-008, FR-009, R10), one case per rule:
   - valid config;
   - rejected:
     - invalid JSON;
@@ -65,8 +65,8 @@ alcance y la decisión de R3. Todas las historias dependen de esta fase.
     - `include` and `exclude` together;
     - missing `permissions` or `projects`;
   - merge: union of permissions (OR) and of projects, with environments kept per group; groups compared after the same normalization as `normalizeLoginGroups`
-- [ ] T004 Implement `packages/server/src/oidc-sso/domain/group-profiles.ts` (pure, zod) until T003 passes. Errors carry a path such as `developers.permissions[0]: unknown permission "canDeploy"`. On any error the whole set is rejected (FR-009)
-- [ ] T005 [P] Rename `USER_MANAGEMENT_GRANT_TTL_MS` to `SSO_GRANT_TTL_MS` in `packages/server/src/oidc-sso/domain/user-management.ts` and update its imports. Spec 002 tests must pass unchanged in behaviour
+- [X] T004 Implement `packages/server/src/oidc-sso/domain/group-profiles.ts` (pure, zod) until T003 passes. Errors carry a path such as `developers.permissions[0]: unknown permission "canDeploy"`. On any error the whole set is rejected (FR-009)
+- [X] T005 [P] Rename `USER_MANAGEMENT_GRANT_TTL_MS` to `SSO_GRANT_TTL_MS` in `packages/server/src/oidc-sso/domain/user-management.ts` and update its imports. Spec 002 tests must pass unchanged in behaviour
 - [ ] T006 Write failing tests, then add `groupProfiles` to the configuration (FR-001, FR-009, FR-012, R4):
   - tests in `config-env.test.ts`, `config-provider.test.ts` and `config-admin.test.ts`:
     - `SSO_OIDC_GROUP_PROFILES` wins over the stored value and is reported with source `env`;

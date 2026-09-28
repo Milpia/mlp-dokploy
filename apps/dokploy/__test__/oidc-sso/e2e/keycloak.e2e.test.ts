@@ -13,7 +13,7 @@
  */
 import { SsoConfigProvider } from "@dokploy/server/oidc-sso/config/provider";
 import type { LoginState } from "@dokploy/server/oidc-sso/domain/user-management";
-import { USER_MANAGEMENT_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
+import { SSO_GRANT_TTL_MS } from "@dokploy/server/oidc-sso/domain/user-management";
 import type {
 	ProvisioningStore,
 	ProvisioningTx,
@@ -483,7 +483,7 @@ describe.skipIf(!enabled)(
 		it("FR-015: admin1's grant expires 8 hours after the SSO login", async () => {
 			const ctx = setup(spec002Config);
 			const admin1 = await signIn(ctx, "admin1");
-			ctx.clock.now = new Date(Date.now() + USER_MANAGEMENT_GRANT_TTL_MS);
+			ctx.clock.now = new Date(Date.now() + SSO_GRANT_TTL_MS);
 			const { caller } = trpcCaller(ctx, admin1.userId);
 			await expect(caller.user.remove()).rejects.toMatchObject({
 				code: "FORBIDDEN",
