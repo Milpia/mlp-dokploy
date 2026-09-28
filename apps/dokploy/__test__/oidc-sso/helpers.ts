@@ -72,14 +72,17 @@ export const fakeOidc = (
 
 export const fakeEvents = () => {
 	const recorded: AuthEventInput[] = [];
-	const recorder = new AuthEventRecorder({
-		insert: async (event) => {
-			recorded.push(event);
+	const recorder = new AuthEventRecorder(
+		{
+			insert: async (event) => {
+				recorded.push(event);
+			},
+			listRecent: async () => [],
+			count: async () => 0,
+			deleteOlderThan: async () => {},
 		},
-		listRecent: async () => [],
-		count: async () => 0,
-		deleteOlderThan: async () => {},
-	});
+		{ logEvent: () => {} },
+	);
 	return { recorder, recorded };
 };
 
