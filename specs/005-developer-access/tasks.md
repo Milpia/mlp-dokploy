@@ -152,7 +152,7 @@ Todavía no se aplican en el login.
 
 - [X] T019 [US3] Add `oidcSso.groupProfilesCheck` (owner) to `apps/dokploy/server/api/routers/oidc-sso.ts`, returning `missingProjects`, `ambiguousProjects` and `projectsResolved` per group (contracts/trpc-and-guard.md), with tests in `router.test.ts`
 - [X] T020 [US3] Add `oidcSso.memberProfiles` (owner and admin) returning `userId → { groups, appliedAt, expired }`, with tests (FR-011)
-- [ ] T021 [US3] Add the «Group profiles» JSON field to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx`:
+- [X] T021 [US3] Add the «Group profiles» JSON field to `apps/dokploy/components/dashboard/settings/oidc-sso/oidc-sso-settings.tsx`:
   - locked with the env badge when the source is `env`;
   - the validation error shown under the field;
   - the result of `groupProfilesCheck` (projects not found, ambiguous) shown below
