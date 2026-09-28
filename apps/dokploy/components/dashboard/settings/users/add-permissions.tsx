@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { api, type RouterOutputs } from "@/utils/api";
+import { MemberProfileOverwriteNotice } from "../oidc-sso/member-profile-notice";
 
 /** Shape returned by project.allForPermissions (admin only). Used for the permissions UI. */
 type ProjectForPermissions =
@@ -314,6 +315,7 @@ export const AddUserPermissions = ({ userId, role }: Props) => {
 					<DialogTitle>Permissions</DialogTitle>
 					<DialogDescription>Add or remove permissions</DialogDescription>
 				</DialogHeader>
+				<MemberProfileOverwriteNotice userId={userId} />
 				{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
 
 				<Form {...form}>

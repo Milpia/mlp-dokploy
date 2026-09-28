@@ -156,8 +156,8 @@ Todavía no se aplican en el login.
   - locked with the env badge when the source is `env`;
   - the validation error shown under the field;
   - the result of `groupProfilesCheck` (projects not found, ambiguous) shown below
-- [ ] T022 [P] [US3] Create `apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-badge.tsx` («SSO: <groups>») and mount it next to the role badge in `apps/dokploy/components/dashboard/settings/users/show-users.tsx` (upstream mount point)
-- [ ] T023 [US3] Create the overwrite notice in `apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-notice.tsx`: «These permissions come from SSO group(s) …; changes made here are replaced at the user's next SSO login». Mount it below the dialog header in `apps/dokploy/components/dashboard/settings/users/add-permissions.tsx` (upstream mount point). Put the visibility logic in a pure helper, with tests
+- [X] T022 [P] [US3] Create `apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-badge.tsx` («SSO: <groups>») and mount it next to the role badge in `apps/dokploy/components/dashboard/settings/users/show-users.tsx` (upstream mount point)
+- [X] T023 [US3] Create the overwrite notice in `apps/dokploy/components/dashboard/settings/oidc-sso/member-profile-notice.tsx`: «These permissions come from SSO group(s) …; changes made here are replaced at the user's next SSO login». Mount it below the dialog header in `apps/dokploy/components/dashboard/settings/users/add-permissions.tsx` (upstream mount point). Put the visibility logic in a pure helper, with tests
 
 **Checkpoint**: el owner configura y los admins ven de dónde vienen los permisos.
 

@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/table";
 import { authClient } from "@/lib/auth-client";
 import { api } from "@/utils/api";
+import { MemberProfileBadge } from "../oidc-sso/member-profile-notice";
 import { AddUserPermissions } from "./add-permissions";
 import { ChangeRole } from "./change-role";
 
@@ -187,6 +188,7 @@ export const ShowUsers = () => {
 																>
 																	{member.role}
 																</Badge>
+																<MemberProfileBadge userId={member.user.id} />
 															</TableCell>
 															<TableCell className="text-center">
 																<Badge
