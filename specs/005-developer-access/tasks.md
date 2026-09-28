@@ -178,7 +178,7 @@ Todavía no se aplican en el login.
   - the cache is loaded at startup and updated on every store write
 - [X] T025 [US4] Implement `packages/server/src/oidc-sso/member-profile/expiry.ts` (checker + in-memory user cache) until T024 passes, using `SSO_GRANT_TTL_MS`
 - [X] T026 [US4] Create the tRPC middleware `apps/dokploy/server/api/middlewares/member-profile.ts` and chain it in `protectedProcedure` after `userManagementGuard` in `apps/dokploy/server/api/trpc.ts` (upstream). Add a drift test in `apps/dokploy/__test__/oidc-sso/member-profile-drift.test.ts` asserting that the middleware is in the chain of `protectedProcedure` and of a `withPermission(...)` procedure
-- [ ] T027 [US4] Add `oidcSso.memberProfileStatus` (any session) returning `{ managed, groups, expiresAt, expired }`. Show the expired notice with `SignInWithSso` on `apps/dokploy/pages/dashboard/projects.tsx` (upstream mount point) through `member-profile-notice.tsx` (FR-017)
+- [X] T027 [US4] Add `oidcSso.memberProfileStatus` (any session) returning `{ managed, groups, expiresAt, expired }`. Show the expired notice with `SignInWithSso` on `apps/dokploy/pages/dashboard/projects.tsx` (upstream mount point) through `member-profile-notice.tsx` (FR-017)
 - [ ] T028 [US4] Add e2e scenarios to `keycloak.e2e.test.ts`:
   - leaving `developers` and logging in again removes the scope;
   - `last_sso_login_at` 9 h ago hides the projects and records `profile_expired`, and logging in again restores them;

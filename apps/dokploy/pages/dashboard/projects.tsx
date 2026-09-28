@@ -4,11 +4,17 @@ import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { ShowProjects } from "@/components/dashboard/projects/show";
+import { MemberProfileExpiredNotice } from "@/components/dashboard/settings/oidc-sso/member-profile-notice";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { appRouter } from "@/server/api/root";
 
 const Dashboard = () => {
-	return <ShowProjects />;
+	return (
+		<>
+			<MemberProfileExpiredNotice returnTo="/dashboard/projects" />
+			<ShowProjects />
+		</>
+	);
 };
 
 export default Dashboard;
