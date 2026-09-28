@@ -11,6 +11,13 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
 	Table,
 	TableBody,
 	TableCell,
@@ -19,17 +26,21 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { api } from "@/utils/api";
-import { authEventView, eventPagination } from "./auth-event-view";
-
-const PAGE_SIZE = 20;
+import {
+	authEventView,
+	DEFAULT_EVENT_PAGE_SIZE,
+	EVENT_PAGE_SIZES,
+	eventPagination,
+} from "./auth-event-view";
 
 const outcomeVariant = (outcome: string) =>
 	outcome === "success" ? "blue" : "red";
 
 const EventsTable = () => {
 	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState<number>(DEFAULT_EVENT_PAGE_SIZE);
 	const { data, isPending, isFetching } = api.oidcSso.listEvents.useQuery(
-		{ page, pageSize: PAGE_SIZE },
+		{ page, pageSize },
 		{ placeholderData: (previous) => previous },
 	);
 
@@ -111,7 +122,26 @@ const EventsTable = () => {
 					{pages.from}–{pages.to} of {data.total} · page {data.page} of{" "}
 					{pages.pageCount}
 				</span>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="text-sm text-muted-foreground">Rows per page</span>
+					<Select
+						value={String(pageSize)}
+						onValueChange={(value) => {
+							setPageSize(Number(value));
+							setPage(1);
+						}}
+					>
+						<SelectTrigger className="w-[76px] h-8" aria-label="Rows per page">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{EVENT_PAGE_SIZES.map((size) => (
+								<SelectItem key={size} value={String(size)}>
+									{size}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 					{isFetching && (
 						<Loader2 className="animate-spin size-4 text-muted-foreground" />
 					)}
