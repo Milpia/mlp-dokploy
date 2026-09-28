@@ -488,6 +488,7 @@ requirements:
     - MIL-408
     - MIL-409
     - MIL-510
+    - MIL-511
     local_tasks:
     - T004
     - T005
@@ -508,6 +509,7 @@ requirements:
     - T044
     - T052
     - T061
+    - T062
     commits:
     - f3a4a07bc
     - e6c239a0b
@@ -1080,6 +1082,7 @@ requirements:
     - MIL-407
     - MIL-408
     - MIL-409
+    - MIL-511
     local_tasks:
     - T016
     - T017
@@ -1094,6 +1097,7 @@ requirements:
     - T041
     - T042
     - T046
+    - T062
     commits:
     - 30e62ad83
     - 7def99db9
@@ -1748,6 +1752,13 @@ phase_tasks:
     parallel: false
     requirements:
     - FR-013
+  - local_id: T062
+    title: Write one container log line per denied or failed auth event
+    jira: MIL-511
+    parallel: false
+    requirements:
+    - FR-013
+    - NFR-QA-004
 bugs:
 - jira: MIL-421
   summary: La prueba de conexión da por válido un secreto incorrecto con Keycloak (resuelto)

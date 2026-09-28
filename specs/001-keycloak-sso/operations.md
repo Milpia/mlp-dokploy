@@ -251,7 +251,15 @@ reinicia.
 ## 5. Diagnóstico
 
 Cuando un login falla, el usuario ve un mensaje con una **referencia** de 12 caracteres. Búscala en
-la tabla de eventos de la pantalla de settings o en los logs (`OIDC SSO [<referencia>] ...`).
+los eventos de autenticación (Settings › SSO › **Authentication events**) o en los logs del
+contenedor:
+
+- los errores técnicos: `OIDC SSO [<referencia>] <etapa> failed: ...`;
+- cada evento rechazado o con error, sin emails:
+  `OIDC SSO event type=<tipo> outcome=<denied|error> reason=<motivo> ref=<referencia> user=<id> action=<acción> target=<id>`.
+
+`docker logs <contenedor> 2>&1 | grep 'ref=<referencia>'` encuentra la línea sin acceso a la base de
+datos. Los logins correctos no se escriben en el log.
 
 | Código (`?error=`) | Causa habitual |
 |---|---|
