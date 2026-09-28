@@ -36,11 +36,12 @@ La infraestructura que lo despliega vive en `Milpia/mlp-infrastructure`, y la CL
 
 ### Checklist del PR que trae una versión de upstream
 
-- [ ] **Orden y numeración de migraciones.** El fork se basa en un tag publicado de upstream, y las migraciones de Milpia van justo detrás de su última (hoy, `0196_chief_goliath` detrás de la `0195` de `v0.30.7`). Cada versión nueva de upstream traerá sus propias migraciones con esos mismos números. En el PR de sincronización:
+- [ ] **Orden y numeración de migraciones.** El fork se basa en un tag publicado de upstream, y las migraciones de Milpia van justo detrás de su última (hoy, `0196_chief_goliath` y `0197_equal_wallflower` detrás de la `0195` de `v0.30.7`: 198 migraciones en total). Cada versión nueva de upstream traerá sus propias migraciones con esos mismos números. En el PR de sincronización:
   1. Las de upstream conservan su número y su posición. Las de Milpia se mueven detrás: se renombran el `.sql` y el snapshot al número siguiente, y se actualiza su entrada en `apps/dokploy/drizzle/meta/_journal.json`.
   2. El SQL de una migración de Milpia que ya se haya aplicado en algún entorno **no cambia de contenido**. Se hace idempotente (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`), porque al moverla se ejecutará de nuevo.
   3. Drizzle aplica solo las migraciones cuya fecha (`when`) es posterior a la última aplicada, y salta las demás **en silencio**. Toda migración nueva de upstream tiene que tener un `when` posterior al de la última migración de Milpia aplicada en prod. Si no lo tiene, se sube su `when` en el journal, manteniendo el orden, y se anota en el PR.
-  4. Se comprueba el resultado aplicando todas las migraciones sobre una copia de la base de datos de prod o del laboratorio antes del merge.
+  4. Se comprueba que la cadena completa aplica limpia **en una base nueva**: `pnpm --filter=dokploy exec vitest run --config __test__/vitest.config.ts __test__/oidc-sso/db-adapters.test.ts` aplica todas las migraciones del journal, en orden, sobre un PGlite vacío. El PR anota cuántas migraciones hay y cuáles son las de Milpia.
+  5. Se comprueba también aplicándolas sobre una copia de la base de datos de prod o del laboratorio antes del merge.
 - [ ] **Workflows nuevos o cambiados** en `.github/workflows/`. Los que publican en el Docker Hub de Dokploy o usan sus secretos se desactivan en el fork, con `gh workflow disable "<nombre>"`. La imagen de Milpia solo la publica `milpia-image.yml`.
 - [ ] La suite de `oidc-sso` y `pnpm typecheck` pasan sobre el resultado del merge.
 - [ ] `pnpm --filter=dokploy run e2e:oidc all` pasa sobre el resultado del merge, y la matriz regenerada (`e2e:oidc:matrix`) va en el PR. Si un proveedor falla por su propia versión y no por la de upstream, se anota en `specs/004-oidc-provider-compatibility/limitations.md`.
