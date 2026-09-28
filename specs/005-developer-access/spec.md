@@ -20,6 +20,8 @@ El mecanismo es genérico (perfiles y alcances por grupo, definidos en la config
 
 - Q: ¿Cómo se asignan los proyectos a un grupo? → A: Con una lista de proyectos por nombre para cada grupo, en la pantalla de SSO o en una variable de entorno (opción B). Cada proyecto nuevo se añade a la lista a mano.
 - Q: ¿Operan los developers en producción? → A: Operan fuera de producción y en producción solo leen (opción C). Como la solo lectura es de la spec 006, la 005 excluye producción del alcance de developers (no la ven) y la 006 la abrirá en solo lectura.
+- Q: ¿Pueden los developers crear y borrar servicios y entornos dentro de sus proyectos, fuera de producción? → A: No (opción A). Operan lo que ya existe en sus proyectos: desplegar, variables de entorno, dominios y logs. El alta de aplicaciones sigue pasando por el CLI y Vault (spec 013 de infra).
+- Q: Cuando alguien sale del grupo, ¿pierde el acceso solo en su siguiente login por SSO o también tras unas horas? → A: En su siguiente login o, como mucho, 8 horas después de su último login por SSO (opción B, el mismo criterio que la spec 002). Pasado ese plazo, el perfil y el alcance dejan de aplicarse hasta que vuelva a entrar por SSO.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -41,7 +43,7 @@ Una persona del grupo `developers` entra por SSO por primera vez. Ve los proyect
 
 ### User Story 2 - Un developer no puede hacer lo que corresponde a admins y leads (Priority: P1)
 
-Un developer no puede crear ni borrar proyectos, gestionar la infraestructura (Docker, Traefik, SSH keys, servidores, registries), crear proveedores Git, crear claves de API ni gestionar usuarios, ni desde la interfaz ni llamando directamente al servidor.
+Un developer no puede crear ni borrar proyectos, servicios ni entornos, gestionar la infraestructura (Docker, Traefik, SSH keys, servidores, registries), crear proveedores Git, crear claves de API ni gestionar usuarios, ni desde la interfaz ni llamando directamente al servidor.
 
 **Why this priority**: un nivel de confianza menor tiene que serlo de verdad. Sin esta garantía, abrir el acceso a developers amplía el riesgo en prod.
 
@@ -49,7 +51,7 @@ Un developer no puede crear ni borrar proyectos, gestionar la infraestructura (D
 
 **Acceptance Scenarios**:
 
-1. **Given** un developer, **When** intenta crear o borrar un proyecto, **Then** el sistema lo rechaza, en la interfaz y por llamada directa.
+1. **Given** un developer, **When** intenta crear o borrar un proyecto, un servicio o un entorno, **Then** el sistema lo rechaza, en la interfaz y por llamada directa.
 2. **Given** un developer, **When** intenta acceder a Docker, a los archivos de Traefik, a las SSH keys o a los proveedores Git, **Then** el sistema lo rechaza.
 3. **Given** un developer, **When** intenta operar un servicio de un proyecto fuera de su alcance, **Then** el sistema lo rechaza como si el proyecto no existiera para él.
 
@@ -82,6 +84,7 @@ Cuando una persona sale del grupo `developers` o cambia de grupo en el proveedor
 **Acceptance Scenarios**:
 
 1. **Given** un developer, **When** sale del grupo y vuelve a entrar por SSO, **Then** pierde los permisos y el alcance del perfil.
+4. **Given** un developer cuyo último login por SSO fue hace más de 8 horas, **When** abre el panel o intenta operar un servicio, **Then** el perfil y el alcance ya no se aplican y el panel le indica que vuelva a iniciar sesión por SSO; tras hacerlo, recupera el acceso si sigue en el grupo.
 2. **Given** un developer, **When** pasa a `leads` y vuelve a entrar, **Then** entra como admin y el perfil de developer deja de aplicarse.
 3. **Given** el owner cambia el alcance de `developers`, **When** un developer vuelve a entrar por SSO, **Then** ve el alcance nuevo.
 
@@ -105,7 +108,8 @@ Una instancia que actualiza el fork sin configurar perfiles ni alcances se compo
 - Una persona en `developers` y en `leads`: gana el rol más alto (admin) y el perfil de member no se aplica.
 - Una persona en dos grupos con perfil de member (por ejemplo `developers` y, en la spec 006, `qa`): recibe la unión de permisos y de alcances. La spec 006 decide cómo se combina con la solo lectura.
 - El owner está en `developers`: su rol nunca cambia y no se le aplica ningún perfil.
-- Un developer tiene una sesión abierta cuando el owner cambia el perfil: el cambio se aplica en su siguiente login por SSO, no antes.
+- Un developer tiene una sesión abierta cuando el owner cambia el perfil: el cambio se aplica en su siguiente login por SSO o, como mucho, 8 horas después de su último login por SSO (FR-017).
+- Un developer sale del grupo y no vuelve a entrar: conserva el acceso como mucho 8 horas desde su último login por SSO. El owner puede cerrar su sesión si es urgente.
 - El alcance nombra un proyecto que no existe o que se borró: se ignora y el resto del alcance se aplica; la pantalla de SSO lo señala.
 - Se crea un proyecto nuevo: nadie de `developers` lo ve hasta que se añade a la lista de su alcance; a partir de entonces, lo ven en su siguiente login por SSO.
 - Un proyecto se renombra: deja de coincidir con la lista hasta que se actualiza el nombre en ella; la pantalla de SSO señala los nombres de la lista que no existen.
@@ -134,6 +138,7 @@ Una instancia que actualiza el fork sin configurar perfiles ni alcances se compo
 - **FR-014**: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise. Si el usuario tiene un rol personalizado, el sistema MUST NOT aplicarle perfil.
 - **FR-015**: Los nombres de grupo, los permisos de cada perfil y el alcance MUST vivir en la configuración; el código MUST NOT fijar ninguno.
 - **FR-016**: El alcance MUST poder excluir entornos por nombre, para que un grupo opere sus proyectos fuera de producción. En esta spec, un entorno excluido no es visible para el grupo. Ver producción en solo lectura llegará con la spec 006, que añadirá al alcance un nivel de acceso de solo lectura por entorno.
+- **FR-017**: El perfil y el alcance que un member recibe de sus grupos MUST caducar 8 horas después de su último login por SSO. Pasado ese plazo, el sistema MUST dejar de aplicarlos (el member queda sin esos permisos ni ese alcance) y MUST indicarle en el panel que vuelva a iniciar sesión por SSO, sin cerrar su sesión. Los permisos manuales de los members sin perfil de grupo no caducan (FR-005).
 
 ### Key Entities
 
@@ -143,7 +148,8 @@ Una instancia que actualiza el fork sin configurar perfiles ni alcances se compo
 
 ### Non-Functional Requirements
 
-- **NFR-PERF-001**: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO y MUST NOT añadir consultas al resto de peticiones.
+- **NFR-PERF-001**: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
+- **NFR-PERF-002**: Comprobar la caducidad (FR-017) MUST añadir como máximo 5 ms (p95) a cada petición de un member con perfil de grupo, y MUST NOT añadir consultas ni tiempo a las peticiones del owner, de los admins ni de los members sin perfil de grupo.
 - **NFR-SEC-001**: Cualquier error al calcular el perfil o el alcance durante el login (configuración ilegible, fallo de base de datos) MUST resolverse dejando al usuario sin los permisos y el alcance del perfil, nunca con permisos de más, y MUST registrar un evento de error con su referencia.
 - **NFR-SEC-002**: Un member MUST NOT poder ampliar su propio perfil ni su alcance por ninguna vía.
 
@@ -152,17 +158,18 @@ Una instancia que actualiza el fork sin configurar perfiles ni alcances se compo
 ### Measurable Outcomes
 
 - **SC-001**: Un developer nuevo puede desplegar un servicio de uno de sus proyectos en su primer login por SSO, con 0 pasos manuales de un admin.
-- **SC-002**: El 100 % de las acciones fuera del perfil de developer (crear o borrar proyectos, Docker, Traefik, SSH keys, proveedores Git, gestión de usuarios, proyectos fuera de su alcance) se rechazan, tanto desde la interfaz como por llamada directa.
-- **SC-003**: Al sacar a una persona del grupo, pierde el perfil y el alcance en su siguiente login por SSO en el 100 % de los casos.
+- **SC-002**: El 100 % de las acciones fuera del perfil de developer (crear o borrar proyectos, servicios o entornos, Docker, Traefik, SSH keys, proveedores Git, gestión de usuarios, proyectos fuera de su alcance) se rechazan, tanto desde la interfaz como por llamada directa.
+- **SC-003**: Al sacar a una persona del grupo, pierde el perfil y el alcance en su siguiente login por SSO o, como mucho, 8 horas después de su último login por SSO, en el 100 % de los casos.
 - **SC-004**: Una instancia que actualiza sin configurar perfiles no cambia de comportamiento: las pruebas actuales de permisos pasan sin modificarse y ningún permiso manual existente cambia.
 - **SC-005**: El login por SSO de un developer tarda como mucho 50 ms más (p95) que el de un member sin perfil.
 
 ## Assumptions
 
-- La configuración de Milpia para `developers`, que se cerrará en el clarify, parte de la propuesta de infra: ver y operar lo que ya existe en sus proyectos (desplegar, variables de entorno, dominios, backups, logs y monitorización), **sin** crear ni borrar proyectos, servicios ni entornos, **sin** proveedores Git (las apps se despliegan por imagen de GHCR fijada por SHA con el CLI, spec 013 de infra; la GitHub App de Dokploy se borró el 27/09), **sin** Docker, Traefik ni SSH keys, y **sin** API ni CLI (P10: solo admins y leads). Con esa configuración, el perfil de `developers` no otorga ninguno de los permisos individuales, y lo que opera dentro de sus proyectos viene de lo que upstream ya permite a un member en su alcance.
+- La configuración de Milpia para `developers` (confirmada por el owner en el clarify) sigue la propuesta de infra: ver y operar lo que ya existe en sus proyectos (desplegar, variables de entorno, dominios, backups, logs y monitorización), **sin** crear ni borrar proyectos, servicios ni entornos, **sin** proveedores Git (las apps se despliegan por imagen de GHCR fijada por SHA con el CLI, spec 013 de infra; la GitHub App de Dokploy se borró el 27/09), **sin** Docker, Traefik ni SSH keys, y **sin** API ni CLI (P10: solo admins y leads). Con esa configuración, el perfil de `developers` no otorga ninguno de los permisos individuales, y lo que opera dentro de sus proyectos viene de lo que upstream ya permite a un member en su alcance.
 - Lo que un member puede hacer dentro de los servicios de su alcance (desplegar, variables de entorno, dominios, backups, logs) lo fija upstream y esta spec no lo cambia; limitarlo es trabajo de la spec 006 (solo lectura).
 - El entorno de producción de cada proyecto se llama `production`, que es el nombre por defecto de Dokploy. La configuración de Milpia para `developers` será: sus proyectos por nombre, excluyendo el entorno `production`.
+- El alcance cubre todos los servicios de los entornos incluidos, también los que un admin cree después; el developer los ve a partir de su siguiente login por SSO.
 - Hasta la spec 006, los developers no ven producción. Consultar logs o el estado de prod sigue en manos de leads y admins.
-- El perfil se recalcula en el login por SSO, como el rol (spec 001) y el grupo de gestión (spec 002). No hay caducidad por tiempo: el owner puede cerrar la sesión de alguien si un cambio es urgente.
+- El perfil se recalcula en el login por SSO, como el rol (spec 001) y el grupo de gestión (spec 002), y caduca a las 8 horas del último login por SSO, igual que el permiso de gestión de usuarios de la spec 002. Si un cambio es más urgente, el owner cierra la sesión.
 - Infra añadirá `developers` a `SSO_OIDC_ACCESS_GROUP` y a `deploy_access_groups` solo cuando esta spec esté en canary y probada en el lab; antes, los developers no pueden entrar.
 - El acceso al CLI y a la API se controla en infra (oauth2-proxy y Vault). Que un developer tenga o no el permiso de API en Dokploy no le da acceso al CLI.
