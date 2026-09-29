@@ -2,7 +2,7 @@ import { db } from "@dokploy/server/db";
 import { SSO_GRANT_TTL_MS } from "../domain/user-management";
 import { newCorrelationId } from "../events/auth-events";
 import type { OidcSsoServices } from "../services";
-import { memberProfileCache } from "./cache";
+import { memberProfileCache, readOnlyScopeCache } from "./cache";
 import { findProfileWithLogin, type ProfileWithLogin } from "./status";
 import {
 	drizzleMemberProfileStore,
@@ -69,6 +69,7 @@ export const checkMemberProfileExpiry = async (
 				at: now,
 			}),
 		);
+		readOnlyScopeCache.invalidate(user.id);
 		await deps.services.events.record({
 			type: "member_profile",
 			outcome: "denied",
