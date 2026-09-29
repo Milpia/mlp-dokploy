@@ -4,6 +4,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { decideAccess } from "../domain/access-policy";
 import type { SsoIdentity } from "../domain/claims";
 import { type ApplyOutcome, applyGroupProfile } from "../member-profile/apply";
+import { readOnlyScopeCache } from "../member-profile/cache";
 import { drizzleScopeCatalog } from "../member-profile/scope";
 import { drizzleMemberProfileStore } from "../member-profile/store";
 import {
@@ -160,6 +161,9 @@ export const provisionIdentity = async ({
 		}
 		return id;
 	});
+	// Again after the commit: a request between the store's invalidation and
+	// the commit may have cached the scope as it was before this login.
+	if (groupProfiles.length > 0) readOnlyScopeCache.invalidate(userId);
 
 	return { allow: true, userId, isOwner, action: decision.action };
 };

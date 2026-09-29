@@ -36,8 +36,9 @@ export const isReadOnlyEmpty = (sets: ReadOnlySets) =>
 
 /**
  * The read-only scope of a profiled user from memory: a full reload every
- * 5 minutes, and one row after a login invalidated the entry. Errors are
- * thrown so the caller denies (NFR-SEC-001).
+ * 5 minutes, and one row after a login invalidated the entry. A load that
+ * overlaps an invalidation is used for this call only and not kept. Errors
+ * are thrown so the caller denies (NFR-SEC-001).
  */
 export const getReadOnlyScope = async (
 	userId: string,
@@ -45,15 +46,21 @@ export const getReadOnlyScope = async (
 	now: number = Date.now(),
 ): Promise<ReadOnlySets> => {
 	if (readOnlyScopeCache.isStale(now)) {
+		const version = readOnlyScopeCache.version();
 		const rows = await source.list();
-		readOnlyScopeCache.replace(
-			rows.map(({ userId: id, ...scope }) => [id, toSets(scope)]),
-			now,
-		);
+		if (readOnlyScopeCache.version() === version) {
+			readOnlyScopeCache.replace(
+				rows.map(({ userId: id, ...scope }) => [id, toSets(scope)]),
+				now,
+			);
+		}
 	}
 	const cached = readOnlyScopeCache.get(userId);
 	if (cached) return cached;
+	const version = readOnlyScopeCache.version();
 	const sets = toSets(await source.find(userId));
-	readOnlyScopeCache.set(userId, sets);
+	if (readOnlyScopeCache.version() === version) {
+		readOnlyScopeCache.set(userId, sets);
+	}
 	return sets;
 };

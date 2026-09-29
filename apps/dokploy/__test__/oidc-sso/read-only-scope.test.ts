@@ -61,6 +61,64 @@ describe("getReadOnlyScope (spec 006, FR-008, NFR-PERF-001, NFR-SEC-001)", () =>
 		expect(s.list).toHaveBeenCalledTimes(1);
 	});
 
+	it("a row read before an invalidation serves that call but is not kept", async () => {
+		const s = source();
+		await getReadOnlyScope("dev", s, 0);
+		readOnlyScopeCache.invalidate("dev");
+		let release: () => void = () => {};
+		s.find.mockImplementationOnce(async () => {
+			await new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			return { environmentIds: [], serviceIds: [], projectIds: [] };
+		});
+		const pending = getReadOnlyScope("dev", s, 1);
+		await vi.waitFor(() => expect(s.find).toHaveBeenCalledTimes(1));
+		readOnlyScopeCache.invalidate("dev");
+		release();
+		expect(isReadOnlyEmpty(await pending)).toBe(true);
+
+		const next = await getReadOnlyScope("dev", s, 2);
+		expect([...next.environmentIds]).toEqual(["e-prod"]);
+		expect(s.find).toHaveBeenCalledTimes(2);
+	});
+
+	it("a reload that overlaps an invalidation is not kept", async () => {
+		const s = source();
+		let release: () => void = () => {};
+		s.list.mockImplementationOnce(async () => {
+			await new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			return [{ ...DEV, environmentIds: [] }];
+		});
+		const pending = getReadOnlyScope("dev", s, 0);
+		await vi.waitFor(() => expect(s.list).toHaveBeenCalledTimes(1));
+		readOnlyScopeCache.invalidate("dev");
+		release();
+		await pending;
+
+		const next = await getReadOnlyScope("dev", s, 1);
+		expect([...next.environmentIds]).toEqual(["e-prod"]);
+		expect(s.list).toHaveBeenCalledTimes(2);
+	});
+
+	it("another copy of the module, as in another bundle, shares both caches", async () => {
+		vi.resetModules();
+		const copy = await import(
+			"@dokploy/server/oidc-sso/member-profile/cache"
+		);
+		expect(copy.readOnlyScopeCache).not.toBe(readOnlyScopeCache);
+
+		const s = source();
+		await getReadOnlyScope("dev", s, 0);
+		copy.readOnlyScopeCache.invalidate("dev");
+		expect(readOnlyScopeCache.get("dev")).toBeUndefined();
+
+		copy.memberProfileCache.add("new-dev");
+		expect(memberProfileCache.has("new-dev")).toBe(true);
+	});
+
 	it("a user without a row has an empty scope", async () => {
 		const scope = await getReadOnlyScope("other", source(), 0);
 		expect(isReadOnlyEmpty(scope)).toBe(true);
