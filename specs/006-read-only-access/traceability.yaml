@@ -228,7 +228,8 @@ requirements:
     - T030
     - T031
     - T032
-    bugs: []
+    bugs:
+    - MIL-573
     status: planned
   FR-009:
     text: La solo lectura MUST aplicarse solo a members con perfil de grupo; nunca al owner, a los admins ni a members
@@ -786,7 +787,19 @@ phase_tasks:
     parallel: false
     paths: []
     requirements: []
-bugs: []
+bugs:
+- jira: MIL-573
+  summary: La solo lectura no se aplica tras un login por SSO que cambia el conjunto del usuario, hasta reiniciar
+    Dokploy
+  violates:
+  - FR-008
+  breaks:
+  - SC-002
+  detected_in: MIL-551
+  found_by: MIL-570
+  fixed_by: T044 (PR #35, 85eaf61)
+  regression_test: 'apps/dokploy/__test__/oidc-sso/read-only-refresh.test.ts::login, expiry and a new login without
+    a restart: the mutation is still denied'
 orphans:
   requirements_without_issue: []
   tasks_without_requirement:
