@@ -162,7 +162,7 @@ requirements:
     bugs:
     - MIL-545
     - MIL-546
-    status: at_risk
+    status: implemented
   FR-011:
     text: La lista de usuarios MUST indicar, para un member con perfil de grupo, que sus permisos y su alcance vienen
       de sus grupos y que un cambio manual se perderá en su siguiente login por SSO.
@@ -252,7 +252,7 @@ requirements:
     - T028
     bugs:
     - MIL-546
-    status: at_risk
+    status: implemented
   NFR-PERF-001:
     text: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
     tasks:
