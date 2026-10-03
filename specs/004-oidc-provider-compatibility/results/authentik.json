@@ -2,8 +2,8 @@
 	"schema": "oidc-compat/v1",
 	"provider": "authentik",
 	"providerVersion": "2026.8.3",
-	"moduleCommit": "f8b772675e4805ce50a10a8f8b4250db65bc8735",
-	"ranAt": "2026-09-26T16:34:08.191Z",
+	"moduleCommit": "57d293f63e9ec4dd38ca9543e8e4f5e5af0fe23b",
+	"ranAt": "2026-10-03T08:13:59.082Z",
 	"environment": "local",
 	"status": "passed",
 	"scenarios": {
