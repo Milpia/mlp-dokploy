@@ -82,6 +82,7 @@ La solo lectura no depende de la interfaz: se cumple en el servidor, también co
 4. **Given** un member con perfil de grupo y acceso a un servicio, **When** pide la terminal o los logs de un contenedor que no pertenece a ese servicio, **Then** la conexión se rechaza.
 5. **Given** un member con perfil de grupo, **When** pide el log en directo de un despliegue de un servicio fuera de su alcance, o con su perfil caducado, **Then** la conexión se rechaza.
 6. **Given** un usuario con algún entorno de solo lectura, **When** intenta abrir la terminal de un servidor o reiniciar un contenedor desde la vista de Docker del servidor, **Then** el sistema lo rechaza.
+7. **Given** un member cuyo conjunto de solo lectura cambia (porque su perfil caducó o porque la configuración cambió), **When** vuelve a entrar por SSO y, sin que Dokploy se reinicie, intenta un cambio en un entorno que ahora es de solo lectura, **Then** el sistema lo rechaza desde la primera llamada (FR-008, MIL-573).
 
 ---
 

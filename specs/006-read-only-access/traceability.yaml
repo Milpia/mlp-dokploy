@@ -49,7 +49,7 @@ requirements:
     - T006
     - T039
     bugs: []
-    status: planned
+    status: implemented
   FR-002:
     text: En un servicio de un entorno de solo lectura, el sistema MUST permitir ver el proyecto, el entorno, el servicio,
       su estado, su configuración no secreta, sus logs, su monitorización y su historial de despliegues.
@@ -60,7 +60,7 @@ requirements:
     - T019
     - T020
     bugs: []
-    status: planned
+    status: implemented
   FR-003:
     text: 'En un servicio de un entorno de solo lectura, el sistema MUST rechazar: desplegar, volver a desplegar, cancelar
       un despliegue, arrancar, parar o reiniciar; crear, cambiar o borrar variables de entorno, dominios, volúmenes,
@@ -78,7 +78,7 @@ requirements:
     - T016
     - T017
     bugs: []
-    status: planned
+    status: implemented
   FR-003a:
     text: Si un proyecto contiene algún entorno de solo lectura para el usuario, el sistema MUST rechazar que cambie
       las variables de entorno compartidas del proyecto, que borre el proyecto o que lo duplique, y MUST aplicar FR-006
@@ -94,7 +94,7 @@ requirements:
     - T025
     - T026
     bugs: []
-    status: planned
+    status: implemented
   FR-004:
     text: En un servicio de un entorno de solo lectura, el sistema MUST rechazar abrir la terminal de sus contenedores.
       Ver sus logs y estadísticas MUST seguir permitido.
@@ -104,7 +104,7 @@ requirements:
     - T021
     - T022
     bugs: []
-    status: planned
+    status: implemented
   FR-004a:
     text: A un usuario con algún entorno de solo lectura, el sistema MUST rechazarle abrir la terminal de un servidor
       y las acciones de Docker que actúan sobre el servidor y no sobre un servicio concreto (contenedores, volúmenes,
@@ -117,7 +117,7 @@ requirements:
     - T012
     - T030
     bugs: []
-    status: planned
+    status: implemented
   FR-004b:
     text: Al abrir la terminal o los logs de un contenedor, el sistema MUST comprobar, para todo member con perfil de
       grupo (tenga o no entornos de solo lectura), que el contenedor pertenece al servicio por el que se pide, y MUST
@@ -131,7 +131,7 @@ requirements:
     - T031
     - T032
     bugs: []
-    status: planned
+    status: implemented
   FR-004c:
     text: Antes de enviar en directo el log de un despliegue a un member con perfil de grupo, el sistema MUST comprobar
       que el despliegue pertenece a un servicio de su alcance y que su perfil no ha caducado (FR-008), y MUST rechazar
@@ -146,7 +146,7 @@ requirements:
     - T031
     - T032
     bugs: []
-    status: planned
+    status: implemented
   FR-005:
     text: 'Las restricciones de FR-003, FR-003a, FR-004, FR-004a, FR-004b y FR-004c MUST cumplirse en el servidor por
       todas las vías (la interfaz, llamadas directas, claves de API y conexiones WebSocket), con fallo cerrado: un error
@@ -169,7 +169,7 @@ requirements:
     - T022
     - T027
     bugs: []
-    status: planned
+    status: implemented
   FR-006:
     text: En un servicio de un entorno de solo lectura, el sistema MUST mostrar los **nombres** de las variables de entorno
       (del servicio, del entorno y del proyecto) y MUST NOT devolver sus **valores**, por ninguna vía. Lo mismo aplica
@@ -185,7 +185,7 @@ requirements:
     - T020
     - T039
     bugs: []
-    status: planned
+    status: implemented
   FR-006a:
     text: En un servicio de un entorno de solo lectura, el sistema MUST mostrar la lista de backups y su estado (fecha,
       resultado, tamaño) y MUST rechazar descargarlos o leer su contenido, por ninguna vía.
@@ -196,7 +196,7 @@ requirements:
     - T019
     - T020
     bugs: []
-    status: planned
+    status: implemented
   FR-007:
     text: 'Si una persona está en un grupo que da acceso completo a un entorno y en otro que lo da en solo lectura, gana
       el **acceso completo**: los grupos suman, como en la spec 005 (FR-006 de la 005). Un entorno es de solo lectura
@@ -211,7 +211,7 @@ requirements:
     - T025
     - T026
     bugs: []
-    status: planned
+    status: implemented
   FR-008:
     text: La solo lectura MUST recalcularse en cada login por SSO y caducar con el perfil a las 8 horas, como el resto
       de la spec 005.
@@ -230,7 +230,7 @@ requirements:
     - T032
     bugs:
     - MIL-573
-    status: planned
+    status: implemented
   FR-009:
     text: La solo lectura MUST aplicarse solo a members con perfil de grupo; nunca al owner, a los admins ni a members
       sin perfil.
@@ -244,7 +244,7 @@ requirements:
     - T036
     - T037
     bugs: []
-    status: planned
+    status: implemented
   FR-010:
     text: En los servicios de solo lectura, la interfaz MUST indicar que el acceso es de solo lectura y MUST NOT ofrecer
       como disponibles las acciones que FR-003 y FR-004 rechazan.
@@ -255,7 +255,7 @@ requirements:
     - T034
     - T035
     bugs: []
-    status: planned
+    status: implemented
   FR-011:
     text: Un intento rechazado por la solo lectura MUST registrarse en los eventos del SSO (con quién, la acción y el
       servicio) y en el log del contenedor sin emails, como los de la spec 002 y la T062.
@@ -273,7 +273,7 @@ requirements:
     - T017
     - T039
     bugs: []
-    status: planned
+    status: implemented
   FR-012:
     text: Sin ningún entorno marcado como solo lectura, el sistema MUST comportarse exactamente como con la spec 005.
     tasks:
@@ -282,7 +282,7 @@ requirements:
     - T036
     - T037
     bugs: []
-    status: planned
+    status: implemented
   FR-013:
     text: La funcionalidad MUST NOT depender de roles personalizados ni de código bajo licencia enterprise, y los nombres
       de grupo y de entorno MUST vivir en la configuración.
@@ -292,7 +292,7 @@ requirements:
     - T040
     - T041
     bugs: []
-    status: planned
+    status: implemented
   FR-014:
     text: Una configuración de solo lectura inválida (entorno fuera del alcance del grupo, formato incorrecto) MUST rechazarse
       entera con un mensaje, como en la spec 005.
@@ -304,7 +304,7 @@ requirements:
     - T004
     - T010
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-001:
     text: Comprobar la solo lectura MUST añadir como máximo 5 ms (p95) a cada acción de cambio de un member con perfil.
       MUST NOT añadir consultas a las peticiones de lectura tRPC, salvo una carga única del alcance de solo lectura por
@@ -317,7 +317,7 @@ requirements:
     local_tasks:
     - T038
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-001:
     text: Cualquier error al comprobar la solo lectura MUST resolverse denegando la acción.
     tasks:
@@ -330,7 +330,7 @@ requirements:
     - T016
     - T017
     bugs: []
-    status: planned
+    status: implemented
 success_criteria:
   SC-001:
     text: Un usuario de `qa` ve el estado, los logs y el historial de despliegues de todos los servicios de su alcance
