@@ -36,7 +36,7 @@ La infraestructura que lo despliega vive en `Milpia/mlp-infrastructure`, y la CL
 
 ### Checklist del PR que trae una versión de upstream
 
-- [ ] **Orden y numeración de migraciones.** El fork se basa en un tag publicado de upstream, y las migraciones de Milpia van justo detrás de su última (hoy, `0196_chief_goliath` y `0197_equal_wallflower` detrás de la `0195` de `v0.30.7`: 198 migraciones en total). Cada versión nueva de upstream traerá sus propias migraciones con esos mismos números. En el PR de sincronización:
+- [ ] **Orden y numeración de migraciones.** El fork se basa en un tag publicado de upstream, y las migraciones de Milpia van justo detrás de su última (hoy, de `0196_chief_goliath` a `0199_medical_red_shift`, detrás de la `0195` de upstream, que no añadió migraciones en `v0.30.8`: 200 migraciones en total). Cada versión nueva de upstream traerá sus propias migraciones con esos mismos números. En el PR de sincronización:
   1. Las de upstream conservan su número y su posición. Las de Milpia se mueven detrás: se renombran el `.sql` y el snapshot al número siguiente, y se actualiza su entrada en `apps/dokploy/drizzle/meta/_journal.json`.
   2. El SQL de una migración de Milpia que ya se haya aplicado en algún entorno **no cambia de contenido**. Se hace idempotente (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`), porque al moverla se ejecutará de nuevo.
   3. Drizzle aplica solo las migraciones cuya fecha (`when`) es posterior a la última aplicada, y salta las demás **en silencio**. Toda migración nueva de upstream tiene que tener un `when` posterior al de la última migración de Milpia aplicada en prod. Si no lo tiene, se sube su `when` en el journal, manteniendo el orden, y se anota en el PR.
