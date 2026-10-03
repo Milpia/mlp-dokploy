@@ -12,6 +12,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { IS_CLOUD } from "../constants";
 import { db } from "../db";
 import * as schema from "../db/schema";
+import { trustedProxiesAdvanced } from "../oidc-sso/config/trusted-proxies";
 import { oidcSso } from "../oidc-sso/plugin";
 import {
 	getTrustedOrigins,
@@ -91,6 +92,7 @@ const createBetterAuth = () =>
 							httpOnly: true,
 							path: "/",
 						},
+						...trustedProxiesAdvanced(),
 					},
 				}
 			: {}),
