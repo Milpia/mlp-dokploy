@@ -1,9 +1,9 @@
 {
 	"schema": "oidc-compat/v1",
 	"provider": "okta",
-	"providerVersion": "saas 2026-09-26",
-	"moduleCommit": "5a033af2e4192a44574472af40e89f6357c16b6f",
-	"ranAt": "2026-09-26T21:08:30.634Z",
+	"providerVersion": "saas 2026-10-03",
+	"moduleCommit": "57d293f63e9ec4dd38ca9543e8e4f5e5af0fe23b",
+	"ranAt": "2026-10-03T08:10:09.092Z",
 	"environment": "local",
 	"status": "passed",
 	"scenarios": {
