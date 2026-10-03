@@ -17,6 +17,7 @@
 | `SSO_OIDC_ALLOW_INSECURE_HTTP` | `true` \| `false` | solo en desarrollo |
 | `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto `http(s)://host[:puerto]`, sin barra final | origen extra aceptado solo para el login del owner, su segundo factor y el cierre de sesión, en cualquier modo del SSO (spec 003, `specs/003-emergency-origin/contracts/emergency-origin.md`). Un valor inválido se ignora y se registra en el log |
 | `SSO_OIDC_USER_MANAGEMENT_GROUP` | texto o lista separada por comas, máx. 512 caracteres | solo el owner y los miembros de este grupo pueden gestionar usuarios, con un login por SSO de hace menos de 8 horas (spec 002, `specs/002-lead-user-management/contracts/user-management-guard.md`). Vacía o sin definir, rigen las reglas de upstream. Un valor demasiado largo se ignora y se registra en el log |
+| `SSO_OIDC_TRUSTED_PROXIES` | IPs o rangos CIDR (IPv4 o IPv6) separados por comas | proxies que añaden su IP a `X-Forwarded-For` delante de Dokploy. better-auth recorre esa cabecera de derecha a izquierda, salta estos y usa la primera dirección que queda para sus límites por IP (p. ej. los 20 por minuto de `/api/auth/oidc/*`). Vacía o sin definir, rige upstream: solo se acepta una cabecera con una única IP. Una entrada que no es IP ni CIDR la ignora better-auth y la registra en el log. Solo en self-hosted |
 
 - Un valor no válido (p. ej. un modo desconocido) se ignora: se registra un error al arrancar y
   se usa el valor guardado.

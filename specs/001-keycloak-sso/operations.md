@@ -168,6 +168,7 @@ conexión comprueba el secreto revocando un token inventado cuando el proveedor 
 | `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto desde el que el owner puede usar la ruta de emergencia por un túnel (spec 003), p. ej. `http://localhost:3900` |
 | `SSO_OIDC_USER_MANAGEMENT_GROUP` | grupo o lista separada por comas que puede gestionar usuarios (spec 002); vacío, rige upstream |
 | `SSO_OIDC_GROUP_PROFILES` | JSON con los permisos, proyectos y entornos de solo lectura de cada grupo de members (specs 005 y 006, ver «Perfiles por grupo» y «Solo lectura por entorno»); vacío, se gestionan a mano |
+| `SSO_OIDC_TRUSTED_PROXIES` | IPs o CIDR, separados por comas, de los proxies delante de Dokploy que amplían `X-Forwarded-For` (ver «Límites por IP detrás de Cloudflare»); vacío, rige upstream |
 
 - Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen
   bloqueados en ella.
@@ -451,3 +452,17 @@ Estos eventos también salen en el log del contenedor, con `resource=<id>`.
   redirect URI coincida exactamente con la registrada en el proveedor.
 - **SSO-only no afecta a:** las API keys ni los endpoints SAML del SSO enterprise, que siguen
   funcionando en modo SSO-only (decisión explícita).
+- **Límites por IP detrás de Cloudflare:** better-auth limita algunas rutas por IP, por ejemplo
+  20 peticiones por minuto a `/api/auth/oidc/*`. Toma la IP de `X-Forwarded-For`, nunca de la
+  conexión. Sin `SSO_OIDC_TRUSTED_PROXIES` solo acepta esa cabecera si trae una única IP. Cuando
+  Traefik confía en Cloudflare (`trustedIPs`), la cabecera llega como «cliente, edge de
+  Cloudflare» y todo el tráfico caería en un solo contador. Para que cuente por persona:
+  - pon en `SSO_OIDC_TRUSTED_PROXIES` los rangos IPv4 e IPv6 de Cloudflare, los mismos que en
+    `trustedIPs` de Traefik. Traefik no aparece en la cabecera, así que su IP no hace falta; la red
+    de Dokploy (`dokploy-network`) es opcional y solo sirve si hay otro proxy entre Traefik y Dokploy;
+  - despliega la variable a la vez que `trustedIPs`, o antes, nunca después;
+  - el puerto 3000 de Dokploy no debe ser accesible sin pasar por Traefik: quien llegue directo puede
+    escribir su propio `X-Forwarded-For` y elegir la IP con la que se le cuenta.
+- **Sonda de salud:** usa `GET /api/health`, que responde 200 sin sesión ni límites. La raíz, en
+  SSO-only, redirige al inicio de sesión por SSO y acaba recibiendo 429 del límite de
+  `/api/auth/oidc/*`.
