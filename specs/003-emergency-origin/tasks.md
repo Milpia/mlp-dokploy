@@ -173,6 +173,7 @@ ve la configuración efectiva.
   - Confirm with `grep` that no new file imports anything under `/proprietary`.
 - [X] T019 Run `/security-review` on the branch, focused on the `Origin` rewrite (plan.md Complexity Tracking), and resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).
 - [ ] T020 Run the quickstart.md manual scenarios 1–10 and record the results in the PR description. Then tell the infra session the PR number, so MIL-425's image and the L5 lab test can include it (SC-001–SC-005).
+  - Status 2026-10-04: scenarios 1, 4, 5 and 7 passed in the lab (MIL-427 rounds 2 and 3, mlp-deploy-lab #17 and #20). Scenarios 2, 3, 8 and 9 are covered only by `emergency-origin-auth.test.ts` against a real better-auth instance. Scenario 6 was run only for a non-owner, and scenario 10 only by reading `oidc_sso_auth_event`, not the events screen. Still to run by hand: 2, 3, 6, 8, 9 and 10.
 
 ---
 
