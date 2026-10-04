@@ -707,6 +707,15 @@ phase_tasks:
     - SC-003
     - SC-004
 bugs:
+- jira: MIL-535
+  summary: Un developer ve los proveedores Git compartidos con la organización aunque su perfil no los incluya
+  violates: []
+  breaks: []
+  labels:
+  - spec-gap
+  detected_in: MIL-534
+  regression_test: null
+  status: open
 - jira: MIL-545
   summary: La terminal y los logs de contenedor por WebSocket no respetan el alcance del member
   violates:
@@ -715,6 +724,7 @@ bugs:
   - SC-002
   detected_in: null
   regression_test: 'apps/dokploy/__test__/oidc-sso/read-only-wss.test.ts::MIL-545: container of another service is refused'
+  status: closed
 - jira: MIL-546
   summary: Los logs de despliegue en directo no respetan el alcance ni la caducidad del member
   violates:
@@ -724,6 +734,7 @@ bugs:
   - SC-002
   detected_in: MIL-533
   regression_test: 'apps/dokploy/__test__/oidc-sso/read-only-wss.test.ts::MIL-546: deployment log outside the scope is refused'
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement:

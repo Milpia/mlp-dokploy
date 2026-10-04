@@ -137,7 +137,7 @@ requirements:
     - T019
     - T020
     bugs: []
-    status: in_progress
+    status: implemented
   FR-009:
     text: Con el modo SSO-only activo, el sistema MUST aceptar también el origen de emergencia en el cierre de sesión,
       para que el owner termine la sesión de emergencia desde el mismo navegador.

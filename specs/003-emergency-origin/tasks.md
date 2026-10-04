@@ -172,7 +172,8 @@ ve la configuración efectiva.
   - Coverage of `packages/server/src/oidc-sso/**` must stay ≥ 90 % lines, with 100 % branches of `domain/emergency-origin.ts` and `plugin/emergency-origin.ts`.
   - Confirm with `grep` that no new file imports anything under `/proprietary`.
 - [X] T019 Run `/security-review` on the branch, focused on the `Origin` rewrite (plan.md Complexity Tracking), and resolve HIGH/MEDIUM findings before the PR (principle III, NFR-SEC-001, NFR-SEC-002).
-- [ ] T020 Run the quickstart.md manual scenarios 1–10 and record the results in the PR description. Then tell the infra session the PR number, so MIL-425's image and the L5 lab test can include it (SC-001–SC-005).
+- [X] T020 Run the quickstart.md manual scenarios 1–10 and record the results in the PR description. Then tell the infra session the PR number, so MIL-425's image and the L5 lab test can include it (SC-001–SC-005).
+  - Done 2026-10-04 with image dd6f812: scenarios 1, 4, 5 and 7 in the lab rounds of MIL-427 (mlp-deploy-lab #17 and #20); 2, 3, 6, 8, 9 and 10 in mlp-deploy-lab #33, with the tunnel simulated and Keycloak down. Scenario 10 was checked through `oidcSso.listEvents`, the query the events screen renders, not by opening the screen in a browser.
 
 ---
 
