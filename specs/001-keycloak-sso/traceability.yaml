@@ -15,8 +15,8 @@ feature:
   story: MIL-394
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-25T15:36:34Z'
-  synced_from_sha: 6df9585ba8849e40238eaaa8e1956d7338bc3468
+  synced_at: '2026-10-04T10:01:38Z'
+  synced_from_sha: dd6f812f05ba33b378e60e07f0b40f8d524c5ae6
   spec_digest: sha256:f11f271e80daf5fdf9055d712b5ffb7ea3ebbae8ecf163c46261083c68c05b34
 requirements:
   FR-001:
@@ -898,6 +898,7 @@ requirements:
     - MIL-402
     - MIL-404
     - MIL-407
+    - MIL-627
     local_tasks:
     - T020
     - T021
@@ -906,8 +907,10 @@ requirements:
     - T024
     - T031
     - T039
+    - T064
     commits:
     - 65f0deadc
+    - 1375b24cf
     bugs: []
     status: implemented
   NFR-SEC-007:
@@ -1767,6 +1770,12 @@ phase_tasks:
     parallel: false
     requirements:
     - FR-013
+  - local_id: T064
+    title: Read SSO_OIDC_TRUSTED_PROXIES into better-auth advanced.ipAddress.trustedProxies
+    jira: MIL-627
+    parallel: false
+    requirements:
+    - NFR-SEC-006
 bugs:
 - jira: MIL-421
   summary: La prueba de conexión da por válido un secreto incorrecto con Keycloak (resuelto)
@@ -1782,8 +1791,8 @@ bugs:
   - FR-013
   breaks: []
   detected_in: null
-  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-013/MIL-506: an owner login
-    rejected for its origin is recorded as invalid_origin'
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::FR-013/MIL-506: an owner
+    login rejected for its origin is recorded as invalid_origin'
   status: closed
 - jira: MIL-507
   summary: Eventos de error de SSO desde el origen público durante el corte del proveedor
@@ -1800,8 +1809,8 @@ bugs:
   - NFR-QA-004
   breaks: []
   detected_in: null
-  regression_test: 'apps/dokploy/__test__/oidc-sso/login-flow.test.ts::NFR-QA-004/MIL-508: an email linked to
-    another identity gets its own code, not access denied'
+  regression_test: 'apps/dokploy/__test__/oidc-sso/login-flow.test.ts::NFR-QA-004/MIL-508: an email linked
+    to another identity gets its own code, not access denied'
   status: closed
 orphans:
   requirements_without_issue: []
