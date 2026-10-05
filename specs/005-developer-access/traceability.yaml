@@ -715,7 +715,8 @@ bugs:
   - spec-gap
   detected_in: MIL-534
   regression_test: null
-  status: open
+  resolution: accepted-upstream-behaviour
+  status: closed
 - jira: MIL-545
   summary: La terminal y los logs de contenedor por WebSocket no respetan el alcance del member
   violates:
