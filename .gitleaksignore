@@ -1,0 +1,12 @@
+# Test fixtures of the OIDC SSO suite, not real credentials: client secrets and
+# API keys of the throwaway providers that e2e:oidc starts in Docker, and a
+# fake PEM block used to test redaction. One line per gitleaks fingerprint.
+aae3c925b8408717db0978233ad2c67e308df9b0:apps/dokploy/__test__/oidc-sso/providers/authelia/driver.ts:generic-api-key:94
+2b95598b06e53d7968ccecdbfe5cf5702e117d88:apps/dokploy/__test__/oidc-sso/providers/authentik/blueprint.yaml:generic-api-key:69
+2b95598b06e53d7968ccecdbfe5cf5702e117d88:apps/dokploy/__test__/oidc-sso/providers/authentik/driver.ts:generic-api-key:35
+62ef076ed6cd43d750c528285e2ab6898716f327:apps/dokploy/__test__/oidc-sso/providers/fusionauth/driver.ts:generic-api-key:38
+62ef076ed6cd43d750c528285e2ab6898716f327:apps/dokploy/__test__/oidc-sso/providers/fusionauth/kickstart.json:generic-api-key:51
+285f8f1d79421dc438ca4d07abdc812a02938faf:apps/dokploy/__test__/oidc-sso/providers/keycloak/driver.ts:generic-api-key:52
+285f8f1d79421dc438ca4d07abdc812a02938faf:apps/dokploy/__test__/oidc-sso/providers/keycloak/realm.json:generic-api-key:26
+258cf977e4342cb806e0d880c9121652bb09d6e5:apps/dokploy/__test__/oidc-sso/read-only-redact.test.ts:private-key:33
+ca42654d0ccaf7a8650a6b23766cfe8269ee2fc2:apps/dokploy/__test__/oidc-sso/read-only-redact.test.ts:private-key:33
