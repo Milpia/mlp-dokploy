@@ -168,6 +168,35 @@ describe("completeLogin", () => {
 		expect(recorded.at(-1)).toMatchObject({ outcome: "error" });
 	});
 
+	it("NFR-QA-004/MIL-651: a client rejected by the token endpoint is unavailable and says what to check", async () => {
+		const oidc = fakeOidc({
+			exchangeCode: vi.fn(async () => {
+				throw Object.assign(new Error("server responded with an error"), {
+					code: "OAUTH_RESPONSE_BODY_ERROR",
+					error: "unauthorized_client",
+					status: 401,
+				});
+			}),
+		});
+		const { deps, recorded } = makeDeps({ oidc });
+		const log = vi.spyOn(console, "error").mockImplementation(() => {});
+		const result = await completeLogin(deps, {
+			tx,
+			callbackUrl: callback(),
+			redirectUri,
+		});
+		expect(result).toMatchObject({ ok: false, code: "sso_unavailable" });
+		expect(recorded.at(-1)).toMatchObject({
+			type: "sso_login",
+			outcome: "error",
+			reason: "client_auth_failed",
+		});
+		expect(log.mock.calls.flat().join("\n")).toContain(
+			"SSO_OIDC_CLIENT_SECRET",
+		);
+		log.mockRestore();
+	});
+
 	it("rejects an ID token without subject", async () => {
 		const oidc = fakeOidc({
 			exchangeCode: vi.fn(async () => ({ claims: {}, idToken: "t" })),
