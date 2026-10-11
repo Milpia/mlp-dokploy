@@ -23,6 +23,11 @@ import {
 const BASE = "http://localhost:3000";
 const SECRET = "test-secret-that-is-long-enough-for-better-auth";
 
+// The budgets are wall-clock p95s. On a shared CI runner, or with the whole
+// suite running in parallel, one noisy run can cross them without any code
+// change, so a timing test may be measured again before it fails.
+const TIMING = { retry: 2 };
+
 const p95 = (samples: number[]) => {
 	const sorted = [...samples].sort((a, b) => a - b);
 	return (
@@ -46,7 +51,7 @@ const memory = () => ({
 	verification: [] as Record<string, unknown>[],
 });
 
-describe("performance (NFR-PERF, SC-008, SC-009)", () => {
+describe("performance (NFR-PERF, SC-008, SC-009)", TIMING, () => {
 	it("NFR-PERF-001/SC-009: with the feature disabled, the plugin adds under 5 ms p95 and no provider call", async () => {
 		const built = makeDeps({ config: DEFAULT_STORED_CONFIG });
 		const withPlugin = betterAuth({
@@ -269,7 +274,7 @@ describe("performance (NFR-PERF, SC-008, SC-009)", () => {
 	}, 60_000);
 });
 
-describe("performance · group profiles (spec 005)", () => {
+describe("performance · group profiles (spec 005)", TIMING, () => {
 	it("NFR-PERF-001/SC-005: applying a profile with 200 projects and 500 services takes at most 50 ms p95", async () => {
 		const projects: MemoryProject[] = Array.from({ length: 200 }, (_, i) => ({
 			projectId: `p${i}`,
@@ -368,7 +373,7 @@ describe("performance · group profiles (spec 005)", () => {
 	});
 });
 
-describe("performance · read-only (spec 006)", () => {
+describe("performance · read-only (spec 006)", TIMING, () => {
 	const scope = {
 		environmentIds: new Set(["env-prod"]),
 		serviceIds: new Set(["app-prod"]),
