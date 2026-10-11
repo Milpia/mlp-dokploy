@@ -270,7 +270,7 @@ datos. Los logins correctos no se escriben en el log.
 | `sso_identity_mismatch` | El email ya está enlazado a otra identidad del proveedor: el realm se recreó, o el usuario se borró y se volvió a crear. Ver «Desenlazar una cuenta» |
 | `sso_email_unverified` | El proveedor no envía email o no lo marca como verificado |
 | `sso_invalid_response` | La cookie de login caducó (más de 10 minutos), `state` no coincide o el ID token no es válido |
-| `sso_unavailable` | El proveedor no responde en 5 s, error de red o TLS, o secreto incorrecto |
+| `sso_unavailable` | El proveedor no responde en 5 s, error de red o TLS, o secreto incorrecto. Si el proveedor rechaza al cliente, el evento es `sso_login` / `error` / `client_auth_failed` y el log dice `OIDC SSO [<referencia>] client authentication rejected: check the client ID and SSO_OIDC_CLIENT_SECRET`: compara el secreto del contenedor con el del cliente en el proveedor |
 | `sso_clock_skew` | Los relojes difieren en más de 30 s (usa NTP) |
 | `sso_cancelled` | El usuario canceló en el proveedor |
 

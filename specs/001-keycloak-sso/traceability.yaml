@@ -1839,7 +1839,8 @@ bugs:
   - NFR-QA-004
   breaks: []
   detected_in: null
-  regression_test: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/login-flow.test.ts::NFR-QA-004/MIL-651: a client rejected
+    by the token endpoint is unavailable and says what to check'
   status: open
 orphans:
   requirements_without_issue: []
