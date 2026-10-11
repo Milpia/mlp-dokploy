@@ -90,7 +90,7 @@ const PRECONDITION_CODES = new Set([
 export const oidcSsoRouter = createTRPCRouter({
 	publicConfig: publicProcedure.query(() =>
 		IS_CLOUD
-			? { mode: "disabled" as const, buttonLabel: "" }
+			? { mode: "disabled" as const, buttonLabel: "", hideEnterpriseSso: false }
 			: getPublicConfig(getOidcSsoServices()),
 	),
 

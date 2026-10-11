@@ -43,6 +43,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { withoutEnterpriseSsoEntry } from "@/components/dashboard/settings/oidc-sso/enterprise-sso-entry";
 import { TruncateTooltip } from "@/components/shared/truncate-tooltip";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -966,13 +967,20 @@ export default function Page({ children }: Props) {
 
 	const {
 		home: filteredHome,
-		settings: filteredSettings,
+		settings: upstreamSettings,
 		help,
 	} = createMenuForAuthUser({
 		auth,
 		permissions,
 		isCloud: !!isCloud,
 		whitelabeling,
+	});
+	const { data: oidcSso } = api.oidcSso.publicConfig.useQuery();
+	const { data: haveValidLicense } =
+		api.licenseKey.haveValidLicenseKey.useQuery();
+	const filteredSettings = withoutEnterpriseSsoEntry(upstreamSettings, {
+		hide: oidcSso?.hideEnterpriseSso,
+		haveValidLicense,
 	});
 
 	const activeItem = findActiveNavItem(

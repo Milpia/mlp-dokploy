@@ -37,6 +37,11 @@ const read = (env: Env, name: string): string | undefined => {
 	return value ? value : undefined;
 };
 
+// Read on its own, not through readEnvOverrides: it has no stored counterpart
+// and applies even while the integration is disabled.
+export const hidesEnterpriseSsoEntry = (env: Env = process.env): boolean =>
+	read(env, "SSO_OIDC_HIDE_ENTERPRISE_SSO") === "true";
+
 export const normalizeIssuerUrl = (value: string): string | null => {
 	let url: URL;
 	try {
