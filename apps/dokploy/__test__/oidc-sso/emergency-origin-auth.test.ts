@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { readEnvOverrides } from "@dokploy/server/oidc-sso/config/env";
+import { sessionCookieSecure } from "@dokploy/server/oidc-sso/config/session-cookie";
 import { oidcSso } from "@dokploy/server/oidc-sso/plugin/index";
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
@@ -48,7 +49,10 @@ const cookiesFrom = (response: Response): string =>
 		.filter((pair) => !pair.endsWith("="))
 		.join("; ");
 
-const setup = (emergencyOrigin: string | null) => {
+const setup = (
+	emergencyOrigin: string | null,
+	advanced: Record<string, unknown> = {},
+) => {
 	const built = makeDeps({ emergencyOrigin });
 	const memory = {
 		user: [] as Record<string, unknown>[],
@@ -63,7 +67,7 @@ const setup = (emergencyOrigin: string | null) => {
 		database: memoryAdapter(memory),
 		rateLimit: { enabled: false },
 		// better-auth skips origin checks under test unless told otherwise.
-		advanced: { disableOriginCheck: false },
+		advanced: { disableOriginCheck: false, ...advanced },
 		trustedOrigins: async () => [],
 		emailAndPassword: { enabled: true, sendResetPassword: async () => {} },
 		plugins: [
@@ -527,5 +531,60 @@ describe("emergency origin through a real better-auth instance (spec 003)", () =
 				}),
 			]);
 		});
+	});
+});
+
+describe("session cookie (spec 001, NFR-SEC-005, MIL-653)", () => {
+	// The same cookie settings as packages/server/src/lib/auth.ts.
+	const advancedFor = (baseUrl: string | undefined) => ({
+		useSecureCookies: false,
+		defaultCookieAttributes: {
+			sameSite: "lax",
+			secure: sessionCookieSecure({ BETTER_AUTH_URL: baseUrl }),
+			httpOnly: true,
+			path: "/",
+		},
+	});
+	const sessionCookie = (response: Response) =>
+		response.headers
+			.getSetCookie()
+			.find((cookie) => cookie.includes("session_token=")) ?? "";
+
+	it.each([
+		["https://deploy.example.test", true],
+		["http://localhost:3000", false],
+		[undefined, false],
+		["not a url", false],
+	] as const)(
+		"the base URL %s makes the cookie Secure: %s",
+		(baseUrl, secure) => {
+			expect(sessionCookieSecure({ BETTER_AUTH_URL: baseUrl })).toBe(secure);
+		},
+	);
+
+	it("MIL-653: over https the session cookie is Secure and keeps its name", async () => {
+		const ctx = setup(null, advancedFor(BASE));
+		const response = await post(
+			ctx,
+			"/sign-up/email",
+			{ email: OWNER, password: PASSWORD, name: OWNER },
+			{ origin: BASE },
+		);
+		expect(response.status).toBe(200);
+		expect(sessionCookie(response)).toMatch(/^better-auth\.session_token=/);
+		expect(sessionCookie(response)).toMatch(/;\s*Secure/i);
+	});
+
+	it("spec 003: through the http tunnel the owner's cookie is not Secure, or it would never come back", async () => {
+		const ctx = setup(TUNNEL, advancedFor(BASE));
+		await signUp(ctx, OWNER);
+		const response = await post(ctx, "/sign-in/email", {
+			email: OWNER,
+			password: PASSWORD,
+		});
+		expect(response.status).toBe(200);
+		expect(sessionCookie(response)).toMatch(/^better-auth\.session_token=/);
+		expect(sessionCookie(response)).not.toMatch(/;\s*Secure/i);
+		expect(sessionCookie(response)).toMatch(/HttpOnly/i);
 	});
 });
