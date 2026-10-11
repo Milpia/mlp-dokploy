@@ -881,11 +881,13 @@ requirements:
     bugs: []
     status: implemented
   NFR-SEC-005:
-    text: Tras un login por SSO, el sistema MUST emitir una sesión nueva (sin reutilizar identificadores
-      de sesión previos) cuya cookie siga exactamente la política de cookies de sesión de Dokploy (`HttpOnly`,
-      `SameSite=Lax`; `Secure` según la configuración existente de la instancia). La cookie temporal del
-      login MUST ser `HttpOnly`, `SameSite=Lax`, firmada, de 10 minutos como máximo, y `Secure` cuando
-      la petición llega por HTTPS.
+    text: Tras un login por SSO, el sistema MUST emitir una sesión nueva (sin reutilizar identificadores de
+      sesión previos) cuya cookie sea `HttpOnly` y `SameSite=Lax`, y `Secure` cuando la URL base de la instancia
+      (`BETTER_AUTH_URL`) es https; con una URL base http, o sin ella, queda como en upstream. La cookie de
+      sesión MUST conservar su nombre. Las respuestas a peticiones que entran por el origen de emergencia
+      (spec 003), que es un túnel http, MUST emitirla sin `Secure`. La cookie temporal del login MUST ser
+      `HttpOnly`, `SameSite=Lax`, firmada, de 10 minutos como máximo, y `Secure` cuando la petición llega
+      por HTTPS.
     tasks:
     - MIL-401
     - MIL-402
@@ -902,8 +904,9 @@ requirements:
     commits:
     - 0ac9712f0
     - 65f0deadc
-    bugs: []
-    status: implemented
+    bugs:
+    - MIL-653
+    status: at_risk
   NFR-SEC-006:
     text: La ruta web de emergencia y los endpoints de retorno del login MUST limitar los intentos repetidos
       por origen, y los mensajes de error MUST NOT revelar si una cuenta existe.
@@ -1840,6 +1843,15 @@ bugs:
   breaks: []
   detected_in: null
   regression_test: null
+  status: open
+- jira: MIL-653
+  summary: La cookie de sesión se emite sin Secure aunque la instancia se sirva por https
+  violates:
+  - NFR-SEC-005
+  breaks: []
+  detected_in: null
+  regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::MIL-653: over https the
+    session cookie is Secure and keeps its name'
   status: open
 orphans:
   requirements_without_issue: []
