@@ -152,6 +152,22 @@ const isNetworkFailure = (error: unknown): "timeout" | "unreachable" | null => {
 };
 
 /**
+ * The token endpoint refused the client itself, so the cause is the SSO
+ * configuration and not the user or the response. RFC 6749 names it
+ * invalid_client; Keycloak answers a wrong secret with unauthorized_client
+ * and a 401 (MIL-651).
+ */
+export const isClientAuthFailure = (error: unknown): boolean =>
+	errorChain(error).some((item) => {
+		const code = (item as { code?: string }).code;
+		const oauthError = (item as { error?: string }).error;
+		return (
+			code === "OAUTH_RESPONSE_BODY_ERROR" &&
+			(oauthError === "invalid_client" || oauthError === "unauthorized_client")
+		);
+	});
+
+/**
  * Collapses library and network errors into the stable codes shown to users
  * (contracts/http-endpoints.md). Unknown errors map to invalid_response so the
  * login fails closed.
@@ -159,6 +175,7 @@ const isNetworkFailure = (error: unknown): "timeout" | "unreachable" | null => {
 export const mapOidcError = (error: unknown): LoginErrorCode => {
 	if (error instanceof SsoLoginError) return error.code;
 	if (isNetworkFailure(error)) return "sso_unavailable";
+	if (isClientAuthFailure(error)) return "sso_unavailable";
 
 	for (const item of errorChain(error)) {
 		const code = (item as { code?: string }).code;
@@ -172,12 +189,6 @@ export const mapOidcError = (error: unknown): LoginErrorCode => {
 				oauthError === "consent_required"
 				? "sso_cancelled"
 				: "sso_invalid_response";
-		}
-		if (
-			code === "OAUTH_RESPONSE_BODY_ERROR" &&
-			oauthError === "invalid_client"
-		) {
-			return "sso_unavailable";
 		}
 		if (
 			code === "OAUTH_RESPONSE_IS_NOT_JSON" ||

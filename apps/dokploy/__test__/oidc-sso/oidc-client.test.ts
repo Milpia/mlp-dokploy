@@ -1,5 +1,6 @@
 import {
 	createOpenIdClient,
+	isClientAuthFailure,
 	mapOidcError,
 	type OidcSettings,
 } from "@dokploy/server/oidc-sso/oidc/client";
@@ -143,6 +144,29 @@ describe("mapOidcError", () => {
 				Object.assign(new Error("x"), { code: "OAUTH_RESPONSE_IS_NOT_JSON" }),
 			),
 		).toBe("sso_unavailable");
+	});
+
+	it("NFR-QA-004/MIL-651: Keycloak's unauthorized_client (401) is unavailable, not an invalid response", () => {
+		const error = Object.assign(new Error("server responded with an error"), {
+			code: "OAUTH_RESPONSE_BODY_ERROR",
+			error: "unauthorized_client",
+			status: 401,
+			error_description: "Invalid client or Invalid client credentials",
+		});
+		expect(isClientAuthFailure(error)).toBe(true);
+		expect(mapOidcError(error)).toBe("sso_unavailable");
+		expect(mapOidcError(new Error("wrapped", { cause: error }))).toBe(
+			"sso_unavailable",
+		);
+	});
+
+	it("MIL-651: other token endpoint errors are not client authentication failures", () => {
+		const error = Object.assign(new Error("x"), {
+			code: "OAUTH_RESPONSE_BODY_ERROR",
+			error: "invalid_grant",
+		});
+		expect(isClientAuthFailure(error)).toBe(false);
+		expect(mapOidcError(error)).toBe("sso_invalid_response");
 	});
 });
 

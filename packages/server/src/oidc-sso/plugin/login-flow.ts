@@ -8,7 +8,11 @@ import type {
 	ProvisionResult,
 } from "../identity/provisioning";
 import { GroupProfileError, provisionIdentity } from "../identity/provisioning";
-import { mapOidcError, type OidcSettings } from "../oidc/client";
+import {
+	isClientAuthFailure,
+	mapOidcError,
+	type OidcSettings,
+} from "../oidc/client";
 import type { OidcSsoServices } from "../services";
 import type { DenyReason, EffectiveConfig, LoginErrorCode } from "../types";
 
@@ -159,6 +163,12 @@ export const completeLogin = async (
 	} catch (error) {
 		logFailure(correlationId, "code exchange", error);
 		const code = mapOidcError(error);
+		if (isClientAuthFailure(error)) {
+			console.error(
+				`OIDC SSO [${correlationId}] client authentication rejected: check the client ID and SSO_OIDC_CLIENT_SECRET`,
+			);
+			return fail(code, "error", "client_auth_failed");
+		}
 		return fail(code, "error", code);
 	}
 
