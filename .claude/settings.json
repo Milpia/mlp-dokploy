@@ -2,6 +2,12 @@
 	"worktree": {
 		"baseRef": "fresh"
 	},
+	"permissions": {
+		"deny": [
+			"Read(**/proprietary/**)",
+			"Edit(**/proprietary/**)"
+		]
+	},
 	"hooks": {
 		"PostToolUse": [
 			{
