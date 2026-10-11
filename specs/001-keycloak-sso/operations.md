@@ -168,6 +168,7 @@ conexión comprueba el secreto revocando un token inventado cuando el proveedor 
 | `SSO_OIDC_EMERGENCY_ORIGIN` | origen exacto desde el que el owner puede usar la ruta de emergencia por un túnel (spec 003), p. ej. `http://localhost:3900` |
 | `SSO_OIDC_USER_MANAGEMENT_GROUP` | grupo o lista separada por comas que puede gestionar usuarios (spec 002); vacío, rige upstream |
 | `SSO_OIDC_GROUP_PROFILES` | JSON con los permisos, proyectos y entornos de solo lectura de cada grupo de members (specs 005 y 006, ver «Perfiles por grupo» y «Solo lectura por entorno»); vacío, se gestionan a mano |
+| `SSO_OIDC_HIDE_ENTERPRISE_SSO` | `true` oculta del menú de ajustes la entrada «SSO», que es el SSO enterprise de upstream y sin licencia solo muestra una pantalla bloqueada; la configuración de este módulo es «OIDC SSO». Cualquier otro valor, o vacío, la muestra. Con licencia enterprise válida se muestra siempre |
 | `SSO_OIDC_TRUSTED_PROXIES` | IPs o CIDR, separados por comas, de los proxies delante de Dokploy que amplían `X-Forwarded-For` (ver «Límites por IP detrás de Cloudflare»); vacío, rige upstream |
 
 - Las variables mandan sobre lo guardado en la interfaz, y los campos que definen aparecen

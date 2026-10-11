@@ -76,7 +76,7 @@ una migración de Drizzle aditiva.
 | `apps/dokploy/server/api/root.ts` | registrar `oidcSso` | registro de routers |
 | `apps/dokploy/pages/index.tsx` | botón, redirección SSO-only, aviso de emergencia y mensajes de error | pantalla de login única |
 | `apps/dokploy/components/layouts/user-nav.tsx` | logout que pasa por `/api/auth/oidc/sign-out` en SSO-only | FR-010 |
-| `apps/dokploy/components/layouts/side.tsx` | entrada de menú «Keycloak SSO» (solo owner, no cloud) | navegación a la configuración |
+| `apps/dokploy/components/layouts/side.tsx` | entrada de menú «Keycloak SSO» (solo owner, no cloud); una condición más en la entrada «SSO» de upstream para ocultarla con `SSO_OIDC_HIDE_ENTERPRISE_SSO` | navegación a la configuración; FR-026 (el menú es el único sitio donde se decide qué entradas se ven) |
 | `apps/dokploy/esbuild.config.ts`, `apps/dokploy/package.json` | entrada y script del comando de emergencia | patrón de `reset-password` |
 | `apps/dokploy/drizzle/*` | migración generada | obligatorio para las tablas nuevas |
 | `apps/dokploy/package.json` (dev) | `@vitest/coverage-v8`, `@electric-sql/pglite` | cobertura (NFR-QA-001) y pruebas de los adaptadores con Postgres real |

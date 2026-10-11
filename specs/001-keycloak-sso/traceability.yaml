@@ -15,8 +15,8 @@ feature:
   story: MIL-394
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-10-04T10:01:38Z'
-  synced_from_sha: dd6f812f05ba33b378e60e07f0b40f8d524c5ae6
+  synced_at: '2026-10-11T05:07:57Z'
+  synced_from_sha: d7cd8ac189abbacb097ec404685d1727ae84cfa6
   spec_digest: sha256:f11f271e80daf5fdf9055d712b5ffb7ea3ebbae8ecf163c46261083c68c05b34
 requirements:
   FR-001:
@@ -782,6 +782,20 @@ requirements:
     - c26205419
     bugs: []
     status: implemented
+  FR-026:
+    text: 'La instancia MUST poder ocultar del menú de ajustes la entrada «SSO» del SSO enterprise de upstream
+      mediante la variable de entorno `SSO_OIDC_HIDE_ENTERPRISE_SSO=true`. Por defecto (variable ausente o
+      distinta de `true`) la entrada MUST mostrarse como en upstream. Con una licencia enterprise válida la
+      entrada MUST mostrarse siempre, aunque la variable esté activa, porque en ese caso el SSO de upstream
+      prevalece (ver Assumptions). Ocultarla MUST limitarse al menú: no se modifica, bloquea ni elimina nada
+      bajo `/proprietary`, y la página sigue respondiendo como en upstream si se abre por su URL.'
+    tasks:
+    - MIL-671
+    local_tasks:
+    - T065
+    commits: []
+    bugs: []
+    status: planned
   NFR-SEC-001:
     text: 'El flujo de login MUST seguir las buenas prácticas vigentes de seguridad para OAuth 2.0 y OpenID
       Connect (OAuth 2.0 Security Best Current Practice, RFC 9700): flujo de código de autorización con
@@ -1777,6 +1791,12 @@ phase_tasks:
     parallel: false
     requirements:
     - NFR-SEC-006
+  - local_id: T065
+    title: Hide upstream's «SSO» settings entry with SSO_OIDC_HIDE_ENTERPRISE_SSO
+    jira: MIL-671
+    parallel: false
+    requirements:
+    - FR-026
 bugs:
 - jira: MIL-421
   summary: La prueba de conexión da por válido un secreto incorrecto con Keycloak (resuelto)

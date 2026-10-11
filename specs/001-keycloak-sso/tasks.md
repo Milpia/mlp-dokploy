@@ -241,6 +241,7 @@ registrados.
 - [X] T062 Write one container log line per denied or failed auth event (`OIDC SSO event type=… outcome=… reason=… ref=…`, ids only, no email); successful events are not logged and a failing log sink never breaks a login [NFR-QA-004, FR-013]
 - [X] T063 Add a «Rows per page» select to the events dialog (10, 20 or 50, default 10); changing it returns to the first page [FR-013] (owner review in prod, 2026-09-28)
 - [X] T064 Read `SSO_OIDC_TRUSTED_PROXIES` (IPs or CIDR ranges, comma-separated) into better-auth `advanced.ipAddress.trustedProxies`, so its per-IP rate limits (such as `/api/auth/oidc/*`) count each client when Traefik trusts Cloudflare and `X-Forwarded-For` carries «client, edge». Empty keeps upstream. Behavioural tests in `trusted-proxies.test.ts` [NFR-SEC-006] (owner approval, 2026-10-03)
+- [ ] T065 Read `SSO_OIDC_HIDE_ENTERPRISE_SSO` and expose it as a boolean in the public configuration; `side.tsx` hides upstream's «SSO» settings entry when it is `true` and there is no valid enterprise license. Default shows the entry; nothing under `/proprietary` changes. Tests for the three cases (hidden, default, licensed) [FR-026] (owner request, 2026-10-10)
 
 ---
 
