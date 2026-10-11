@@ -9,6 +9,7 @@ import {
 	defaultUserManagementGuardDeps,
 	type UserManagementGuardDeps,
 } from "../user-management/guard";
+import { emergencyCookieHook } from "./emergency-cookie";
 import { createEmergencyOriginHandler } from "./emergency-origin";
 import { createSsoEndpoints, type SsoEndpointDeps } from "./endpoints";
 import { createSsoOnlyGuard } from "./sso-only-guard";
@@ -41,6 +42,7 @@ export const oidcSso = (options: OidcSsoPluginOptions = {}) => {
 				...ssoOnlyGuard.before,
 				createUserManagementHook(resolveUserManagementDeps),
 			],
+			after: [...ssoOnlyGuard.after, emergencyCookieHook],
 		},
 		onRequest: createEmergencyOriginHandler(resolveDeps),
 		rateLimit: [
