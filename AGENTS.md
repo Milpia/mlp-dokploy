@@ -51,6 +51,7 @@ La infraestructura que lo despliega vive en `Milpia/mlp-infrastructure`, y la CL
 Se aplican siempre, salvo que el owner autorice explícitamente lo contrario en la conversación:
 
 - **Nunca** importes, copies, adaptes ni desbloquees código bajo `/proprietary` (licencia DSAL; constitución, principio I).
+- **No leas ni busques** dentro de carpetas `/proprietary` (ni con `cat`, `git show` o `git grep`). Las funciones propias se diseñan desde lo que Milpia necesita y desde la documentación pública de Dokploy. `.claude/settings.json` deniega la lectura y la edición de esas rutas a las herramientas de Claude Code; la shell no queda cubierta, así que esta regla es la que manda. Los archivos de licencia de la raíz sí se pueden leer.
 - **Nunca** hagas push directo a `canary` ni a `main`, ni fuerces un push sobre ellas.
 - **Nunca** pongas secretos en el código, los commits ni el chat. Si encuentras uno hardcodeado, **repórtalo y espera aprobación** antes de tocarlo.
 - **Nunca** crees ni modifiques issues en Jira sin mostrar antes el borrador al owner.
