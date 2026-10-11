@@ -33,7 +33,9 @@ const HOUR = 60 * 60 * 1000;
 const QA = { sub: "kc-qa", email: "qa@example.com", groups: ["qa"] };
 const DEV = { sub: "kc-dev", email: "dev@example.com", groups: ["developers"] };
 
-type Profiles = Parameters<typeof loginSide.provisionIdentity>[0]["groupProfiles"];
+type Profiles = Parameters<
+	typeof loginSide.provisionIdentity
+>[0]["groupProfiles"];
 
 const QA_READ_ONLY: Profiles = [
 	{
@@ -188,9 +190,7 @@ beforeEach(() => {
 
 describe("a login refreshes the read-only scope the guard reads (spec 006, FR-008)", () => {
 	it("the login and the guard sides are separate module copies", () => {
-		expect(loginSide.readOnlyScopeCache).not.toBe(
-			guardSide.readOnlyScopeCache,
-		);
+		expect(loginSide.readOnlyScopeCache).not.toBe(guardSide.readOnlyScopeCache);
 	});
 
 	it("login, expiry and a new login without a restart: the mutation is still denied", async () => {
@@ -200,9 +200,10 @@ describe("a login refreshes the read-only scope the guard reads (spec 006, FR-00
 		});
 
 		const later = new Date(Date.now() + 9 * HOUR);
-		await expect(saveEnvironment(qa, "app-stg", later)).resolves.toMatchObject(
-			{ expiry: { ok: true, outcome: "expired" }, verdict: "pass" },
-		);
+		await expect(saveEnvironment(qa, "app-stg", later)).resolves.toMatchObject({
+			expiry: { ok: true, outcome: "expired" },
+			verdict: "pass",
+		});
 
 		await login(QA, QA_READ_ONLY);
 		await expect(saveEnvironment(qa, "app-stg")).resolves.toMatchObject({

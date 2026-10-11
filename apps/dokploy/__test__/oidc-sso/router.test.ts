@@ -84,7 +84,20 @@ describe("oidcSso router", () => {
 		await expect(caller(null).publicConfig()).resolves.toEqual({
 			mode: "button",
 			buttonLabel: "Sign in with SSO",
+			hideEnterpriseSso: false,
 		});
+	});
+
+	it("FR-026: publicConfig tells the menu to hide upstream's SSO entry only when the variable is true", async () => {
+		vi.stubEnv("SSO_OIDC_HIDE_ENTERPRISE_SSO", "true");
+		await expect(caller(null).publicConfig()).resolves.toMatchObject({
+			hideEnterpriseSso: true,
+		});
+		vi.stubEnv("SSO_OIDC_HIDE_ENTERPRISE_SSO", "1");
+		await expect(caller(null).publicConfig()).resolves.toMatchObject({
+			hideEnterpriseSso: false,
+		});
+		vi.unstubAllEnvs();
 	});
 
 	it.each(["admin", "member"] as const)(

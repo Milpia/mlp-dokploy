@@ -105,9 +105,7 @@ describe("getReadOnlyScope (spec 006, FR-008, NFR-PERF-001, NFR-SEC-001)", () =>
 
 	it("another copy of the module, as in another bundle, shares both caches", async () => {
 		vi.resetModules();
-		const copy = await import(
-			"@dokploy/server/oidc-sso/member-profile/cache"
-		);
+		const copy = await import("@dokploy/server/oidc-sso/member-profile/cache");
 		expect(copy.readOnlyScopeCache).not.toBe(readOnlyScopeCache);
 
 		const s = source();

@@ -1,4 +1,4 @@
-import { normalizeIssuerUrl } from "../config/env";
+import { hidesEnterpriseSsoEntry, normalizeIssuerUrl } from "../config/env";
 import type { ConfigPatch } from "../config/repository";
 import { DEFAULT_GROUPS_CLAIM } from "../domain/claims";
 import { parseGroupProfiles } from "../domain/group-profiles";
@@ -336,10 +336,15 @@ export const testSsoConnection = async (
 
 export const getPublicConfig = async (
 	services: OidcSsoServices,
-): Promise<{ mode: SsoMode; buttonLabel: string }> => {
+): Promise<{
+	mode: SsoMode;
+	buttonLabel: string;
+	hideEnterpriseSso: boolean;
+}> => {
 	const effective = await services.config.getEffective();
 	return {
 		mode: effective.active ? effective.mode : "disabled",
 		buttonLabel: effective.buttonLabel,
+		hideEnterpriseSso: hidesEnterpriseSsoEntry(),
 	};
 };

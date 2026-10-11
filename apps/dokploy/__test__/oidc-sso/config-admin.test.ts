@@ -286,11 +286,12 @@ describe("testSsoConnection (FR-014)", () => {
 });
 
 describe("getPublicConfig", () => {
-	it("FR-003: exposes only the effective mode and the button label", async () => {
+	it("FR-003/FR-026: exposes only the effective mode, the button label and the menu flag", async () => {
 		const { services } = makeServices();
 		await expect(getPublicConfig(services)).resolves.toEqual({
 			mode: "button",
 			buttonLabel: "Sign in with SSO",
+			hideEnterpriseSso: false,
 		});
 	});
 
