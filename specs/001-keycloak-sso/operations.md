@@ -451,6 +451,10 @@ Estos eventos también salen en el log del contenedor, con `resource=<id>`.
   sirve Dokploy siempre detrás de HTTPS.
 - **URL pública:** detrás de un proxy, define `BETTER_AUTH_URL` con la URL pública para que la
   redirect URI coincida exactamente con la registrada en el proveedor.
+- **Cookie de sesión:** lleva `Secure` cuando `BETTER_AUTH_URL` es https, y no lo lleva con una
+  URL http o sin ella (instalaciones locales). Su nombre no cambia, así que las sesiones abiertas
+  siguen valiendo tras actualizar. Por el origen de emergencia, que es un túnel http, se emite sin
+  `Secure` para que el owner pueda mantener la sesión (NFR-SEC-005, MIL-653).
 - **SSO-only no afecta a:** las API keys ni los endpoints SAML del SSO enterprise, que siguen
   funcionando en modo SSO-only (decisión explícita).
 - **Límites por IP detrás de Cloudflare:** better-auth limita algunas rutas por IP, por ejemplo

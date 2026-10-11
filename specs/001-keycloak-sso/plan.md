@@ -70,7 +70,7 @@ una migración de Drizzle aditiva.
 
 | Archivo | Cambio | Por qué es imprescindible |
 |---|---|---|
-| `packages/server/src/lib/auth.ts` | añadir `oidcSso()` a `plugins` | único punto de registro de plugins |
+| `packages/server/src/lib/auth.ts` | añadir `oidcSso()` a `plugins`; `secure` de la cookie de sesión según `BETTER_AUTH_URL` (una expresión en `defaultCookieAttributes`) | único punto de registro de plugins y único sitio donde se fijan los atributos de las cookies (NFR-SEC-005) |
 | `packages/server/src/db/schema/index.ts` | `export * from "./oidc-sso"` | Drizzle y el adaptador de better-auth leen el esquema desde aquí |
 | `packages/server/package.json` | dependencia `openid-client` | R2 |
 | `apps/dokploy/server/api/root.ts` | registrar `oidcSso` | registro de routers |
