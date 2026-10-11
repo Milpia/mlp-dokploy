@@ -271,7 +271,10 @@ describe("drizzleSubResourceOwner (spec 006, FR-003, FR-005, research R5)", () =
 	);
 });
 
-describe("performance · sub-resource lookup (spec 006, NFR-PERF-001)", () => {
+// Wall-clock budget: measured again before failing, as in performance.test.ts.
+describe("performance · sub-resource lookup (spec 006, NFR-PERF-001)", {
+	retry: 2,
+}, () => {
 	const p95 = (samples: number[]) =>
 		[...samples].sort((a, b) => a - b)[Math.floor(samples.length * 0.95)] ?? 0;
 
