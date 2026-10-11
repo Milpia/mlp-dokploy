@@ -49,7 +49,7 @@ Es la URL de retorno que se registra en el proveedor: `<baseURL>/api/auth/oidc/c
 | `sso_email_unverified` | falta el email o no está verificado |
 | `sso_access_denied` | fuera del grupo de acceso, provisioning desactivado, usuario baneado o instancia sin owner |
 | `sso_identity_mismatch` | el email ya está enlazado a otra identidad del proveedor (`identity_conflict`, p. ej. tras recrear el realm). El mensaje no revela que la cuenta exista (NFR-SEC-006); la referencia lleva al evento (MIL-508) |
-| `sso_unavailable` | timeout o error de red o del proveedor |
+| `sso_unavailable` | timeout o error de red o del proveedor, o el proveedor rechaza al cliente en el token endpoint (`invalid_client`, o `unauthorized_client` en Keycloak): client ID o secreto incorrectos. Ese caso se registra con el motivo `client_auth_failed` (MIL-651) |
 | `sso_clock_skew` | el ID token llega caducado o con fecha futura por diferencia de reloj |
 
 ## `GET /api/auth/oidc/sign-out`
