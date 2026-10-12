@@ -18,6 +18,18 @@ export const seed = async () => {
 		await new Promise((resolve) => setTimeout(resolve, 2_000));
 	}
 
+	// The PAT and the discovery document exist before Zitadel's gateway can
+	// reach its own gRPC server: until then the management API answers 503.
+	for (;;) {
+		try {
+			await api("/management/v1/orgs/me");
+			break;
+		} catch (error) {
+			if (Date.now() > deadline) throw error;
+			await new Promise((resolve) => setTimeout(resolve, 2_000));
+		}
+	}
+
 	const { id: projectId } = (await api("/management/v1/projects", {
 		method: "POST",
 		body: JSON.stringify({
