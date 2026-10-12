@@ -793,9 +793,10 @@ requirements:
     - MIL-671
     local_tasks:
     - T065
-    commits: []
+    commits:
+    - ee894454b
     bugs: []
-    status: planned
+    status: implemented
   NFR-SEC-001:
     text: 'El flujo de login MUST seguir las buenas prácticas vigentes de seguridad para OAuth 2.0 y OpenID
       Connect (OAuth 2.0 Security Best Current Practice, RFC 9700): flujo de código de autorización con
@@ -904,9 +905,10 @@ requirements:
     commits:
     - 0ac9712f0
     - 65f0deadc
+    - e62a7a9aa
     bugs:
     - MIL-653
-    status: at_risk
+    status: implemented
   NFR-SEC-006:
     text: La ruta web de emergencia y los endpoints de retorno del login MUST limitar los intentos repetidos
       por origen, y los mensajes de error MUST NOT revelar si una cuenta existe.
@@ -1123,10 +1125,11 @@ requirements:
     commits:
     - 30e62ad83
     - 7def99db9
+    - 46b8be473
     bugs:
     - MIL-508
     - MIL-651
-    status: at_risk
+    status: implemented
   NFR-QA-005:
     text: La funcionalidad MUST documentar la configuración de Keycloak (cliente, URL de retorno, grupos),
       las variables de entorno y los dos procedimientos de emergencia.
@@ -1844,7 +1847,7 @@ bugs:
   detected_in: null
   regression_test: 'apps/dokploy/__test__/oidc-sso/login-flow.test.ts::NFR-QA-004/MIL-651: a client rejected
     by the token endpoint is unavailable and says what to check'
-  status: open
+  status: closed
 - jira: MIL-653
   summary: La cookie de sesión se emite sin Secure aunque la instancia se sirva por https
   violates:
@@ -1853,7 +1856,7 @@ bugs:
   detected_in: null
   regression_test: 'apps/dokploy/__test__/oidc-sso/emergency-origin-auth.test.ts::MIL-653: over https the
     session cookie is Secure and keeps its name'
-  status: open
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement: []
