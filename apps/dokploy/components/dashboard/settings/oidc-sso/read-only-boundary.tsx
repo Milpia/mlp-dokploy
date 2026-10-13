@@ -4,6 +4,26 @@ import { TabsContent } from "@/components/ui/tabs";
 import { api } from "@/utils/api";
 import { isReadOnlyService } from "./member-profile-view";
 
+const NOTICE =
+	"Read-only: you can view this service, its logs and deployments, but not change it.";
+
+export const useReadOnlyService = (serviceId: string): boolean => {
+	const { data } = api.oidcSso.memberProfileStatus.useQuery(undefined, {
+		retry: false,
+	});
+	return isReadOnlyService(data, serviceId);
+};
+
+/**
+ * For the tabs that mix reads and changes (deployments), where a disabled
+ * fieldset would also block «View». The component hides its own change
+ * controls with `useReadOnlyService`.
+ */
+export const ReadOnlyNotice = ({ serviceId }: { serviceId: string }) =>
+	useReadOnlyService(serviceId) ? (
+		<AlertBlock type="info">{NOTICE}</AlertBlock>
+	) : null;
+
 /**
  * Wraps the tabs of a service page that change things (spec 006, FR-010,
  * research R10). For a read-only service it explains why and renders the
@@ -17,16 +37,10 @@ export const ReadOnlyBoundary = ({
 	serviceId: string;
 	children: ReactNode;
 }) => {
-	const { data } = api.oidcSso.memberProfileStatus.useQuery(undefined, {
-		retry: false,
-	});
-	if (!isReadOnlyService(data, serviceId)) return <>{children}</>;
+	if (!useReadOnlyService(serviceId)) return <>{children}</>;
 	return (
 		<div className="flex flex-col gap-4">
-			<AlertBlock type="info">
-				Read-only: you can view this service, its logs and deployments, but not
-				change it.
-			</AlertBlock>
+			<AlertBlock type="info">{NOTICE}</AlertBlock>
 			<fieldset disabled className="m-0 min-w-0 border-0 p-0">
 				{children}
 			</fieldset>

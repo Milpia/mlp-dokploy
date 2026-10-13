@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 import { toast } from "sonner";
+import {
+	ReadOnlyNotice,
+	useReadOnlyService,
+} from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { GithubIcon } from "@/components/icons/data-tools-icons";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -42,6 +46,7 @@ interface Props {
 
 export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 	const { data } = api.application.one.useQuery({ applicationId });
+	const readOnly = useReadOnlyService(applicationId);
 
 	const { mutateAsync: deletePreviewDeployment, isPending } =
 		api.previewDeployment.delete.useMutation();
@@ -81,11 +86,12 @@ export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 					<CardTitle className="text-xl">Preview Deployments</CardTitle>
 					<CardDescription>See all the preview deployments</CardDescription>
 				</div>
-				{data?.isPreviewDeploymentsActive && (
+				{data?.isPreviewDeploymentsActive && !readOnly && (
 					<ShowPreviewSettings applicationId={applicationId} />
 				)}
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
+				<ReadOnlyNotice serviceId={applicationId} />
 				{data?.isPreviewDeploymentsActive ? (
 					<>
 						<div className="flex flex-col gap-2 text-sm">
@@ -231,6 +237,7 @@ export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 																variant="outline"
 																size="sm"
 																isLoading={status === "running"}
+																disabled={readOnly}
 																className="gap-2"
 															>
 																<TooltipProvider>
@@ -264,6 +271,7 @@ export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 															<Button
 																variant="ghost"
 																size="sm"
+																disabled={readOnly}
 																className="gap-2"
 															>
 																<PenSquare className="size-4" />
@@ -282,6 +290,7 @@ export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 																variant="ghost"
 																size="sm"
 																isLoading={isPending}
+																disabled={readOnly}
 																className="text-red-600 hover:text-red-700 hover:bg-red-50"
 															>
 																<Trash2 className="size-4" />
@@ -303,7 +312,7 @@ export const ShowPreviewDeployments = ({ applicationId }: Props) => {
 							Preview deployments are disabled for this application, please
 							enable it
 						</span>
-						<ShowPreviewSettings applicationId={applicationId} />
+						{!readOnly && <ShowPreviewSettings applicationId={applicationId} />}
 					</div>
 				)}
 			</CardContent>
