@@ -14,7 +14,7 @@ feature:
   story: MIL-547
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-28T05:25:38Z'
+  synced_at: '2026-10-13T04:00:00Z'
   synced_from_sha: 49914bf31d55cb5e5b4d39da5681d583b04d1ee1
   spec_digest: sha256:7b0f1e2f6150dedfaf9f6bb05eeada34381d14d3cfbfec02a635068bab60603c
 links:
@@ -254,8 +254,10 @@ requirements:
     - T033
     - T034
     - T035
-    bugs: []
-    status: implemented
+    - T045
+    bugs:
+    - MIL-722
+    status: at_risk
   FR-011:
     text: Un intento rechazado por la solo lectura MUST registrarse en los eventos del SSO (con quién, la acción y el
       servicio) y en el log del contenedor sin emails, como los de la spec 002 y la T062.
@@ -787,6 +789,13 @@ phase_tasks:
     parallel: false
     paths: []
     requirements: []
+  - local_id: T045
+    title: Show the read-only notice and disable the change controls in the Deployments and Preview Deployments tabs
+    jira: MIL-722
+    parallel: false
+    paths: []
+    requirements:
+    - FR-010
 bugs:
 - jira: MIL-573
   summary: La solo lectura no se aplica tras un login por SSO que cambia el conjunto del usuario, hasta reiniciar
@@ -800,6 +809,16 @@ bugs:
   fixed_by: T044 (PR #35, 85eaf61)
   regression_test: 'apps/dokploy/__test__/oidc-sso/read-only-refresh.test.ts::login, expiry and a new login without
     a restart: the mutation is still denied'
+- jira: MIL-722
+  summary: Las pestañas Deployments y Preview Deployments de un servicio de solo lectura muestran botones que parecen
+    disponibles
+  violates:
+  - FR-010
+  breaks: []
+  detected_in: MIL-565
+  found_by: lab check L-1 (2026-10-13)
+  regression_test: null
+  status: open
 orphans:
   requirements_without_issue: []
   tasks_without_requirement:

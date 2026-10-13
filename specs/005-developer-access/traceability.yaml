@@ -14,9 +14,9 @@ feature:
   story: MIL-514
   issue_type: Story
   task_issue_type: Subtask
-  synced_at: '2026-09-28T03:59:54Z'
+  synced_at: '2026-10-13T04:00:00Z'
   synced_from_sha: 5ec916345fe85e4191094eee32d8786ae4150150
-  spec_digest: sha256:5acd56b1f38f3126f5bc2d9b2a458fbc06e90a96126047de5322edea47e3ef51
+  spec_digest: sha256:2d8a5a6e55d0064373e5d0b00c2007e4a7f9475a3689415b7d9dc7eed4fcd66d
 links:
 - type: relates
   issue: MIL-423
@@ -253,6 +253,20 @@ requirements:
     bugs:
     - MIL-546
     status: implemented
+  FR-018:
+    text: 'Con el SSO activado (modo botón o SSO-only), el sistema MUST rechazar a todo usuario con rol `member`, tenga
+      o no perfil de grupo, las acciones que cambian las redes de la instancia: crear, importar, recrear, resincronizar
+      y borrar. Ver las redes MUST seguir permitido. El owner y los admins no cambian. El rechazo MUST cumplirse en
+      el servidor por todas las vías (FR-010) y registrarse en los eventos del SSO. Con el SSO desactivado el sistema
+      MUST comportarse como upstream.'
+    tasks:
+    - MIL-721
+    local_tasks:
+    - T036
+    - T037
+    - T038
+    bugs: []
+    status: planned
   NFR-PERF-001:
     text: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
     tasks:
@@ -706,6 +720,31 @@ phase_tasks:
     - SC-002
     - SC-003
     - SC-004
+  - local_id: T036
+    title: Write the failing tests of the member network guard
+    jira: MIL-721
+    parallel: false
+    paths:
+    - apps/dokploy/__test__/oidc-sso/member-network-guard.test.ts
+    requirements:
+    - FR-018
+  - local_id: T037
+    title: Implement the member network guard and chain it in protectedProcedure
+    jira: MIL-721
+    parallel: false
+    paths:
+    - packages/server/src/oidc-sso/member-profile/network-guard.ts
+    - apps/dokploy/server/api/trpc.ts
+    requirements:
+    - FR-018
+  - local_id: T038
+    title: Re-run lab check L-3 with the new image
+    jira: MIL-721
+    parallel: false
+    paths: []
+    requirements:
+    - FR-018
+    - SC-002
 bugs:
 - jira: MIL-535
   summary: Un developer ve los proveedores Git compartidos con la organización aunque su perfil no los incluya
