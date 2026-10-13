@@ -19,6 +19,7 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session, User } from "better-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { memberNetworkGuard } from "./middlewares/member-network";
 import { memberProfileGuard } from "./middlewares/member-profile";
 import { readOnlyGuard } from "./middlewares/read-only";
 import { userManagementGuard } from "./middlewares/user-management";
@@ -177,7 +178,8 @@ export const protectedProcedure = t.procedure
 	})
 	.use(userManagementGuard)
 	.use(memberProfileGuard)
-	.use(readOnlyGuard);
+	.use(readOnlyGuard)
+	.use(memberNetworkGuard);
 
 export const cliProcedure = t.procedure.use(({ ctx, next }) => {
 	if (

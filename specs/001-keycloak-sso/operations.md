@@ -355,12 +355,19 @@ grupo, sin que un admin tenga que marcarlos a mano. El formato completo está en
 | `sso_login` / `error` / `profile_failed` | falló al aplicar el perfil; el login se deshizo | revisar el log `OIDC SSO [<referencia>] group profile failed` y la base de datos |
 | `member_profile` / `denied` / `profile_expired` | un member llevaba 8 h sin entrar por SSO | nada: al volver a entrar recupera su acceso |
 | `member_profile` / `error` / `check_failed` | falló la comprobación de caducidad; se denegó la petición | revisar el log `OIDC SSO: group profile expiry check failed` |
+| `member_profile` / `denied` / `network_change` | un member intentó crear, importar, recrear, resincronizar o borrar una red | nada: solo el owner y los admins cambian redes |
 
 Los tres también salen en el log del contenedor como `OIDC SSO event … ref=<referencia>` (T062).
 
 Antes de añadir un grupo a `SSO_OIDC_ACCESS_GROUP` (y, en Milpia, a `deploy_access_groups` de
 oauth2-proxy), su perfil tiene que estar configurado. Sin él, sus personas entran sin permisos ni
 proyectos.
+
+**Redes (FR-018).** Las redes son de toda la instancia, no de un proyecto, así que el alcance por
+grupo no las cubre. Con el SSO activo, cualquier usuario con rol `member`, tenga o no perfil de
+grupo, puede ver las redes pero no crearlas, importarlas, recrearlas, resincronizarlas ni borrarlas:
+recibe «Only owners and admins can change networks.» por la interfaz y con su clave de API. Con el
+SSO desactivado el panel se comporta como upstream. No hay variable que lo cambie.
 
 ### Solo lectura por entorno (spec 006)
 
