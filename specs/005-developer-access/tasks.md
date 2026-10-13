@@ -225,13 +225,14 @@ Todavía no se aplican en el login.
 
 ## Phase 9: Redes de la instancia (FR-018, added 2026-10-13)
 
-- [ ] T036 Write the failing tests in `apps/dokploy/__test__/oidc-sso/member-network-guard.test.ts` [FR-018]:
+- [X] T036 Write the failing tests in `apps/dokploy/__test__/oidc-sso/member-network-guard.test.ts` [FR-018]:
   - a member (with and without a group profile) is denied `network.create`, `network.import`, `network.recreate`, `network.resync` and `network.remove`, and the denial records an SSO event;
   - the same member is allowed `network.all`, `network.one`, `network.inspect` and `network.networksToSync`;
   - owner and admin pass untouched; with the SSO disabled every call passes;
   - a drift test: every mutation of the upstream `network` router is in the deny list, so a new upstream mutation fails the test instead of slipping through
-- [ ] T037 Implement the guard in `packages/server/src/oidc-sso/member-profile/network-guard.ts` and chain it in `protectedProcedure` (`apps/dokploy/server/api/trpc.ts`, one line, constitution II) [FR-018]. Document it in `specs/001-keycloak-sso/operations.md`
-- [ ] T038 Re-run lab check L-3 (developer on `milpia-dev`, 2026-10-13: 8 of 9 green, the network deletion was allowed) with the new image: the 9 checks must be green [FR-018, SC-002]
+- [X] T037 Implement the guard in `packages/server/src/oidc-sso/member-profile/network-guard.ts` and chain it in `protectedProcedure` (`apps/dokploy/server/api/trpc.ts`, one line, constitution II) [FR-018]. Document it in `specs/001-keycloak-sso/operations.md`
+- [X] T038 Re-run lab check L-3 (developer on `milpia-dev`, 2026-10-13: 8 of 9 green, the network deletion was allowed) with the new image: the 9 checks must be green [FR-018, SC-002]
+  - result (2026-10-13): 9 of 9 green on canary f733ede (image digest sha256:205fad25…8bc6). `network.remove` and `network.import` by the developer: 403, also with an API key; reads still 200; an admin still changes networks; four `network_change` events recorded. A member without a group profile was not tried in the lab (no such user has access there): the automatic tests cover it
 
 ## Dependencies & Execution Order
 

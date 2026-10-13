@@ -265,8 +265,10 @@ requirements:
     - T036
     - T037
     - T038
+    commits:
+    - d796382cc
     bugs: []
-    status: planned
+    status: implemented
   NFR-PERF-001:
     text: Aplicar el perfil y el alcance MUST añadir como máximo 50 ms (p95) al login por SSO.
     tasks:
