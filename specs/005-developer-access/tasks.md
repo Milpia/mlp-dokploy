@@ -223,7 +223,19 @@ Todavía no se aplican en el login.
 
 ---
 
+## Phase 9: Redes de la instancia (FR-018, added 2026-10-13)
+
+- [ ] T036 Write the failing tests in `apps/dokploy/__test__/oidc-sso/member-network-guard.test.ts` [FR-018]:
+  - a member (with and without a group profile) is denied `network.create`, `network.import`, `network.recreate`, `network.resync` and `network.remove`, and the denial records an SSO event;
+  - the same member is allowed `network.all`, `network.one`, `network.inspect` and `network.networksToSync`;
+  - owner and admin pass untouched; with the SSO disabled every call passes;
+  - a drift test: every mutation of the upstream `network` router is in the deny list, so a new upstream mutation fails the test instead of slipping through
+- [ ] T037 Implement the guard in `packages/server/src/oidc-sso/member-profile/network-guard.ts` and chain it in `protectedProcedure` (`apps/dokploy/server/api/trpc.ts`, one line, constitution II) [FR-018]. Document it in `specs/001-keycloak-sso/operations.md`
+- [ ] T038 Re-run lab check L-3 (developer on `milpia-dev`, 2026-10-13: 8 of 9 green, the network deletion was allowed) with the new image: the 9 checks must be green [FR-018, SC-002]
+
 ## Dependencies & Execution Order
+
+- **Fase 9 (T036–T038)** depende de la fase 2. T036 → T037 → T038; T038 necesita la imagen de canary.
 
 - **Phase 1 → Phase 2 → historias.** Dentro de la fase 2: T003 → T004; T006 → T007; T008 → T009; T010 y T011 → T012.
 - **US1 (T013–T016)** depende de la fase 2. Es el MVP.

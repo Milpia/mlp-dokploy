@@ -16,8 +16,8 @@ feature:
   issue_type: Story
   task_issue_type: Subtask
   synced_at: '2026-10-11T05:07:57Z'
-  synced_from_sha: d7cd8ac189abbacb097ec404685d1727ae84cfa6
-  spec_digest: sha256:f11f271e80daf5fdf9055d712b5ffb7ea3ebbae8ecf163c46261083c68c05b34
+  synced_from_sha: 6ff287676294f6ad3a1017e4fdd4d909f9db1273
+  spec_digest: sha256:ffa159c85557eb2adf7caa8b4ed1c4f4b4e32ee64de9b85139e39ac40f3ad837
 requirements:
   FR-001:
     text: El sistema MUST permitir registrar una conexión con un servidor Keycloak mediante OIDC, indicando

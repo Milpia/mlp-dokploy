@@ -136,11 +136,12 @@ Una instancia que actualiza el fork sin configurar perfiles ni alcances se compo
 - **FR-010**: Las comprobaciones de permisos y de alcance MUST cumplirse en el servidor, también en peticiones que no vienen de la interfaz, con las mismas reglas que upstream aplica hoy a un member con esos permisos y ese alcance.
 - **FR-011**: La lista de usuarios MUST indicar, para un member con perfil de grupo, que sus permisos y su alcance vienen de sus grupos y que un cambio manual se perderá en su siguiente login por SSO.
 - **FR-012**: Los cambios de perfiles y alcances en la pantalla de SSO MUST registrarse en los eventos del SSO como cambios de configuración, igual que el resto de ajustes.
-- **FR-013**: Sin perfiles ni alcances configurados, el sistema MUST comportarse exactamente como hoy.
+- **FR-013**: Sin perfiles ni alcances configurados, el sistema MUST comportarse exactamente como hoy, con la única excepción de FR-018.
 - **FR-014**: La funcionalidad MUST NOT depender de roles personalizados ni de ningún código bajo licencia enterprise. Si el usuario tiene un rol personalizado, el sistema MUST NOT aplicarle perfil.
 - **FR-015**: Los nombres de grupo, los permisos de cada perfil y el alcance MUST vivir en la configuración; el código MUST NOT fijar ninguno.
 - **FR-016**: El alcance MUST poder excluir entornos por nombre, para que un grupo opere sus proyectos fuera de producción. En esta spec, un entorno excluido no es visible para el grupo. Ver producción en solo lectura llegará con la spec 006, que añadirá al alcance un nivel de acceso de solo lectura por entorno.
 - **FR-017**: El perfil y el alcance que un member recibe de sus grupos MUST caducar 8 horas después de su último login por SSO. Pasado ese plazo, el sistema MUST dejar de aplicarlos (el member queda sin esos permisos ni ese alcance) y MUST indicarle en el panel que vuelva a iniciar sesión por SSO, sin cerrar su sesión. Los permisos manuales de los members sin perfil de grupo no caducan (FR-005).
+- **FR-018**: Con el SSO activado (modo botón o SSO-only), el sistema MUST rechazar a todo usuario con rol `member`, tenga o no perfil de grupo, las acciones que cambian las redes de la instancia: crear, importar, recrear, resincronizar y borrar. Ver las redes (listarlas, abrir una, inspeccionarla, ver cuáles faltan por sincronizar) MUST seguir permitido. El owner y los admins no cambian. El rechazo MUST cumplirse en el servidor por todas las vías (FR-010) y registrarse en los eventos del SSO. Con el SSO desactivado el sistema MUST comportarse como upstream. Motivo: las redes son de toda la instancia, no de un proyecto, y el alcance por proyecto no las cubre (decisión del owner del 2026-10-13).
 
 ### Key Entities
 
