@@ -12,6 +12,10 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+	ReadOnlyNotice,
+	useReadOnlyService,
+} from "@/components/dashboard/settings/oidc-sso/read-only-boundary";
 import { AlertBlock } from "@/components/shared/alert-block";
 import { DateTooltip } from "@/components/shared/date-tooltip";
 import { DialogAction } from "@/components/shared/dialog-action";
@@ -60,6 +64,7 @@ export const ShowDeployments = ({
 	refreshToken,
 	serverId,
 }: Props) => {
+	const readOnly = useReadOnlyService(id);
 	const [activeLog, setActiveLog] = useState<
 		RouterOutputs["deployment"]["all"][number] | null
 	>(null);
@@ -158,7 +163,10 @@ export const ShowDeployments = ({
 						See the last 10 deployments for this {type}
 					</CardDescription>
 				</div>
-				<div className="flex flex-row items-center flex-wrap gap-2">
+				<div
+					hidden={readOnly}
+					className="flex flex-row items-center flex-wrap gap-2"
+				>
 					{(type === "application" || type === "compose") && (
 						<ClearDeployments id={id} type={type} />
 					)}
@@ -178,6 +186,7 @@ export const ShowDeployments = ({
 				</div>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
+				<ReadOnlyNotice serviceId={id} />
 				{stuckDeployment && (type === "application" || type === "compose") && (
 					<AlertBlock
 						type="warning"
@@ -285,8 +294,10 @@ export const ShowDeployments = ({
 							const isExpanded = expandedDescriptions.has(
 								deployment.deploymentId,
 							);
+							const canKill = !readOnly && deployment.status === "running";
 							const canDelete =
-								deployment.status === "done" || deployment.status === "error";
+								!readOnly &&
+								(deployment.status === "done" || deployment.status === "error");
 
 							return (
 								<div
@@ -369,7 +380,7 @@ export const ShowDeployments = ({
 										</div>
 
 										<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-											{deployment.pid && deployment.status === "running" && (
+											{deployment.pid && canKill && (
 												<DialogAction
 													title="Kill Process"
 													description="Are you sure you want to kill the process?"
@@ -451,6 +462,7 @@ export const ShowDeployments = ({
 
 											{deployment?.rollback &&
 												deployment.status === "done" &&
+												!readOnly &&
 												type === "application" && (
 													<DialogAction
 														title="Rollback to this deployment"
