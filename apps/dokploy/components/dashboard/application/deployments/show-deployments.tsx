@@ -264,9 +264,10 @@ export const ShowDeployments = ({
 									{webhookUrl}
 									<Copy className="h-4 w-4 ml-2" />
 								</Badge>
-								{(type === "application" || type === "compose") && (
-									<RefreshToken id={id} type={type} />
-								)}
+								{!readOnly &&
+									(type === "application" || type === "compose") && (
+										<RefreshToken id={id} type={type} />
+									)}
 							</div>
 						</div>
 					</div>
