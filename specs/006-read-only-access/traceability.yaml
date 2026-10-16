@@ -257,7 +257,7 @@ requirements:
     - T045
     bugs:
     - MIL-722
-    status: at_risk
+    status: implemented
   FR-011:
     text: Un intento rechazado por la solo lectura MUST registrarse en los eventos del SSO (con quién, la acción y el
       servicio) y en el log del contenedor sin emails, como los de la spec 002 y la T062.
@@ -817,8 +817,9 @@ bugs:
   breaks: []
   detected_in: MIL-565
   found_by: lab check L-1 (2026-10-13)
-  regression_test: null
-  status: open
+  fixed_by: T045 (PR #62, d2d2ae22d; PR #64, 9f69cfb79)
+  regression_test: 'lab check L-1 on b2b27ed19 (2026-10-15): the repo has no component-test tooling'
+  status: closed
 orphans:
   requirements_without_issue: []
   tasks_without_requirement:
