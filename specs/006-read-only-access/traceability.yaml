@@ -789,6 +789,9 @@ phase_tasks:
     parallel: false
     paths: []
     requirements: []
+    status: wont_do
+    reason: 'owner decision (2026-10-17): not reported upstream; the fix is in our image (MIL-545) and the draft stays
+      archived, unsent, in the private repository'
   - local_id: T045
     title: Show the read-only notice and disable the change controls in the Deployments and Preview Deployments tabs
     jira: MIL-722
