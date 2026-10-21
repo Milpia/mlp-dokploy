@@ -69,8 +69,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          title="Falló la verificación semanal de proveedores OIDC"
-          body="La ejecución programada falló: $RUN_URL"
+          title="Weekly OIDC provider verification failed"
+          body="The scheduled run failed: $RUN_URL"
           number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
           if [ -n "$number" ]; then
             gh issue comment "$number" --body "$body"

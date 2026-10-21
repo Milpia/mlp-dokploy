@@ -73,7 +73,7 @@ describe("verification results (spec 004, FR-014)", () => {
 		});
 		expect(result).toMatchObject({
 			status: "skipped",
-			skippedReason: "faltan: OKTA_E2E_ORG_URL, OKTA_E2E_API_TOKEN",
+			skippedReason: "missing: OKTA_E2E_ORG_URL, OKTA_E2E_API_TOKEN",
 		});
 		expect(Object.values(result.scenarios)).toEqual(
 			SCENARIO_IDS.map(() => "pending"),

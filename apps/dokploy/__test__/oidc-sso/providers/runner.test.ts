@@ -168,7 +168,7 @@ describe("provider verification runner (spec 004, SC-005)", () => {
 		expect(deps.battery).not.toHaveBeenCalled();
 		expect(deps.compose).not.toHaveBeenCalled();
 		expect(lines).toEqual([
-			"okta: skipped (faltan: OKTA_E2E_API_TOKEN) → results/okta.json",
+			"okta: skipped (missing: OKTA_E2E_API_TOKEN) → results/okta.json",
 		]);
 	});
 

@@ -77,27 +77,27 @@ describe("compatibility matrix (spec 004, FR-010, FR-014)", () => {
 
 	it("FR-010: version, date and environment columns", () => {
 		expect(markdown).toContain(
-			"| Keycloak | 26.7.4 | 2026-09-26 | local | abcdef1 | pasa |",
+			"| Keycloak | 26.7.4 | 2026-09-26 | local | abcdef1 | pass |",
 		);
 		expect(markdown).toContain("| Authelia | 4.39.28 | 2026-09-27 | ci |");
 	});
 
-	it("FR-014: a provider without results is «no verificado»", () => {
+	it("FR-014: a provider without results is not verified", () => {
 		expect(rows(markdown).find((line) => line.startsWith("| Auth0"))).toMatch(
-			/no verificado/,
+			/not verified/,
 		);
 	});
 
 	it("FR-008: a skipped provider says why", () => {
 		expect(rows(markdown).find((line) => line.startsWith("| Okta"))).toMatch(
-			/no verificado \(faltan: OKTA_E2E_ORG_URL\)/,
+			/not verified \(missing: OKTA_E2E_ORG_URL\)/,
 		);
 	});
 
 	it("data-model: not-applicable sign-out and pending scenarios", () => {
 		const row = rows(markdown).find((line) => line.startsWith("| Authelia"));
-		expect(row).toContain("pasa (sin fin de sesión en el proveedor)");
-		expect(row).toContain("pendiente");
+		expect(row).toContain("pass (no sign-out at the provider)");
+		expect(row).toContain("pending");
 	});
 
 	it("FR-014: limitations are embedded per provider", () => {
