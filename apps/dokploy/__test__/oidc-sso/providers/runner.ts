@@ -59,7 +59,7 @@ const runOne = async (
 		const missing = driver.requiredEnv.filter((name) => !deps.env[name]);
 		if (missing.length > 0) {
 			const file = deps.writeSkipped(id, missing);
-			deps.log(`${id}: skipped (faltan: ${missing.join(", ")}) → ${file}`);
+			deps.log(`${id}: skipped (missing: ${missing.join(", ")}) → ${file}`);
 			return "skipped";
 		}
 	}

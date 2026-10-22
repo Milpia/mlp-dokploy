@@ -73,7 +73,7 @@ export const buildResult = (input: ResultInput): VerificationResult => {
 		return {
 			...common,
 			status: "skipped",
-			skippedReason: `faltan: ${input.skippedMissing.join(", ")}`,
+			skippedReason: `missing: ${input.skippedMissing.join(", ")}`,
 			scenarios: allPending(),
 		};
 	}
