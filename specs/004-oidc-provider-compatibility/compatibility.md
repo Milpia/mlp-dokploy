@@ -6,13 +6,13 @@ Each row summarises the latest run of the common spec 004 scenario suite against
 
 | Provider | Version | Date | Environment | Commit | Group provisioning | Admin role | Access denied | Role change | Sign-out | Connection OK | Bad secret | User management (002) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Keycloak | 26.7.4 | 2026-10-03 | local | 57d293f | pass | pass | pass | pass | pass | pass | pass | pass |
-| Okta | saas 2026-10-11 | 2026-10-11 | local | f69a210 | pass | pass | pass | pass | pass | pass | pass | pass |
-| Auth0 | saas 2026-10-11 | 2026-10-11 | local | f69a210 | pass | pass | pass | pass | pass | pass | pass | pass |
-| Authentik | 2026.8.3 | 2026-10-03 | local | 57d293f | pass | pass | pass | pass | pass | pass | pass | pass |
-| Zitadel | v4.19.0 | 2026-10-03 | local | 57d293f | pass | pass | pass | pass | pass | pass | pass | pass |
-| FusionAuth | 1.69.2 | 2026-10-03 | local | 57d293f | pass | pass | pass | pass | pass | pass | pass | pass |
-| Authelia | 4.39.28 | 2026-10-03 | local | 57d293f | pass | pass | pass | pass | pass (no sign-out at the provider) | pass | pass | pass |
+| Keycloak | 26.7.4 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass | pass | pass | pass |
+| Okta | saas 2026-10-22 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass | pass | pass | pass |
+| Auth0 | saas 2026-10-22 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass | pass | pass | pass |
+| Authentik | 2026.8.3 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass | pass | pass | pass |
+| Zitadel | v4.19.0 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass | pass | pass | pass |
+| FusionAuth | 1.69.2 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass | pass | pass | pass |
+| Authelia | 4.39.28 | 2026-10-22 | local | 7a27d70 | pass | pass | pass | pass | pass (no sign-out at the provider) | pass | pass | pass |
 
 ## Known limitations
 
