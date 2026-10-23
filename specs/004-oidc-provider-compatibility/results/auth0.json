@@ -1,9 +1,9 @@
 {
 	"schema": "oidc-compat/v1",
 	"provider": "auth0",
-	"providerVersion": "saas 2026-10-11",
-	"moduleCommit": "f69a210d333324539d97b29804834d5a52f0e26b",
-	"ranAt": "2026-10-11T03:58:13.015Z",
+	"providerVersion": "saas 2026-10-22",
+	"moduleCommit": "7a27d70080847e21351b91a200a56d40b3bca09c",
+	"ranAt": "2026-10-22T23:21:07.097Z",
 	"environment": "local",
 	"status": "passed",
 	"scenarios": {
