@@ -145,6 +145,9 @@ const createMockDeployment = async (appName: string) => {
 
 async function cleanupDocker(appName: string) {
 	try {
+		// deployApplication runs the app as a Swarm service; left behind, Swarm
+		// retries its task forever and keeps the image in use.
+		await execAsync(`docker service rm ${appName} 2>/dev/null || true`);
 		await execAsync(`docker stop ${appName} 2>/dev/null || true`);
 		await execAsync(`docker rm ${appName} 2>/dev/null || true`);
 		await execAsync(`docker rmi ${appName} 2>/dev/null || true`);
