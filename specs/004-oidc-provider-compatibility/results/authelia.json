@@ -2,8 +2,8 @@
 	"schema": "oidc-compat/v1",
 	"provider": "authelia",
 	"providerVersion": "4.39.28",
-	"moduleCommit": "7a27d70080847e21351b91a200a56d40b3bca09c",
-	"ranAt": "2026-10-22T23:28:13.764Z",
+	"moduleCommit": "b78bd148257b5af0eb8763c8a4ff7f3f8ebbc336",
+	"ranAt": "2026-11-18T05:09:01.935Z",
 	"environment": "local",
 	"status": "passed",
 	"scenarios": {
