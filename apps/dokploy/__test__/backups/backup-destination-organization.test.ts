@@ -10,6 +10,14 @@ const mocks = vi.hoisted(() => ({
 	findDestinationRow: vi.fn(),
 }));
 
+// Milpia (spec 005): the group-profile expiry of members, covered in oidc-sso.
+vi.mock("@dokploy/server/oidc-sso/member-profile/expiry", async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import("@dokploy/server/oidc-sso/member-profile/expiry")
+	>()),
+	checkMemberProfileExpiry: vi.fn(async () => ({ ok: true })),
+}));
+
 vi.mock("@dokploy/server/db", () => ({
 	db: { query: { destinations: { findFirst: mocks.findDestinationRow } } },
 }));

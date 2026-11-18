@@ -53,6 +53,10 @@ const mockValidateRequest = vi.hoisted(() => vi.fn());
 const mockFindServerById = vi.hoisted(() => vi.fn());
 const mockFindDeploymentByLogPath = vi.hoisted(() => vi.fn());
 const mockCheckServiceAccess = vi.hoisted(() => vi.fn());
+// Milpia (spec 006): the read-only deployment-log check, covered in oidc-sso.
+vi.mock("@/server/wss/authorize", () => ({
+	canReadDeploymentLogOverWss: vi.fn(async () => true),
+}));
 vi.mock("@dokploy/server", () => ({
 	IS_CLOUD: false,
 	validateRequest: mockValidateRequest,

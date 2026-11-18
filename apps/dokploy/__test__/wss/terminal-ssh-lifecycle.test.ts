@@ -55,6 +55,8 @@ vi.mock("@dokploy/server", () => ({
 vi.mock("@/server/wss/authorize", () => ({
 	canAccessTerminalOverWss: vi.fn(async () => true),
 	canAccessDockerOverWss: vi.fn(async () => true),
+	// Milpia (spec 006): the read-only container binding, covered in oidc-sso.
+	canUseContainerOverWss: vi.fn(async () => true),
 }));
 vi.mock("@/server/wss/container-ownership", () => ({
 	containerBelongsToService: vi.fn(async () => true),
