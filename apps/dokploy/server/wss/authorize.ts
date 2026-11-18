@@ -38,7 +38,6 @@ export const canAccessDockerOverWss = async (
 	serverId?: string | null,
 	serviceId?: string | null,
 ): Promise<boolean> => {
-	// return false;
 	if (!user || !session?.activeOrganizationId) return false;
 
 	const ctx = buildCtx(user, session.activeOrganizationId);
@@ -80,6 +79,22 @@ export const canAccessDockerOverWss = async (
 	}
 
 	return true;
+};
+
+// Whether a stats request for `appName` targets the service named
+// `serviceAppName`. Applications and databases run as one swarm service named
+// after the app; stack tasks are namespaced "<stack>_<service>". Compose
+// container names are free-form, so the stats socket also filters compose and
+// stack containers by their project/namespace label. `appType` comes from the
+// URL, so any other value is rejected.
+export const isServiceContainerName = (
+	appName: string,
+	appType: string,
+	serviceAppName: string,
+): boolean => {
+	if (appType === "application") return appName === serviceAppName;
+	if (appType === "stack") return appName.startsWith(`${serviceAppName}_`);
+	return appType === "docker-compose";
 };
 
 // Authorizes the host/server SSH terminal opened over a WebSocket. The local
@@ -160,4 +175,26 @@ export const canReadDeploymentLogOverWss = async (
 		defaultDeploymentLogDeps(getOidcSsoServices()),
 	);
 	return result.ok;
+};
+
+// Upstream v0.31 sandboxes: a shell inside a container on a server, opened
+// over a WebSocket that never reaches the tRPC guards. Like a server shell,
+// it is denied to an expired group profile (spec 005, FR-017) and to any
+// read-only scope (spec 006, FR-004a).
+export const canUseSandboxOverWss = async (
+	user: WssUser,
+	session: WssSession,
+): Promise<boolean> => {
+	if (!user || !session?.activeOrganizationId) return false;
+	const expiry = await checkMemberProfileExpiryForUser(
+		user.id,
+		session.activeOrganizationId,
+		defaultMemberProfileExpiryDeps(getOidcSsoServices()),
+	);
+	if (!expiry.ok) return false;
+	const readOnly = await checkServerTerminal(
+		{ userId: user.id, organizationId: session.activeOrganizationId },
+		defaultServerTerminalDeps(getOidcSsoServices()),
+	);
+	return readOnly.ok;
 };

@@ -1,5 +1,6 @@
-import { findUserById, IS_CLOUD } from "@dokploy/server";
+import { findUserById, IS_CLOUD, updateUser } from "@dokploy/server";
 import { getOrganizationOwnerId } from "@dokploy/server/services/proprietary/sso";
+import { TRPCError } from "@trpc/server";
 import Stripe from "stripe";
 import {
 	HOBBY_PRICE_ANNUAL_ID,
@@ -92,6 +93,8 @@ export interface BillingStatus {
 	hasUsedTrial: boolean;
 	hasActiveAccess: boolean;
 	hasPaymentMethod: boolean;
+	isAnnual: boolean;
+	isEnterpriseCloud: boolean;
 }
 
 export const getBillingStatus = async (
@@ -106,6 +109,8 @@ export const getBillingStatus = async (
 			hasUsedTrial: false,
 			hasActiveAccess: true,
 			hasPaymentMethod: true,
+			isAnnual: false,
+			isEnterpriseCloud: false,
 		};
 	}
 
@@ -119,6 +124,8 @@ export const getBillingStatus = async (
 			hasUsedTrial: false,
 			hasActiveAccess: false,
 			hasPaymentMethod: false,
+			isAnnual: false,
+			isEnterpriseCloud: owner?.isEnterpriseCloud ?? false,
 		};
 	}
 
@@ -146,6 +153,9 @@ export const getBillingStatus = async (
 	const hasPaymentMethod =
 		!!currentSub?.default_payment_method ||
 		!!customer?.invoice_settings?.default_payment_method;
+	const isAnnual =
+		(currentSub?.items.data[0]?.price as Stripe.Price | undefined)?.recurring
+			?.interval === "year";
 	const trialEndsAt = trialingSub?.trial_end
 		? new Date(trialingSub.trial_end * 1000)
 		: null;
@@ -164,5 +174,107 @@ export const getBillingStatus = async (
 		hasPaymentMethod,
 		hasUsedTrial: subscriptions.data.length > 0,
 		hasActiveAccess: plan !== null || !!trialingSub,
+		isAnnual,
+		isEnterpriseCloud: owner.isEnterpriseCloud,
 	};
+};
+
+export const startTrial = async (ownerId: string, tier: TrialTier) => {
+	const trialPriceId =
+		tier === "startup" ? STARTUP_BASE_PRICE_MONTHLY_ID : HOBBY_PRICE_MONTHLY_ID;
+	if (!trialPriceId) {
+		throw new TRPCError({
+			code: "INTERNAL_SERVER_ERROR",
+			message: "Trials are not configured",
+		});
+	}
+
+	const owner = await findUserById(ownerId);
+	const billingStatus = await getBillingStatus(owner.id);
+
+	if (billingStatus.hasActiveAccess) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "You already have an active plan or trial",
+		});
+	}
+
+	if (billingStatus.hasUsedTrial) {
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message: "You have already used your free trial",
+		});
+	}
+
+	const stripe = getStripeClient();
+
+	let stripeCustomerId = owner.stripeCustomerId;
+	if (stripeCustomerId) {
+		const customer = await stripe.customers.retrieve(stripeCustomerId);
+		if (customer.deleted) {
+			stripeCustomerId = null;
+		}
+	}
+	if (!stripeCustomerId) {
+		const customer = await stripe.customers.create({ email: owner.email });
+		stripeCustomerId = customer.id;
+	}
+
+	const subscription = await stripe.subscriptions.create({
+		customer: stripeCustomerId,
+		items: [{ price: trialPriceId, quantity: 1 }],
+		trial_period_days: TRIAL_DURATION_DAYS,
+		trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+		metadata: {
+			source: "onboarding_trial",
+			adminId: owner.id,
+			tier,
+		},
+	});
+
+	await updateUser(owner.id, {
+		stripeCustomerId,
+		stripeSubscriptionId: subscription.id,
+		serversQuantity: TRIAL_SERVER_LIMITS[tier],
+	});
+
+	return {
+		owner,
+		trialEndsAt: subscription.trial_end
+			? new Date(subscription.trial_end * 1000)
+			: null,
+	};
+};
+
+const isMissingResource = (error: unknown) =>
+	error instanceof Stripe.errors.StripeError &&
+	error.code === "resource_missing";
+
+export const cancelStripeSubscriptions = async (
+	stripeCustomerId: string,
+	stripe: Stripe = getStripeClient(),
+) => {
+	const subscriptions = await stripe.subscriptions
+		.list({ customer: stripeCustomerId, status: "all", limit: 100 })
+		.catch((error: unknown) => {
+			if (isMissingResource(error)) return null;
+			throw error;
+		});
+
+	const cancelledSubscriptions: string[] = [];
+	for (const subscription of subscriptions?.data ?? []) {
+		if (
+			subscription.status === "canceled" ||
+			subscription.status === "incomplete_expired"
+		) {
+			continue;
+		}
+		await stripe.subscriptions.cancel(subscription.id, {
+			invoice_now: false,
+			prorate: false,
+		});
+		cancelledSubscriptions.push(subscription.id);
+	}
+
+	return { cancelledSubscriptions };
 };

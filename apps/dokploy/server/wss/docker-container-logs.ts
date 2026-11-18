@@ -4,6 +4,7 @@ import { spawn } from "node-pty";
 import { Client } from "ssh2";
 import { WebSocketServer } from "ws";
 import { canAccessDockerOverWss, canUseContainerOverWss } from "./authorize";
+import { containerBelongsToService } from "./container-ownership";
 import {
 	getShell,
 	isValidContainerId,
@@ -87,6 +88,18 @@ export const setupDockerContainerLogsWebSocketServer = (
 				serverId,
 				mode: "logs",
 			}))
+		) {
+			ws.close(4003, "Not authorized");
+			return;
+		}
+		if (
+			serviceId &&
+			!(await containerBelongsToService(
+				serviceId,
+				containerId,
+				serverId,
+				runType,
+			))
 		) {
 			ws.close(4003, "Not authorized");
 			return;
