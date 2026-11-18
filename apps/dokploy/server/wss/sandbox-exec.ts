@@ -8,6 +8,7 @@ import { checkPermission } from "@dokploy/server/services/permission";
 import { type RawData, type WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
 import { apiExecSandbox, SANDBOX_DEFAULTS } from "@/server/db/schema";
+import { canUseSandboxOverWss } from "./authorize";
 
 const execMessage = apiExecSandbox.omit({ sandboxId: true }).extend({
 	type: z.literal("exec"),
@@ -50,6 +51,7 @@ export const setupSandboxExecWebSocketServer = (
 		const authorize = async () => {
 			const { user, session } = await validateRequest(req);
 			if (!user || !session?.activeOrganizationId) return null;
+			if (!(await canUseSandboxOverWss(user, session))) return null;
 			const organizationId = session.activeOrganizationId;
 			try {
 				await checkPermission(

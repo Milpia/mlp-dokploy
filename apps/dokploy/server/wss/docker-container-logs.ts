@@ -4,7 +4,6 @@ import { spawn } from "node-pty";
 import { Client } from "ssh2";
 import { WebSocketServer } from "ws";
 import { canAccessDockerOverWss, canUseContainerOverWss } from "./authorize";
-import { canAccessDockerOverWss } from "./authorize";
 import { containerBelongsToService } from "./container-ownership";
 import {
 	getShell,

@@ -86,7 +86,8 @@
 			"fast-xml-parser": ">=5.12.0 <6.0.0",
 			"ws@>=8.0.0 <8.21.0": "^8.21.0",
 			"@xmldom/xmldom@>=0.8.0 <0.8.15": "^0.8.15",
-			"shell-quote@>=1.1.0 <1.11.0": "~1.11.0"
+			"shell-quote@>=1.1.0 <1.11.0": "~1.11.0",
+			"jose@>=6.0.0 <7.0.0": "6.2.17"
 		},
 		"peerDependencyRules": {
 			"ignoreMissing": [

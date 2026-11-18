@@ -176,3 +176,25 @@ export const canReadDeploymentLogOverWss = async (
 	);
 	return result.ok;
 };
+
+// Upstream v0.31 sandboxes: a shell inside a container on a server, opened
+// over a WebSocket that never reaches the tRPC guards. Like a server shell,
+// it is denied to an expired group profile (spec 005, FR-017) and to any
+// read-only scope (spec 006, FR-004a).
+export const canUseSandboxOverWss = async (
+	user: WssUser,
+	session: WssSession,
+): Promise<boolean> => {
+	if (!user || !session?.activeOrganizationId) return false;
+	const expiry = await checkMemberProfileExpiryForUser(
+		user.id,
+		session.activeOrganizationId,
+		defaultMemberProfileExpiryDeps(getOidcSsoServices()),
+	);
+	if (!expiry.ok) return false;
+	const readOnly = await checkServerTerminal(
+		{ userId: user.id, organizationId: session.activeOrganizationId },
+		defaultServerTerminalDeps(getOidcSsoServices()),
+	);
+	return readOnly.ok;
+};

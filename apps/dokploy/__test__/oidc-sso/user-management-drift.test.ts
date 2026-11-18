@@ -14,6 +14,9 @@ const REVIEWED_NOT_USER_MANAGEMENT = new Set<string>([
 	"user.createApiKey", // the caller's own key
 	"user.deleteApiKey", // checks the key belongs to the caller
 	"user.toggleTemplateBookmark", // the caller's own bookmarks
+	"user.requestAccountDeletionCode", // Dokploy Cloud only: self-hosted rejects it
+	"user.deleteAccount", // Dokploy Cloud only: the caller's own account
+	"user.deleteAccountByEmail", // Dokploy Cloud only: root admins, self-hosted rejects it
 	"organization.create", // a new organization owned by the caller
 	"organization.update", // owner-only upstream
 	"organization.delete", // owner-only upstream

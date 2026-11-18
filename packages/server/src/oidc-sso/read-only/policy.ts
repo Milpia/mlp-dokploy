@@ -154,6 +154,14 @@ export const READ_ONLY_POLICY: Readonly<Record<string, ReadOnlyRule>> = {
 	"project.create": OUTSIDE,
 	"project.completeOnboarding": OUTSIDE,
 	"project.duplicate": environment("sourceEnvironmentId"),
+	// Upstream v0.31: export bundles a whole project, secrets included, so a
+	// read-only scope never exports. Preview only parses the bundle; import
+	// creates a new project, like project.create.
+	"projectExportImport.export": UNBOUND,
+	"projectExportImport.importPreview": OUTSIDE,
+	"projectExportImport.import": OUTSIDE,
+	// Moves a service to another server: it reaches both servers.
+	"transfer.start": UNBOUND,
 
 	"ai.*": OUTSIDE,
 	"ai.deploy": environment(),
@@ -169,6 +177,9 @@ export const READ_ONLY_POLICY: Readonly<Record<string, ReadOnlyRule>> = {
 	"network.*": UNBOUND,
 	"cluster.*": UNBOUND,
 	"server.*": UNBOUND,
+	"serverSecurity.*": UNBOUND,
+	"telemetryProvider.*": UNBOUND,
+	"sandbox.*": UNBOUND,
 	"settings.*": UNBOUND,
 	"certificates.*": UNBOUND,
 	"registry.*": UNBOUND,
