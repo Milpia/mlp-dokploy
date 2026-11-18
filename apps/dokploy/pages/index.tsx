@@ -12,7 +12,6 @@ import {
 	type SsoMode,
 } from "@dokploy/server/oidc-sso/types";
 import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/standard-schema";
-import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Fingerprint } from "lucide-react";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
@@ -46,22 +45,17 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	InputOTP,
-	InputOTPGroup,
-	InputOTPSeparator,
-	InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { SSO_ERROR_MESSAGES, ssoSignInUrl } from "@/lib/oidc-sso";
+import { cn } from "@/lib/utils";
 import { appRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
 import { generateServerSideHelper } from "@/utils/create-server-helpers";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
 
 const LoginSchema = z.object({
-	email: z.string().email(),
+	email: z.string().trim().email(),
 	password: z.string().min(8),
 });
 
@@ -103,8 +97,14 @@ export default function Home({
 	const [isTwoFactor, setIsTwoFactor] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [twoFactorCode, setTwoFactorCode] = useState("");
+	const [twoFactorCaret, setTwoFactorCaret] = useState(0);
+	// Clamped so a caret left over from before the code was cleared can't point past it.
+	const twoFactorCursor = Math.min(twoFactorCaret, twoFactorCode.length);
 	const [isBackupCodeModalOpen, setIsBackupCodeModalOpen] = useState(false);
 	const [backupCode, setBackupCode] = useState("");
+	const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+	const hasCustomPasswordReset = !IS_CLOUD && !!whitelabeling?.supportEmail;
 	const loginForm = useForm<LoginForm>({
 		resolver: zodResolver(LoginSchema),
 		defaultValues: {
@@ -216,12 +216,15 @@ export default function Home({
 			toast.error("Please enter a valid 6-digit code");
 			return;
 		}
+		await verifyTwoFactorCode(twoFactorCode);
+	};
+
+	const verifyTwoFactorCode = async (code: string) => {
+		if (isTwoFactorLoading) return;
 
 		setIsTwoFactorLoading(true);
 		try {
-			const { error } = await authClient.twoFactor.verifyTotp({
-				code: twoFactorCode.replace(/\s/g, ""),
-			});
+			const { error } = await authClient.twoFactor.verifyTotp({ code });
 
 			if (error) {
 				toast.error(error.message);
@@ -342,6 +345,18 @@ export default function Home({
 		</>
 	);
 
+	const forgotPasswordContent = (
+		<div className="flex flex-col gap-4">
+			<p className="text-sm text-muted-foreground whitespace-pre-line">
+				{whitelabeling?.passwordResetGuide ||
+					"To reset your password, please contact your administrator. They will help you regain access to your account."}
+			</p>
+			<Button className="w-full" asChild>
+				<a href={`mailto:${whitelabeling?.supportEmail}`}>Get Support</a>
+			</Button>
+		</div>
+	);
+
 	return (
 		<>
 			<div className="flex flex-col space-y-2 text-center">
@@ -352,6 +367,11 @@ export default function Home({
 							logoUrl={
 								whitelabeling?.loginLogoUrl ||
 								whitelabeling?.logoUrl ||
+								undefined
+							}
+							logoLightUrl={
+								whitelabeling?.loginLogoLightUrl ||
+								whitelabeling?.logoLightUrl ||
 								undefined
 							}
 						/>
@@ -382,20 +402,24 @@ export default function Home({
 			)}
 			<CardContent className="p-0">
 				{!isTwoFactor ? (
-					<>
-						{isSsoOnly ? (
-							<SignInWithSso
-								label={sso.buttonLabel}
-								returnTo={returnTo ?? undefined}
-							/>
-						) : enforceSSO ? (
-							<SignInWithSSO enforce />
-						) : showSignInWithSSO ? (
-							<SignInWithSSO>{loginContent}</SignInWithSSO>
-						) : (
-							loginContent
-						)}
-					</>
+					showForgotPassword ? (
+						forgotPasswordContent
+					) : (
+						<>
+							{isSsoOnly ? (
+								<SignInWithSso
+									label={sso.buttonLabel}
+									returnTo={returnTo ?? undefined}
+								/>
+							) : enforceSSO ? (
+								<SignInWithSSO enforce />
+							) : showSignInWithSSO ? (
+								<SignInWithSSO>{loginContent}</SignInWithSSO>
+							) : (
+								loginContent
+							)}
+						</>
+					)
 				) : (
 					<>
 						<form
@@ -407,27 +431,44 @@ export default function Home({
 						>
 							<div className="flex flex-col gap-2">
 								<Label htmlFor="totp-code">2FA Code</Label>
-								<InputOTP
-									id="totp-code"
-									name="totp"
-									value={twoFactorCode}
-									onChange={setTwoFactorCode}
-									maxLength={6}
-									pattern={REGEXP_ONLY_DIGITS}
-									autoFocus
-								>
-									<InputOTPGroup>
-										<InputOTPSlot index={0} />
-										<InputOTPSlot index={1} />
-										<InputOTPSlot index={2} />
-									</InputOTPGroup>
-									<InputOTPSeparator />
-									<InputOTPGroup>
-										<InputOTPSlot index={3} />
-										<InputOTPSlot index={4} />
-										<InputOTPSlot index={5} />
-									</InputOTPGroup>
-								</InputOTP>
+								{/* Visible input so password managers can autofill it */}
+								<div className="group relative isolate w-56">
+									<Input
+										id="totp-code"
+										name="totp"
+										value={twoFactorCode}
+										onChange={(e) => {
+											const code = e.target.value.replace(/\D/g, "");
+											setTwoFactorCode(code);
+											setTwoFactorCaret(e.target.selectionStart ?? code.length);
+											if (code.length === 6) verifyTwoFactorCode(code);
+										}}
+										onSelect={(e) =>
+											setTwoFactorCaret(e.currentTarget.selectionStart ?? 0)
+										}
+										autoComplete="one-time-code"
+										inputMode="numeric"
+										maxLength={6}
+										readOnly={isTwoFactorLoading}
+										autoFocus
+										className={cn(
+											"h-8 border-0 py-0 pr-0 pl-[calc((2rem_-_1ch)/2)] font-mono text-base tracking-[calc(2rem_-_1ch)] focus-visible:ring-0 md:text-base dark:bg-transparent",
+											twoFactorCursor === 6 && "caret-transparent",
+										)}
+									/>
+									<div
+										aria-hidden
+										className="pointer-events-none absolute inset-y-0 left-0 -z-10 flex"
+									>
+										{[0, 1, 2, 3, 4, 5].map((slot) => (
+											<div
+												key={slot}
+												data-active={slot === Math.min(twoFactorCursor, 5)}
+												className="relative size-8 border-y border-r border-input first:rounded-l-lg first:border-l last:rounded-r-lg dark:bg-input/30 group-focus-within:data-[active=true]:z-10 group-focus-within:data-[active=true]:border-ring group-focus-within:data-[active=true]:ring-3 group-focus-within:data-[active=true]:ring-ring/50"
+											/>
+										))}
+									</div>
+								</div>
 								<CardDescription>
 									Enter the 6-digit code from your authenticator app
 								</CardDescription>
@@ -539,7 +580,17 @@ export default function Home({
 							>
 								Lost your password?
 							</Link>
-						) : (
+						) : hasCustomPasswordReset && !isTwoFactor ? (
+							<button
+								type="button"
+								className="hover:underline text-muted-foreground"
+								onClick={() => setShowForgotPassword((prev) => !prev)}
+							>
+								{showForgotPassword
+									? "Go back to login"
+									: "Lost your password?"}
+							</button>
+						) : !hasCustomPasswordReset ? (
 							<Link
 								className="hover:underline text-muted-foreground"
 								href="https://docs.dokploy.com/docs/core/reset-password"
@@ -547,7 +598,7 @@ export default function Home({
 							>
 								Lost your password?
 							</Link>
-						)}
+						) : null}
 					</div>
 				</div>
 				<div className="p-2" />
@@ -565,6 +616,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	// render correctly on the server (no flash of default branding).
 	await helpers.whitelabeling.getPublic.prefetch();
 	await helpers.oidcSso.publicConfig.prefetch();
+	await helpers.sso.showSignInWithSSO.prefetch();
 
 	if (IS_CLOUD) {
 		try {

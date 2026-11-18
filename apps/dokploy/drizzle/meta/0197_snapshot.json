@@ -1,6 +1,6 @@
 {
-  "id": "39fc72e4-3903-4f9a-8280-de40bbd066ec",
-  "prevId": "883e22a3-6b77-4b93-9f8c-b0ce9f0dcbdb",
+  "id": "e2f2cd03-52dd-457a-8854-1ef6d0b5d168",
+  "prevId": "c9ad226a-7a8f-4c3b-8f04-fef6bccf9bfb",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2690,6 +2690,13 @@
           "notNull": true,
           "default": false
         },
+        "pullImages": {
+          "name": "pullImages",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "triggerType": {
           "name": "triggerType",
           "type": "triggerType",
@@ -4020,276 +4027,6 @@
           ],
           "columnsTo": [
             "gitProviderId"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.oidc_sso_auth_event": {
-      "name": "oidc_sso_auth_event",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "outcome": {
-          "name": "outcome",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ip": {
-          "name": "ip",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "correlation_id": {
-          "name": "correlation_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "emergency_origin": {
-          "name": "emergency_origin",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "action": {
-          "name": "action",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_user_id": {
-          "name": "target_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "oidcSsoAuthEvent_createdAt_idx": {
-          "name": "oidcSsoAuthEvent_createdAt_idx",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.oidc_sso_config": {
-      "name": "oidc_sso_config",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "mode": {
-          "name": "mode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'disabled'"
-        },
-        "issuer_url": {
-          "name": "issuer_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "client_id": {
-          "name": "client_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "client_secret": {
-          "name": "client_secret",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "access_group": {
-          "name": "access_group",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "admin_group": {
-          "name": "admin_group",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_management_group": {
-          "name": "user_management_group",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "groups_claim": {
-          "name": "groups_claim",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'groups'"
-        },
-        "extra_scopes": {
-          "name": "extra_scopes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "button_label": {
-          "name": "button_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'Sign in with SSO'"
-        },
-        "allow_insecure_http": {
-          "name": "allow_insecure_http",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "verified_issuer": {
-          "name": "verified_issuer",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "verified_at": {
-          "name": "verified_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.oidc_sso_login_state": {
-      "name": "oidc_sso_login_state",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "groups": {
-          "name": "groups",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "last_sso_login_at": {
-          "name": "last_sso_login_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "oidc_sso_login_state_user_id_user_id_fk": {
-          "name": "oidc_sso_login_state_user_id_user_id_fk",
-          "tableFrom": "oidc_sso_login_state",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -7939,6 +7676,13 @@
           "notNull": true,
           "default": false
         },
+        "telemetryProviderIds": {
+          "name": "telemetryProviderIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "ARRAY[]::text[]"
+        },
         "buildsConcurrency": {
           "name": "buildsConcurrency",
           "type": "integer",
@@ -8440,6 +8184,101 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.telemetryProvider": {
+      "name": "telemetryProvider",
+      "schema": "",
+      "columns": {
+        "telemetryProviderId": {
+          "name": "telemetryProviderId",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerType": {
+          "name": "providerType",
+          "type": "TelemetryProviderType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signals": {
+          "name": "signals",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "apiKey": {
+          "name": "apiKey",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "apiSecret": {
+          "name": "apiSecret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extraConfig": {
+          "name": "extraConfig",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "organizationId": {
+          "name": "organizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "telemetryProvider_organizationId_organization_id_fk": {
+          "name": "telemetryProvider_organizationId_organization_id_fk",
+          "tableFrom": "telemetryProvider",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "organizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -9068,6 +8907,19 @@
           "notNull": false,
           "default": "'0 0 * * *'"
         },
+        "telemetryProviderIds": {
+          "name": "telemetryProviderIds",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "ARRAY[]::text[]"
+        },
+        "vectorAgentOrganizationId": {
+          "name": "vectorAgentOrganizationId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "metricsConfig": {
           "name": "metricsConfig",
           "type": "jsonb",
@@ -9140,7 +8992,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "webServerSettings_vectorAgentOrganizationId_organization_id_fk": {
+          "name": "webServerSettings_vectorAgentOrganizationId_organization_id_fk",
+          "tableFrom": "webServerSettings",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "vectorAgentOrganizationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -9403,6 +9269,21 @@
       "values": [
         "push",
         "tag"
+      ]
+    },
+    "public.TelemetryProviderType": {
+      "name": "TelemetryProviderType",
+      "schema": "public",
+      "values": [
+        "loki",
+        "datadog",
+        "betterstack",
+        "elasticsearch",
+        "splunk_hec",
+        "aws_cloudwatch",
+        "prometheus_remote_write",
+        "new_relic",
+        "influxdb"
       ]
     },
     "public.VaultProviderType": {
